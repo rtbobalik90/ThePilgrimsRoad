@@ -204,12 +204,13 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 
 /* level-up toast */
 #toast{
-  position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-90px);z-index:120;
+  position:fixed;bottom:calc(78px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(140px);z-index:120;
   background:linear-gradient(180deg,#3d2e12,#2a1f0c);border:1px solid var(--ember);
   border-radius:10px;padding:12px 22px;text-align:center;box-shadow:0 0 30px rgba(201,138,46,.35);
   transition:transform .45s cubic-bezier(.2,.8,.2,1);max-width:88%;
 }
 #toast.on{transform:translateX(-50%) translateY(0)}
+#toast{transition:transform .45s cubic-bezier(.2,.8,.2,1)}
 #toast .t1{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.26em;color:var(--ember);text-transform:uppercase}
 #toast .t2{font-family:'Cinzel',serif;font-size:17px;font-weight:700}
 
@@ -330,6 +331,33 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 #town-full .town-inner img{height:100%;width:auto;display:block}
 .town-title{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:41;background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.45);border-radius:8px;padding:7px 13px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;letter-spacing:.22em;font-size:12px;color:var(--ember-hi);text-transform:uppercase}
 .town-hint{position:fixed;right:14px;top:calc(12px + env(safe-area-inset-top));z-index:41;background:rgba(14,11,7,.6);border:1px solid var(--edge);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--faint);font-style:italic}
+/* ---------- interior scenes ---------- */
+#scene{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;background:#0b0906;box-shadow:var(--shadow);margin-top:10px}
+#scene svg,#scene img{display:block;width:100%;height:auto}
+.armor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.armor{border:1px solid var(--edge);border-radius:10px;padding:12px;background:#1b1610;text-align:center}
+.armor.earned{border-color:var(--ember);box-shadow:0 0 12px rgba(201,138,46,.18)}
+.armor .a-ico{width:34px;height:34px;margin:0 auto;color:var(--faint)}
+.armor.earned .a-ico{color:var(--ember-hi);filter:drop-shadow(0 0 6px rgba(201,138,46,.5))}
+.armor .a-nm{font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:.08em;margin-top:7px}
+.armor .a-req{font-size:12.5px;color:var(--faint);margin-top:3px}
+.armor.earned .a-req{color:var(--parchment-dim)}
+.badge-grid{display:flex;flex-wrap:wrap;gap:9px;margin-top:10px}
+.badge{border:1px solid var(--edge);border-radius:999px;padding:7px 14px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.08em;color:var(--faint);background:#1b1610}
+.badge.earned{border-color:var(--ember);color:var(--ember-hi);background:rgba(201,138,46,.08)}
+.mantle{display:flex;gap:8px;margin-top:12px}
+.mantle .stage{flex:1;aspect-ratio:3/4;border:1px solid var(--edge);border-radius:8px;background:#15100a;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.mantle .stage img{width:100%;height:100%;object-fit:cover}
+.mantle .stage.cur{border-color:var(--ember);box-shadow:0 0 12px rgba(201,138,46,.3)}
+.mantle .stage.locked{opacity:.35}
+.mantle .stage .snm{position:absolute;bottom:0;left:0;right:0;background:rgba(14,11,7,.8);font-family:'Cinzel',serif;font-size:9px;letter-spacing:.08em;text-align:center;padding:3px 2px;color:var(--parchment-dim)}
+.decl{border:1px solid #4a3a24;border-radius:10px;background:#241d12;padding:13px 15px;margin:8px 0;font-size:17px;font-style:italic;color:#EFE2C2;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.tl{border-left:2px solid var(--edge);margin:12px 0 0 8px;padding-left:16px}
+.tl .te{position:relative;padding:7px 0}
+.tl .te::before{content:"";position:absolute;left:-21.5px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ember);box-shadow:0 0 6px rgba(201,138,46,.6)}
+.tl .te.fall::before{background:var(--rust)}
+.tl .te .tw{font-size:15.5px}
+.tl .te .tdt{font-size:12.5px;color:var(--faint)}
 #cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
 #cal-stage img{display:block;width:100%}
 #cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
@@ -2010,9 +2038,6 @@ function renderTown(){
   document.body.appendChild(o);
   const title=document.createElement('div'); title.className='town-title'; title.textContent='The Keep';
   document.body.appendChild(title);
-  const hint=document.createElement('div'); hint.className='town-hint'; hint.textContent='drag to roam';
-  document.body.appendChild(hint);
-  setTimeout(()=>hint.remove(),4000);
   const inner=o.querySelector('.town-inner');
   BUILDINGS.forEach(b=>{
     const p=pins[b.id]||DEFAULT_PINS[b.id]; if(!p) return;
@@ -2030,6 +2055,222 @@ function renderTown(){
   const img=o.querySelector('img');
   const center=()=>{ o.scrollLeft=Math.max(0, inner.scrollWidth*(GATE_PIN.x/100) - o.clientWidth/2); };
   if(img.complete) center(); else img.onload=center;
+}
+
+
+/* ============================================================
+   PHASE 5 — THE PILGRIM'S HOUSE AS A LIVING SCENE
+   (prototype of the scene system every building will get)
+   ============================================================ */
+if(!world.identity) world.identity=[
+ 'I am chosen.','I am forgiven \u2014 fully.','I am a son of the King.',
+ 'I am Naomi, Zipporah, and Grace\u2019s father.','I am free, and being made freer.',
+ 'I am not what I did. I am who He says I am.'];
+if(!world.armor) world.armor={};
+
+/* portrait stages over the fire */
+const STAGES=[
+ {nm:'The Wanderer', min:1},
+ {nm:'The Watchman', min:4},
+ {nm:'The Shepherd', min:7},
+ {nm:'The Whole Man', min:10}
+];
+function stageOf(){ const n=levelInfo(state.xp).n; let s=0;
+  STAGES.forEach((st,i)=>{ if(n>=st.min) s=i; }); return s; }
+
+/* the Armor of God — earned by the real road */
+const ARMOR=[
+ {id:'belt', nm:'Belt of Truth', req:'Seal 7 Evening Watches',
+  ico:'<path d="M3 11h18v4H3zM9 11v4M15 11v4M11 12h2v2h-2z"/>',
+  prog:()=>[Object.values(days).filter(d=>d.sealed).length,7]},
+ {id:'breastplate', nm:'Breastplate of Righteousness', req:'Complete 50 anchors',
+  ico:'<path d="M6 4l6 2 6-2v7c0 5-3 8-6 9-3-1-6-4-6-9zM12 6v12"/>',
+  prog:()=>[Object.values(days).reduce((a,d)=>a+Object.keys(d.anchors||{}).length,0),50]},
+ {id:'boots', nm:'Gospel Boots', req:'Log 70,000 steps',
+  ico:'<path d="M5 4v9h6l2 3h6v3H5a2 2 0 0 1-2-2V4zM5 13l-2 0"/>',
+  prog:()=>[Object.values(world.bodylog).reduce((a,b)=>a+(b.steps||0),0),70000]},
+ {id:'shield', nm:'Shield of Faith', req:'30 days of the Prayer anchor',
+  ico:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+  prog:()=>[Object.values(days).filter(d=>d.anchors&&d.anchors.prayer).length,30]},
+ {id:'helmet', nm:'Helmet of Salvation', req:'3 prayers answered',
+  ico:'<path d="M5 14a7 7 0 0 1 14 0v4h-4l-1-3h-4l-1 3H5zM12 3v2"/>',
+  prog:()=>[world.prayers.filter(p=>p.answered).length,3]},
+ {id:'sword', nm:'Sword of the Spirit', req:'Hide 10 verses in the heart',
+  ico:'<path d="M14 4l6 6-9 9-3 1-3 3-2-2 3-3 1-3zM13 7l4 4"/>',
+  prog:()=>[world.verses.length,10]}
+];
+function armorCheck(){
+  ARMOR.forEach(a=>{ const [v,t]=a.prog();
+    if(v>=t && !world.armor[a.id]){ world.armor[a.id]=nowISO(); saveWorld();
+      toast('Armor earned',a.nm); addXP(40,a.nm+' earned','spirit'); } });
+}
+
+/* deeds — the trophy wall */
+const DEEDS=[
+ ['First Light','Complete your first anchor',()=>Object.values(days).some(d=>Object.keys(d.anchors||{}).length>0)],
+ ['The First Letter','Seal a letter in the chest',()=>world.letters.length>0],
+ ['Seven Standing','7 days standing',()=>standingDays()>=7],
+ ['Thirty Standing','30 days standing',()=>standingDays()>=30],
+ ['Ninety Standing','90 days standing',()=>standingDays()>=90],
+ ['The Fast Return','Returned within 2 hours of a fall',()=>falls.some(f=>typeof f.hours==='number'&&f.hours<=2)],
+ ['First Win Forged','Log a win at the Forge',()=>world.wins.length>0],
+ ['A Prayer Answered','Mark a prayer answered',()=>world.prayers.some(p=>p.answered)],
+ ['Joy Planted','Log a moment of life',()=>world.joy.length>0],
+ ['Something Died','Strike a thing from the Death List',()=>world.death.some(d=>d.dead)],
+ ['Ten Thousand','A 10,000-step day',()=>Object.values(world.bodylog).some(b=>(b.steps||0)>=10000)],
+ ['A Land Behind You','Enter the second land',()=>(journey()||{q:1}).q>=2]
+];
+
+/* the house scene (SVG until art/house_scene.webp exists) */
+function houseSceneSVG(){
+  const c=charOf();
+  return '<svg viewBox="0 0 430 520" xmlns="http://www.w3.org/2000/svg">'+
+  '<defs><linearGradient id="hw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241d14"/><stop offset="1" stop-color="#171209"/></linearGradient>'+
+  '<radialGradient id="fg" cx=".5" cy=".9" r=".8"><stop offset="0" stop-color="#E8B254" stop-opacity=".55"/><stop offset=".5" stop-color="#C9612E" stop-opacity=".25"/><stop offset="1" stop-opacity="0"/></radialGradient></defs>'+
+  '<rect width="430" height="520" fill="url(#hw)"/>'+
+  '<rect y="430" width="430" height="90" fill="#120d07"/>'+
+  /* fireplace */
+  '<rect x="150" y="250" width="130" height="180" fill="#2e261b" stroke="#3a2f20"/>'+
+  '<path d="M170 430 L170 320 Q215 290 260 320 L260 430 Z" fill="#0c0905"/>'+
+  '<ellipse cx="215" cy="420" rx="38" ry="16" fill="url(#fg)"/>'+
+  '<path d="M205 416 Q215 392 212 380 Q224 396 218 416 Z" fill="#E8B254" opacity=".8"/>'+
+  '<rect x="142" y="242" width="146" height="12" fill="#3a2f20"/>'+
+  /* portrait over the fire */
+  '<rect x="178" y="150" width="74" height="86" fill="#15100a" stroke="'+c.color+'" stroke-width="2.5"/>'+
+  '<g transform="translate(203,180) scale(1.0)">'+embSVG(c.emblem,24,c.color)+'</g>'+
+  /* mirror left */
+  '<ellipse cx="62" cy="180" rx="30" ry="44" fill="#1d2128" stroke="#4a3a22" stroke-width="2.5"/>'+
+  '<ellipse cx="55" cy="168" rx="9" ry="18" fill="#39424f" opacity=".5"/>'+
+  /* armor stand left-low */
+  '<line x1="62" y1="290" x2="62" y2="408" stroke="#3a2f20" stroke-width="5"/><line x1="34" y1="316" x2="90" y2="316" stroke="#3a2f20" stroke-width="4"/>'+
+  '<path d="M48 300 l14 5 14-5 v16c0 11-7 17-14 19-7-2-14-8-14-19z" fill="#2b2317" stroke="#57441f"/>'+
+  '<circle cx="62" cy="288" r="9" fill="#2b2317" stroke="#57441f"/>'+
+  /* trophy wall right */
+  '<rect x="318" y="150" width="86" height="120" fill="#1d1810" stroke="#3a2f20"/>'+
+  '<path d="M338 170 l10 4 10-4 v10c0 7-5 11-10 12-5-1-10-5-10-12z" fill="#2b2317" stroke="#6b4a1c"/>'+
+  '<circle cx="384" cy="180" r="9" fill="#2b2317" stroke="#6b4a1c"/>'+
+  '<path d="M334 215 h16 M384 211 l-7 12 h14 z" stroke="#6b4a1c" fill="none"/>'+
+  /* desk right-low */
+  '<rect x="300" y="350" width="110" height="14" fill="#3a2f20"/><rect x="306" y="364" width="10" height="66" fill="#2b2317"/><rect x="394" y="364" width="10" height="66" fill="#2b2317"/>'+
+  '<rect x="318" y="334" width="46" height="16" fill="#E6D6B0" opacity=".85" transform="rotate(-4 341 342)"/>'+
+  '<line x1="376" y1="322" x2="388" y2="346" stroke="#B5A684" stroke-width="2"/>'+
+  /* banner right-high */
+  '<line x1="300" y1="58" x2="300" y2="120" stroke="#3a2f20" stroke-width="3"/>'+
+  '<path d="M300 62 L345 70 L300 82 Z" fill="'+c.color+'"/>'+
+  /* window glow */
+  '<rect x="120" y="60" width="56" height="74" rx="6" fill="#0d1117" stroke="#3a2f20" stroke-width="3"/>'+
+  '<circle cx="148" cy="84" r="10" fill="#E6D6B0" opacity=".25"/>'+
+  '</svg>';
+}
+const HOUSE_SPOTS=[
+ {id:'mantle',  x:50, y:36, lbl:'The Portraits'},
+ {id:'mirror',  x:14, y:34, lbl:'The Mirror'},
+ {id:'armor',   x:14, y:66, lbl:'The Armor Stand'},
+ {id:'deeds',   x:84, y:40, lbl:'The Trophy Wall'},
+ {id:'desk',    x:82, y:72, lbl:'The Record'},
+ {id:'banner',  x:75, y:13, lbl:'The Banner'}
+];
+
+/* sections */
+const HOUSE_SECTIONS={
+ mantle(el){
+  const cur=stageOf(), li=levelInfo(state.xp);
+  el.innerHTML=panelHTML('The Portraits Over the Fire',
+   '<p class="small">Four frames hang above the mantle. They change as the man changes.</p>'+
+   '<div class="mantle">'+STAGES.map((st,i)=>{
+     const state_=i<cur?'':i===cur?' cur':' locked';
+     return '<div class="stage'+state_+'" data-st="'+i+'">'+
+      '<span class="ph display" style="font-size:22px;color:'+(i<=cur?'var(--ember)':'#3a3a3a')+'">'+(i<=cur?'\u2713':'?')+'</span>'+
+      '<img src="art/pilgrim_s'+(i+1)+'.webp" alt="" onerror="this.remove()" '+(i>cur?'style="filter:grayscale(1) brightness(.4)"':'')+'>'+
+      '<span class="snm">'+st.nm+'</span></div>';}).join('')+'</div>'+
+   '<p class="small" style="margin-top:10px">You stand as <b>'+STAGES[cur].nm+'</b> \u2014 Level '+li.n+', '+li.title+'. The next frame unlocks at Level '+(STAGES[cur+1]?STAGES[cur+1].min:'\u2014')+'.</p>');
+ },
+ mirror(el){
+  const rerender=()=>HOUSE_SECTIONS.mirror(el);
+  let i=0;
+  el.innerHTML=panelHTML('The Mirror \u00B7 Who I Am',
+   '<p class="small">What is true regardless of level, streak, or yesterday. Stand here and say them.</p>'+
+   world.identity.map((d,ix)=>'<div class="decl"><span>'+esc(d)+'</span><button class="mini-btn" data-x="'+ix+'">\u00D7</button></div>').join('')+
+   addRowUI('I am\u2026','Declare')+
+   '<button class="btn primary block" id="mr-stand" style="margin-top:12px">Stand at the mirror</button>');
+  el.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{world.identity.splice(+b.dataset.x,1);saveWorld();rerender();});
+  wireAdd(el.querySelector('.panel'),v=>{world.identity.push(v);saveWorld();rerender();});
+  $('#mr-stand').onclick=()=>{
+    i=0;
+    const cyc=()=>{ if(i>=world.identity.length){ addXP(10,'Stood at the mirror','heart'); rerender(); return; }
+      el.querySelector('.panel').innerHTML='<div style="min-height:160px;display:flex;flex-direction:column;justify-content:center;text-align:center">'+
+       '<div class="eyebrow">'+(i+1)+' of '+world.identity.length+'</div>'+
+       '<p style="font-size:24px;font-style:italic;color:#EFE2C2;margin:14px 0;line-height:1.5">'+esc(world.identity[i])+'</p>'+
+       '<button class="btn primary" id="mr-next">'+(i<world.identity.length-1?'Say it. Next':'Amen \u00B7 +10')+'</button></div>';
+      $('#mr-next').onclick=()=>{i++;cyc();}; };
+    cyc();
+  };
+ },
+ armor(el){
+  armorCheck();
+  el.innerHTML=panelHTML('The Armor Stand \u00B7 Ephesians 6',
+   '<p class="small">\u201CPut on the whole armour of God.\u201D Each piece is earned on the real road, not bought.</p>'+
+   '<div class="armor-grid">'+ARMOR.map(a=>{
+     const e=world.armor[a.id], [v,t]=a.prog();
+     return '<div class="armor'+(e?' earned':'')+'">'+
+      '<svg class="a-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+a.ico+'</svg>'+
+      '<div class="a-nm">'+a.nm+'</div>'+
+      '<div class="a-req">'+(e?'Earned '+shortDate(e):a.req+' \u00B7 '+Math.min(v,t).toLocaleString()+'/'+t.toLocaleString())+'</div></div>';}).join('')+'</div>');
+ },
+ deeds(el){
+  el.innerHTML=panelHTML('The Trophy Wall',
+   '<p class="small">Deeds done on the road. Beasts will hang here too, when they fall.</p>'+
+   '<div class="badge-grid">'+DEEDS.map(([nm,req,fn])=>{
+     const e=fn();
+     return '<span class="badge'+(e?' earned':'')+'" title="'+esc(req)+'">'+(e?'\u2605 ':'')+nm+'</span>';}).join('')+'</div>'+
+   '<p class="small" style="margin-top:10px">'+DEEDS.filter(d=>d[2]()).length+' of '+DEEDS.length+' earned. Tap and hold a deed to see how it\u2019s won.</p>');
+ },
+ desk(el){
+  const ev=[];
+  ev.push({at:profile.start+'T06:00:00',w:'Set out from the City of Destruction',cls:''});
+  falls.forEach(f=>ev.push({at:f.returnedAt||f.at,w:'Fell \u2014 returned in '+(f.hours<24?Math.round(f.hours)+'h':(f.hours/24).toFixed(1)+'d'),cls:'fall'}));
+  world.letters.forEach(l=>ev.push({at:l.at,w:'Letter sealed for '+l.to,cls:''}));
+  world.prayers.filter(p=>p.answered).forEach(p=>ev.push({at:p.answered,w:'Prayer answered: '+p.text.slice(0,40),cls:''}));
+  world.death.filter(d=>d.dead).forEach(d=>ev.push({at:d.dead,w:'Put to death: '+d.text.slice(0,40),cls:''}));
+  ev.sort((a,b)=>new Date(b.at)-new Date(a.at));
+  el.innerHTML=panelHTML('The Record \u00B7 the honest one',
+   '<p class="small">Falls and risings, side by side. The getting up is the testimony.</p>'+
+   '<div class="tl">'+ev.slice(0,20).map(e=>'<div class="te '+e.cls+'"><div class="tw">'+esc(e.w)+'</div><div class="tdt">'+shortDate(e.at)+'</div></div>').join('')+'</div>');
+ },
+ banner(el){
+  el.innerHTML='<div class="panel"><h2 class="display">The Banner</h2><div id="bn-host"></div></div>';
+  renderCharBody(el.querySelector('#bn-host'),()=>HOUSE_SECTIONS.banner(el));
+ }
+};
+
+/* the house, rebuilt as a scene */
+function enterHouse(b){
+  $('#keep-main').style.display='none';
+  const el=$('#interior'); el.style.display='block';
+  el.innerHTML='<button class="back" id="int-back">\u2190 The town</button>'+
+   '<div class="flex" style="margin-top:6px"><span style="width:30px;height:30px;color:var(--ember)">'+bcardIcon('house')+'</span>'+
+   '<div><h1 class="display" style="font-size:21px">'+b.name+'</h1><div class="eyebrow">'+esc(charOf().motto)+'</div></div></div>'+
+   '<div id="scene"></div>'+
+   '<div id="house-body"><p class="small" style="margin-top:12px;font-style:italic">Tap something in the room \u2014 the portraits over the fire, the mirror, the armor stand, the trophy wall, the desk, the banner.</p></div>';
+  const sc=$('#scene');
+  sc.innerHTML=houseSceneSVG();
+  addSpots();
+  const img=new Image();
+  img.onload=()=>{ sc.innerHTML=''; sc.appendChild(img); addSpots(); };
+  img.src='art/house_scene.webp';
+  function addSpots(){
+    HOUSE_SPOTS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:'+charOf().color+'"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=>{ HOUSE_SECTIONS[h.id]($('#house-body'));
+        if($('#house-body').scrollIntoView) $('#house-body').scrollIntoView({behavior:'smooth',block:'start'}); };
+      sc.appendChild(btn);
+    });
+  }
+  armorCheck();
+  $('#int-back').onclick=renderKeep;
+  window.scrollTo({top:0});
 }
 
 </script>
