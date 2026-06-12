@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E0B07">
+<title>Full by 40 — The Pilgrim's Road</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0E0B07;
+  --iron:#221C15;
+  --iron-2:#2B231A;
+  --edge:#3A2F20;
+  --parchment:#E6D6B0;
+  --parchment-dim:#B5A684;
+  --faint:#7d7160;
+  --ember:#C98A2E;
+  --ember-hi:#E8B254;
+  --rust:#93402B;
+  --mist:#7C8CA0;
+  --moss:#6E7F4E;
+  --shadow:0 10px 30px rgba(0,0,0,.55);
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--night);
+  color:var(--parchment);
+  font-family:'EB Garamond',Georgia,serif;
+  font-size:17px;line-height:1.55;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+/* smoke + vignette atmosphere */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(201,138,46,.07), transparent 60%),
+    radial-gradient(140% 90% at 50% 110%, rgba(0,0,0,.65), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#app{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:0 16px 96px}
+
+/* ---------- type ---------- */
+.display{font-family:'Cinzel',serif;letter-spacing:.06em}
+h1.display{font-size:30px;font-weight:700;line-height:1.2}
+h2.display{font-size:15px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ember)}
+.eyebrow{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint)}
+.scripture{font-style:italic;color:var(--parchment-dim)}
+.scripture .ref{font-style:normal;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.18em;color:var(--faint)}
+small,.small{font-size:14px;color:var(--parchment-dim)}
+
+/* ---------- panels ---------- */
+.panel{
+  background:linear-gradient(180deg,var(--iron-2),var(--iron));
+  border:1px solid var(--edge);
+  border-radius:var(--r);
+  box-shadow:var(--shadow), inset 0 1px 0 rgba(230,214,176,.06);
+  padding:18px;
+  margin:14px 0;
+}
+.panel.sacred{border-color:#4a3a24;background:linear-gradient(180deg,#2d2517,#221c12)}
+.rule{height:1px;background:linear-gradient(90deg,transparent,var(--edge),transparent);margin:14px 0;border:0}
+.flex{display:flex;align-items:center;gap:10px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+/* ---------- buttons ---------- */
+button{font-family:inherit;font-size:16px;color:var(--parchment);cursor:pointer}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(180deg,#3a2f1e,#2c2415);
+  border:1px solid #57441f;border-radius:8px;
+  padding:11px 18px;font-family:'Cinzel',serif;font-size:13px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;
+  transition:filter .15s, transform .05s;
+}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(180deg,#7a541b,#5d3f12);border-color:var(--ember);color:#F4E6C2;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.btn.primary:hover{filter:brightness(1.12)}
+.btn.ghost{background:transparent;border-color:var(--edge);color:var(--parchment-dim)}
+.btn.danger{border-color:var(--rust);color:#d8907c;background:linear-gradient(180deg,#33180f,#27120b)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+
+/* ---------- anchors checklist ---------- */
+.anchor{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  background:transparent;border:1px solid var(--edge);border-radius:8px;
+  padding:13px 14px;margin:8px 0;transition:border-color .2s, background .2s;
+}
+.anchor .box{
+  width:24px;height:24px;flex:0 0 24px;border:1.5px solid var(--faint);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.anchor .box svg{opacity:0;transform:scale(.5);transition:all .2s}
+.anchor.done{border-color:#57441f;background:rgba(201,138,46,.07)}
+.anchor.done .box{border-color:var(--ember);background:var(--ember)}
+.anchor.done .box svg{opacity:1;transform:scale(1)}
+.anchor .a-name{font-family:'Cinzel',serif;font-size:14px;font-weight:600;letter-spacing:.1em}
+.anchor .a-sub{font-size:13.5px;color:var(--faint);margin-top:1px}
+.anchor.done .a-sub{color:var(--parchment-dim)}
+.anchor .a-xp{margin-left:auto;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;color:var(--faint)}
+.anchor.done .a-xp{color:var(--ember)}
+
+/* ---------- XP / pilgrim ---------- */
+.xpbar{height:10px;border-radius:6px;background:#161109;border:1px solid var(--edge);overflow:hidden}
+.xpbar .fill{
+  height:100%;width:0%;border-radius:6px;
+  background:linear-gradient(90deg,#8a5a14,var(--ember) 60%,var(--ember-hi));
+  box-shadow:0 0 10px rgba(201,138,46,.55);
+  transition:width .6s cubic-bezier(.2,.8,.2,1);
+}
+.lvl-badge{
+  width:54px;height:54px;flex:0 0 54px;border-radius:50%;
+  border:1.5px solid var(--ember);display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-weight:700;font-size:20px;color:var(--ember-hi);
+  background:radial-gradient(circle at 50% 35%, #3d2e12, #1d1609 70%);
+  box-shadow:0 0 14px rgba(201,138,46,.25), inset 0 0 8px rgba(0,0,0,.6);
+}
+.stat-row{display:flex;gap:10px;margin-top:14px}
+.stat{flex:1;text-align:center;background:#1b1610;border:1px solid var(--edge);border-radius:8px;padding:10px 6px}
+.stat .v{font-family:'Cinzel',serif;font-size:19px;font-weight:700;color:var(--parchment)}
+.stat .k{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+
+/* ---------- chips ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{
+  border:1px solid var(--edge);border-radius:999px;background:#1b1610;
+  padding:7px 15px;font-size:15px;color:var(--parchment-dim);transition:all .15s;
+}
+.chip.on{border-color:var(--ember);color:var(--ember-hi);background:rgba(201,138,46,.1)}
+.chip.rust.on{border-color:var(--rust);color:#d8907c;background:rgba(147,64,43,.12)}
+.chip.moss.on{border-color:var(--moss);color:#a9bc85;background:rgba(110,127,78,.12)}
+
+input[type=text],input[type=password],input[type=date],textarea{
+  width:100%;background:#15100a;border:1px solid var(--edge);border-radius:8px;
+  color:var(--parchment);font-family:inherit;font-size:16px;padding:11px 13px;
+}
+textarea{min-height:96px;resize:vertical;line-height:1.5}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid rgba(201,138,46,.55);outline-offset:1px}
+label.f{display:block;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin:14px 0 6px}
+
+/* ---------- bottom nav ---------- */
+nav#nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:linear-gradient(180deg,rgba(20,16,10,.92),rgba(14,11,7,.98));
+  border-top:1px solid var(--edge);backdrop-filter:blur(8px);
+  display:flex;justify-content:space-around;
+  padding:6px 8px calc(8px + env(safe-area-inset-bottom));
+  max-width:560px;margin:0 auto;
+}
+nav#nav button{
+  background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--faint);font-family:'Cinzel',serif;font-size:10px;letter-spacing:.16em;
+  padding:6px 14px;border-radius:8px;
+}
+nav#nav button.on{color:var(--ember-hi)}
+nav#nav button svg{width:24px;height:24px}
+nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
+
+/* ---------- views ---------- */
+.view{display:none;animation:fadein .35s ease}
+.view.on{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- splash ---------- */
+#splash{
+  position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  background:var(--night);padding:32px;transition:opacity .6s;
+}
+#splash.gone{opacity:0;pointer-events:none}
+#splash .gate-glow{position:absolute;inset:0;background:radial-gradient(60% 45% at 50% 30%, rgba(232,178,84,.14), transparent 70%);pointer-events:none}
+#splash .ember{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--ember-hi);opacity:0;animation:rise 7s linear infinite}
+@keyframes rise{0%{transform:translateY(0);opacity:0}12%{opacity:.7}100%{transform:translateY(-65vh);opacity:0}}
+#splash h1{font-size:38px;margin:18px 0 4px;text-shadow:0 0 24px rgba(201,138,46,.35)}
+#splash .sub{font-family:'Cinzel',serif;letter-spacing:.34em;font-size:12px;color:var(--ember);text-transform:uppercase}
+#splash .verse{max-width:330px;margin:26px auto 34px}
+
+/* ---------- map ---------- */
+#mapwrap{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;background:#0b0906;box-shadow:var(--shadow)}
+#mapwrap svg{display:block;width:100%;height:auto}
+.t-node{cursor:pointer}
+.t-node circle.ring{transition:all .25s}
+.t-node.cur circle.halo{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25;r:16}50%{opacity:.65;r:21}}
+#t-detail img{width:100%;border-radius:8px;border:1px solid var(--edge);margin-top:12px;display:block}
+
+/* ---------- modal ---------- */
+.modal-bg{position:fixed;inset:0;z-index:80;background:rgba(8,6,3,.8);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center}
+.modal-bg.on{display:flex}
+.modal{
+  width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
+  background:linear-gradient(180deg,#2b2317,#1d1810);
+  border:1px solid #4a3a24;border-bottom:0;border-radius:16px 16px 0 0;
+  padding:22px 20px calc(24px + env(safe-area-inset-bottom));
+  animation:up .3s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+
+/* level-up toast */
+#toast{
+  position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-90px);z-index:120;
+  background:linear-gradient(180deg,#3d2e12,#2a1f0c);border:1px solid var(--ember);
+  border-radius:10px;padding:12px 22px;text-align:center;box-shadow:0 0 30px rgba(201,138,46,.35);
+  transition:transform .45s cubic-bezier(.2,.8,.2,1);max-width:88%;
+}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast .t1{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.26em;color:var(--ember);text-transform:uppercase}
+#toast .t2{font-family:'Cinzel',serif;font-size:17px;font-weight:700}
+
+/* vow */
+#vow-text{font-size:19px;line-height:1.75;font-style:italic;color:#EFE2C2;white-space:pre-wrap}
+.countdown{display:flex;gap:10px;margin-top:16px}
+.countdown .stat .v{color:var(--ember-hi)}
+
+.secret-note{font-size:13.5px;color:var(--faint);font-style:italic;margin-top:6px}
+.fall-quiet .panel{border-color:#3d2c24}
+
+/* ---------- the keep ---------- */
+#keep-hero{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;background:#0b0906;box-shadow:var(--shadow)}
+#keep-hero svg,#keep-hero img{display:block;width:100%;height:auto}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.bcard{
+  background:linear-gradient(180deg,var(--iron-2),var(--iron));
+  border:1px solid var(--edge);border-radius:var(--r);padding:14px 12px;text-align:left;
+  transition:border-color .2s, transform .1s; position:relative; overflow:hidden;
+}
+.bcard:active{transform:scale(.98)}
+.bcard:hover{border-color:#57441f}
+.bcard svg{width:30px;height:30px;color:var(--ember);filter:drop-shadow(0 0 5px rgba(201,138,46,.3))}
+.bcard .b-name{font-family:'Cinzel',serif;font-size:13.5px;font-weight:700;letter-spacing:.1em;margin-top:8px}
+.bcard .b-pill{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.bcard .b-status{font-size:13.5px;color:var(--parchment-dim);margin-top:5px;font-style:italic}
+/* interior */
+#interior .back{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--faint);font-family:'Cinzel',serif;font-size:12px;letter-spacing:.16em;padding:6px 0;text-transform:uppercase}
+.row-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(58,47,32,.5)}
+.row-item:last-child{border-bottom:0}
+.row-item .grow{flex:1;min-width:0}
+.row-item .meta{font-size:13px;color:var(--faint)}
+.mini-btn{background:#1b1610;border:1px solid var(--edge);border-radius:6px;color:var(--parchment-dim);font-size:13px;padding:5px 11px;font-family:'Cinzel',serif;letter-spacing:.06em}
+.mini-btn.gold{border-color:#57441f;color:var(--ember-hi)}
+.mini-btn.done{border-color:var(--moss);color:#a9bc85}
+.struck{text-decoration:line-through;color:var(--faint)}
+.dcard{border:1px solid var(--edge);border-radius:var(--r);padding:14px;margin:10px 0;background:#1b1610}
+.dcard .d-name{font-family:'Cinzel',serif;font-size:16px;font-weight:700;letter-spacing:.12em;color:var(--ember-hi)}
+/* character forge */
+.swatches{display:flex;gap:10px;margin:10px 0}
+.swatch{width:38px;height:38px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.swatch.on{border-color:var(--parchment);box-shadow:0 0 10px rgba(230,214,176,.4)}
+.emblems{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.emb{width:52px;height:52px;border:1px solid var(--edge);border-radius:8px;background:#15100a;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.emb svg{width:28px;height:28px;color:var(--parchment-dim)}
+.emb.on{border-color:var(--ember);box-shadow:0 0 10px rgba(201,138,46,.35)}
+.emb.on svg{color:var(--ember-hi)}
+.statbar{margin:9px 0}
+.statbar .between{font-size:13px}
+.statbar .k{font-family:'Cinzel',serif;letter-spacing:.12em;font-size:11.5px;text-transform:uppercase;color:var(--parchment-dim)}
+.statbar .track{height:7px;border-radius:4px;background:#161109;border:1px solid var(--edge);margin-top:4px;overflow:hidden}
+.statbar .f{height:100%;background:linear-gradient(90deg,#8a5a14,var(--ember-hi));border-radius:4px}
+/* steward */
+#stew-msgs{max-height:46vh;overflow-y:auto;padding:4px 2px;margin:10px 0}
+.smsg{margin:10px 0;display:flex;gap:10px}
+.smsg .who{width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:1px solid var(--edge);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:13px;color:var(--ember)}
+.smsg.me .who{border-color:#3d4654;color:var(--mist)}
+.smsg .bub{background:#1b1610;border:1px solid var(--edge);border-radius:10px;padding:10px 13px;font-size:16px;line-height:1.55}
+.smsg.ai .bub{background:#241d12;border-color:#4a3a24;font-style:normal}
+.stew-row{display:flex;gap:8px}
+.stew-row input{flex:1}
+.typing{color:var(--faint);font-style:italic;font-size:14px}
+/* beast */
+.beastbar{height:14px;border-radius:7px;background:#161109;border:1px solid #4a2a1e;overflow:hidden;margin-top:6px}
+.beastbar .f{height:100%;background:linear-gradient(90deg,#5e2417,var(--rust) 60%,#b85a3e);box-shadow:0 0 10px rgba(147,64,43,.5);transition:width .5s}
+/* map fog */
+.fog{animation:drift 26s linear infinite alternate}
+.fog2{animation:drift 38s linear infinite alternate-reverse}
+@keyframes drift{from{transform:translateX(-26px)}to{transform:translateX(26px)}}
+/* ---------- dialogue (RPG) ---------- */
+#dlg-backdrop{width:100%;border-radius:var(--r);border:1px solid var(--edge);display:none;margin-top:10px}
+.dlg{display:flex;gap:12px;margin-top:12px;align-items:flex-start}
+.portrait{
+  width:88px;height:88px;flex:0 0 88px;border-radius:10px;overflow:hidden;position:relative;
+  border:1px solid #57441f;background:radial-gradient(circle at 50% 30%,#3d2e12,#15100a 75%);
+  box-shadow:0 0 16px rgba(201,138,46,.18), inset 0 0 10px rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;
+}
+.portrait img{width:100%;height:100%;object-fit:cover}
+.portrait .ph{font-family:'Cinzel',serif;font-size:30px;font-weight:700;color:var(--ember)}
+.dlg-main{flex:1;min-width:0}
+.nameplate{display:flex;align-items:baseline;gap:8px}
+.nameplate .nm{font-family:'Cinzel',serif;font-size:15px;font-weight:700;letter-spacing:.1em;color:var(--ember-hi)}
+.nameplate .rl{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.dlg-box{
+  background:linear-gradient(180deg,#241d12,#1c160d);border:1px solid #4a3a24;border-radius:10px;
+  padding:13px 15px;margin-top:7px;min-height:64px;font-size:16.5px;line-height:1.6;
+}
+.dlg-box .caret{display:inline-block;width:8px;height:15px;background:var(--ember);margin-left:2px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.dlg-choices{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.dlg-choice{
+  text-align:left;background:#1b1610;border:1px solid var(--edge);border-radius:8px;
+  padding:10px 14px;font-size:15.5px;color:var(--parchment-dim);transition:all .15s;
+}
+.dlg-choice::before{content:"\25B8  ";color:var(--ember)}
+.dlg-choice:hover{border-color:#57441f;color:var(--parchment)}
+.work-divider{display:flex;align-items:center;gap:12px;margin:20px 0 4px;color:var(--faint);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.3em}
+.work-divider::before,.work-divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--edge))}
+.work-divider::after{background:linear-gradient(90deg,var(--edge),transparent)}
+/* ---------- town map ---------- */
+#town{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;background:#0b0906;box-shadow:var(--shadow)}
+#town img{display:block;width:100%;height:auto}
+.pin{
+  position:absolute;transform:translate(-50%,-50%);background:none;border:0;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;
+}
+.pin .dot{width:15px;height:15px;border-radius:50%;border:2px solid #0E0B07;box-shadow:0 0 10px rgba(232,178,84,.7)}
+.pin .ring{position:absolute;top:6px;width:15px;height:15px;border-radius:50%;border:1.5px solid var(--ember-hi);animation:pinpulse 2.2s ease-out infinite}
+@keyframes pinpulse{from{transform:scale(1);opacity:.8}to{transform:scale(2.4);opacity:0}}
+.pin .lbl{
+  font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;color:#F4E6C2;
+  background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.5);border-radius:5px;padding:2px 7px;white-space:nowrap;
+  text-shadow:0 1px 2px #000;
+}
+#cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
+#cal-stage img{display:block;width:100%}
+#cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
+.cal-dot{position:absolute;width:13px;height:13px;border-radius:50%;background:var(--ember-hi);border:2px solid #0E0B07;transform:translate(-50%,-50%);box-shadow:0 0 8px rgba(232,178,84,.8)}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ======================= SPLASH ======================= -->
+<div id="splash">
+  <div class="gate-glow"></div>
+  <div class="eyebrow">Full by 40</div>
+  <h1 class="display">THE PILGRIM'S<br>ROAD</h1>
+  <div class="sub">Sixteen lands · One gate</div>
+  <p class="verse scripture">"I have fought a good fight, I have finished my course, I have kept the faith."<br><span class="ref">2 TIMOTHY 4:7</span></p>
+  <button class="btn primary" id="splash-btn">Continue the journey</button>
+</div>
+
+<div id="app">
+
+<!-- ======================= ONBOARDING ======================= -->
+<section class="view" id="v-onboard">
+  <div style="height:28px"></div>
+  <div class="eyebrow">Before the road</div>
+  <h1 class="display" style="margin:6px 0 4px">Set out</h1>
+  <p class="small">Three things, then the gate opens. All of this can be changed later.</p>
+
+  <div class="panel">
+    <label class="f" for="ob-name">The pilgrim's name</label>
+    <input type="text" id="ob-name" value="Robert">
+    <label class="f" for="ob-start">The day the journey begins</label>
+    <input type="date" id="ob-start">
+    <label class="f" for="ob-end">The morning of your 40th birthday</label>
+    <input type="date" id="ob-end">
+    <p class="secret-note">The road between these two dates becomes sixteen lands — one per quarter.</p>
+  </div>
+
+  <div class="panel">
+    <h2 class="display">Forge Your Banner</h2>
+    <label class="f">Banner color</label>
+    <div class="swatches" id="ob-colors"></div>
+    <label class="f">Emblem</label>
+    <div class="emblems" id="ob-emblems"></div>
+    <label class="f" for="ob-motto">House words (your motto)</label>
+    <input type="text" id="ob-motto" placeholder="e.g. Rise again">
+  </div>
+
+  <div class="panel sacred">
+    <h2 class="display">The Vow</h2>
+    <p class="small" style="margin:6px 0 10px">This is the morning you are walking toward. Written in your words. It will meet you every time you open the app.</p>
+    <textarea id="ob-vow" rows="8"></textarea>
+  </div>
+
+  <button class="btn primary block" id="ob-go">Step onto the road</button>
+  <div style="height:30px"></div>
+</section>
+
+<!-- ======================= CAMP (home) ======================= -->
+<section class="view" id="v-camp">
+  <div style="height:18px"></div>
+  <div class="between">
+    <div>
+      <div class="eyebrow" id="camp-date"></div>
+      <h1 class="display" id="camp-greet" style="font-size:26px"></h1>
+    </div>
+  </div>
+
+  <!-- pilgrim status -->
+  <div class="panel">
+    <div class="flex">
+      <div class="lvl-badge" id="p-lvl">I</div>
+      <div style="flex:1">
+        <div class="between">
+          <span class="display" style="font-size:15px;font-weight:600" id="p-title">Wanderer</span>
+          <small id="p-xp"></small>
+        </div>
+        <div class="xpbar" style="margin-top:7px"><div class="fill" id="p-fill"></div></div>
+        <small id="p-next" style="display:block;margin-top:5px"></small>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="v" id="s-standing">0</div><div class="k">Days standing</div></div>
+      <div class="stat"><div class="v" id="s-return">—</div><div class="k">Avg return</div></div>
+      <div class="stat"><div class="v" id="s-land">I</div><div class="k">Land</div></div>
+    </div>
+  </div>
+
+  <!-- verse -->
+  <div class="panel sacred" id="verse-panel">
+    <p class="scripture" id="verse-text"></p>
+    <p class="scripture" style="margin-top:8px"><span class="ref" id="verse-ref"></span></p>
+  </div>
+
+  <!-- anchors -->
+  <h2 class="display" style="margin-top:22px">Today's Anchors</h2>
+  <div id="anchors"></div>
+
+  <!-- evening -->
+  <div class="panel" id="evening-cta-panel">
+    <div class="between">
+      <div>
+        <span class="display" style="font-size:14px;font-weight:600">Evening Watch</span>
+        <div class="small" id="evening-sub">Name the day before you sleep. +20 XP</div>
+      </div>
+      <button class="btn" id="evening-btn">Open</button>
+    </div>
+  </div>
+
+  <!-- recent road -->
+  <h2 class="display" style="margin-top:22px">The Road Behind</h2>
+  <div class="panel" id="logfeed"><small>Nothing yet. The road begins with the first anchor.</small></div>
+  <div style="height:10px"></div>
+</section>
+
+<!-- ======================= KEEP (home base) ======================= -->
+<section class="view" id="v-keep">
+  <div style="height:18px"></div>
+  <div class="eyebrow">The pilgrim's stronghold</div>
+  <h1 class="display" style="font-size:26px;margin:4px 0 12px">The Keep</h1>
+  <div id="keep-main">
+    <div id="keep-hero"></div>
+    <div class="panel" style="margin-top:12px">
+      <div class="between">
+        <div>
+          <span class="display" style="font-size:14px;font-weight:600">The Steward</span>
+          <div class="small">Keeper of the gate. Ask, and he brings it to you.</div>
+        </div>
+        <button class="btn primary" id="stew-open">Speak</button>
+      </div>
+    </div>
+    <div class="bgrid" id="bgrid"></div>
+    <button class="btn ghost block" id="char-open" style="margin-top:14px">Character sheet</button>
+  </div>
+  <div id="interior" style="display:none"></div>
+  <div style="height:10px"></div>
+</section>
+
+<!-- ======================= ROAD (map) ======================= -->
+<section class="view" id="v-road">
+  <div style="height:18px"></div>
+  <div class="eyebrow">Quarter <span id="road-q">I</span> of XVI</div>
+  <h1 class="display" style="font-size:26px;margin:4px 0 12px" id="road-title"></h1>
+  <div id="mapwrap"></div>
+  <div class="panel" id="t-detail" style="display:none">
+    <div class="eyebrow" id="td-num"></div>
+    <h2 class="display" style="font-size:17px;color:var(--parchment);text-transform:none;letter-spacing:.08em;margin:4px 0 6px" id="td-name"></h2>
+    <p class="small" id="td-desc"></p>
+    <img id="td-img" alt="" loading="lazy" style="display:none">
+  </div>
+  <div style="height:10px"></div>
+</section>
+
+<!-- ======================= VOW ======================= -->
+<section class="view" id="v-vow">
+  <div style="height:26px"></div>
+  <div class="eyebrow">The morning you walk toward</div>
+  <h1 class="display" style="margin:6px 0 14px">The Vow</h1>
+  <div class="panel sacred">
+    <p id="vow-text"></p>
+    <hr class="rule">
+    <div class="countdown">
+      <div class="stat"><div class="v" id="vw-days">—</div><div class="k">Days to the gate</div></div>
+      <div class="stat"><div class="v" id="vw-pct">—</div><div class="k">Road walked</div></div>
+      <div class="stat"><div class="v" id="vw-q">—</div><div class="k">Land</div></div>
+    </div>
+  </div>
+  <button class="btn ghost block" id="vow-edit">Rewrite the vow</button>
+  <div style="height:10px"></div>
+</section>
+
+<!-- ======================= SETTINGS ======================= -->
+<section class="view" id="v-set">
+  <div style="height:26px"></div>
+  <h1 class="display" style="margin:0 0 4px">Provisions</h1>
+  <p class="small">Keys, dates, and the pack you carry.</p>
+
+  <div class="panel">
+    <h2 class="display">The Pilgrim</h2>
+    <label class="f" for="st-name">Name</label>
+    <input type="text" id="st-name">
+    <label class="f" for="st-start">Journey began</label>
+    <input type="date" id="st-start">
+    <label class="f" for="st-end">The gate (40th birthday)</label>
+    <input type="date" id="st-end">
+    <button class="btn block" id="st-save" style="margin-top:14px">Save</button>
+  </div>
+
+  <div class="panel">
+    <h2 class="display">Mentor Key</h2>
+    <p class="small" style="margin-top:6px">Your Anthropic API key powers the Mentor (arriving in a later phase). It is stored only on this device.</p>
+    <label class="f" for="st-key">API key</label>
+    <input type="password" id="st-key" placeholder="sk-ant-...">
+    <p class="secret-note" id="key-status"></p>
+    <p class="secret-note">Never written to the repo. Never included in exports. Never synced to the cloud.</p>
+    <div class="flex" style="margin-top:10px">
+      <button class="btn" id="st-key-save">Save key</button>
+      <button class="btn ghost" id="st-key-clear">Remove</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="display">The Pack</h2>
+    <p class="small" style="margin-top:6px">Your whole journey as a file. Secrets are excluded automatically. Cloud sync (encrypted) arrives in a later phase — until then, export often.</p>
+    <div class="flex" style="margin-top:12px">
+      <button class="btn" id="st-export">Export journey</button>
+      <button class="btn ghost" id="st-import">Import</button>
+      <input type="file" id="st-file" accept=".json" style="display:none">
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="display">The Town Map</h2>
+    <p class="small" style="margin-top:6px">When the painted town (art/town.webp) is in the repo, place each building's pin once. The map then replaces the courtyard grid.</p>
+    <button class="btn block" id="cal-start" style="margin-top:12px">Place the pins</button>
+    <p class="secret-note" id="cal-status">Pins for the painted town are already placed. Use this only if you replace the art and they drift.</p>
+  </div>
+
+  <div class="panel">
+    <h2 class="display" style="color:var(--rust)">The End of All Things</h2>
+    <p class="small" style="margin-top:6px">Erase everything on this device. There is no undo.</p>
+    <button class="btn danger" id="st-reset" style="margin-top:12px">Burn the map</button>
+  </div>
+  <div style="height:10px"></div>
+</section>
+
+</div><!-- /app -->
+
+<!-- ======================= NAV ======================= -->
+<nav id="nav" style="display:none">
+  <button data-v="camp" class="on">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.8 2.4 4.5 4.4 4.5 7.6A4.5 4.5 0 0 1 12 15a4.5 4.5 0 0 1-4.5-4.4C7.5 7.4 10.2 5.4 12 3z"/><path d="M5 21l4.5-3.5M19 21l-4.5-3.5M9 21h6"/></svg>
+    Camp
+  </button>
+  <button data-v="keep">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l2-2V4h2v2h2V4h2v2h2V4h2v2l2 2v13"/><path d="M4 21h16M10 21v-5a2 2 0 0 1 4 0v5"/></svg>
+    Keep
+  </button>
+  <button data-v="road">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21c-4-2-5-6 0-9s6-7 1-9"/><path d="M15 3h5v5"/><path d="M15 21h6M18 18v6" opacity=".0"/><circle cx="18" cy="6" r="2.6"/><circle cx="8" cy="19" r="1.6"/></svg>
+    Road
+  </button>
+  <button data-v="vow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>
+    Vow
+  </button>
+  <button data-v="set">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+    Pack
+  </button>
+</nav>
+
+<!-- ======================= EVENING MODAL ======================= -->
+<div class="modal-bg" id="m-evening">
+  <div class="modal">
+    <div class="eyebrow">Evening watch</div>
+    <h2 class="display" style="font-size:19px;color:var(--parchment);text-transform:none;letter-spacing:.06em;margin:4px 0 2px">Name the day</h2>
+
+    <label class="f">How is your heart, in one word</label>
+    <div class="chips" id="ev-feel"></div>
+
+    <label class="f">The battle today</label>
+    <div class="chips" id="ev-purity">
+      <button class="chip moss" data-p="stood">Stood firm</button>
+      <button class="chip" data-p="battled">Battled &amp; stood</button>
+      <button class="chip rust" data-p="fell">I fell</button>
+    </div>
+
+    <label class="f" for="ev-note">One honest line (optional)</label>
+    <textarea id="ev-note" rows="2" placeholder="What was true about today..."></textarea>
+
+    <div class="flex" style="margin-top:16px">
+      <button class="btn primary block" id="ev-save">Seal the day · +20 XP</button>
+    </div>
+    <button class="btn ghost block" id="ev-cancel" style="margin-top:8px">Not yet</button>
+  </div>
+</div>
+
+<!-- ======================= RESTORATION MODAL ======================= -->
+<div class="modal-bg" id="m-restore">
+  <div class="modal fall-quiet" id="restore-body"></div>
+</div>
+
+<!-- ======================= VOW EDIT MODAL ======================= -->
+<div class="modal-bg" id="m-vowedit">
+  <div class="modal">
+    <h2 class="display" style="font-size:17px">Rewrite the Vow</h2>
+    <textarea id="vow-input" rows="9" style="margin-top:12px"></textarea>
+    <button class="btn primary block" id="vow-save" style="margin-top:14px">Seal it</button>
+    <button class="btn ghost block" id="vow-cancel" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- ======================= STEWARD MODAL ======================= -->
+<div class="modal-bg" id="m-stew">
+  <div class="modal">
+    <div class="between">
+      <div>
+        <div class="eyebrow">At the gate</div>
+        <h2 class="display" style="font-size:18px;color:var(--parchment);text-transform:none;letter-spacing:.05em">The Steward</h2>
+      </div>
+      <button class="mini-btn" id="stew-close">Close</button>
+    </div>
+    <div id="stew-msgs"></div>
+    <div class="typing" id="stew-typing" style="display:none">The steward considers...</div>
+    <div class="stew-row" style="margin-top:8px">
+      <input type="text" id="stew-in" placeholder="What do you seek?" autocomplete="off">
+      <button class="btn primary" id="stew-send">Ask</button>
+    </div>
+    <p class="secret-note" id="stew-note" style="margin-top:8px"></p>
+  </div>
+</div>
+
+<!-- ======================= CHARACTER MODAL ======================= -->
+<div class="modal-bg" id="m-char">
+  <div class="modal">
+    <div class="between">
+      <h2 class="display" style="font-size:18px;color:var(--parchment);text-transform:none;letter-spacing:.05em">The Pilgrim</h2>
+      <button class="mini-btn" id="char-close">Close</button>
+    </div>
+    <div id="char-body"></div>
+  </div>
+</div>
+
+<!-- ======================= CALIBRATION MODAL ======================= -->
+<div class="modal-bg" id="m-cal">
+  <div class="modal">
+    <div class="between">
+      <h2 class="display" style="font-size:17px;color:var(--parchment);text-transform:none">Place the Pins</h2>
+      <button class="mini-btn" id="cal-close">Close</button>
+    </div>
+    <div id="cal-banner"></div>
+    <div id="cal-stage"></div>
+    <div class="flex" style="margin-top:10px">
+      <button class="btn ghost" id="cal-skip">Skip this one</button>
+      <button class="btn ghost" id="cal-redo">Redo last</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><div class="t1" id="toast-1"></div><div class="t2" id="toast-2"></div></div>
+
+<script>
+/* =====================================================
+   FULL BY 40 — THE PILGRIM'S ROAD · Phase 1
+   Single-file app. Scoped storage. No secrets ever leave.
+   ===================================================== */
+
+/* ---------- storage: fb40_ scoped, secrets excluded ---------- */
+const NS = 'fb40_';
+const SECRET_KEYS = ['secret_anthropic','secret_gh_token','secret_passphrase']; // NEVER exported or synced
+const DATA_KEYS   = ['profile','state','days','falls','log','world','steward','pins','npcchat'];                  // export allow-list
+
+const Store = {
+  get(k, fb=null){ try{ const v = localStorage.getItem(NS+k); return v===null? fb : JSON.parse(v);}catch(e){ return fb; } },
+  set(k, v){ try{ localStorage.setItem(NS+k, JSON.stringify(v)); }catch(e){ console.warn('save failed', k, e); } },
+  del(k){ localStorage.removeItem(NS+k); },
+  exportable(){ const o={_app:'fullby40',_v:1,_exported:new Date().toISOString()};
+    DATA_KEYS.forEach(k=>{ const v=this.get(k); if(v!==null) o[k]=v; }); return o; },
+  wipeAll(){ Object.keys(localStorage).filter(k=>k.startsWith(NS)).forEach(k=>localStorage.removeItem(k)); }
+};
+
+/* ---------- the sixteen lands ---------- */
+const LANDS = [
+ ['City of Destruction',  'Where every pilgrim begins — the life that cannot stay. You are leaving with a burden on your back and a gate in your eyes.'],
+ ['Slough of Despond',    'The mire of discouragement that swallows early resolve. The way out is not strength. It is the steps placed there by Help.'],
+ ['The Wicket Gate',      'The narrow entrance. Commitment becomes covenant here — the journey stops being an idea and becomes a road.'],
+ ['Interpreter\u2019s House','A place of seeing. Patterns, triggers, and the heart behind the habits are shown to you here. Look long.'],
+ ['The Cross & the Tomb', 'Where the burden falls off the pilgrim\u2019s back and rolls away. What was carried is not carried anymore.'],
+ ['Hill Difficulty',      'The long climb. No shortcuts survive this hill — the paths around it are named Danger and Destruction.'],
+ ['Palace Beautiful',     'Rest, armor, and fellowship. The keepers of this house send no pilgrim onward unarmed.'],
+ ['Valley of Humiliation','Apollyon meets pilgrims here, on low ground. The fight is real, the wounds are real, and so is the victory.'],
+ ['Valley of the Shadow', 'The dark stretch walked by prayer alone. "Though I walk through the valley… I will fear no evil."'],
+ ['Vanity Fair',          'The world\u2019s loud market — everything for sale, nothing worth buying. A pilgrim walks through it without becoming of it.'],
+ ['By-Path Meadow',       'The easier-looking ground beside the true road. Drift, not rebellion, is how most men end up off the path.'],
+ ['Doubting Castle',      'Giant Despair\u2019s keep. The key called Promise has been in your chest pocket the whole time.'],
+ ['Delectable Mountains', 'High, clear country. Shepherds here show you how far you\u2019ve come — and the gate, visible at last.'],
+ ['The Enchanted Ground', 'Air that makes pilgrims drowsy so near the end. The discipline of these miles is simply staying awake.'],
+ ['Land of Beulah',       'Within sight of the city. The sun shines night and day. The man arriving here is not the man who set out.'],
+ ['The River & the Gate', 'The last crossing — and the morning you vowed to reach. Deep or shallow according to your faith in the King.']
+];
+
+/* ---------- levels ---------- */
+const LEVELS = [
+ [0,'Wanderer'],[250,'Seeker'],[600,'Pilgrim'],[1100,'Gatekeeper\u2019s Friend'],
+ [1800,'Watchman'],[2700,'Soldier of the Way'],[3900,'Overcomer'],[5400,'Steward'],
+ [7200,'Shepherd'],[9400,'Guardian'],[12000,'Faithful'],[15000,'Whole Man']
+];
+
+/* ---------- verses (KJV, public domain) ---------- */
+const VERSES = [
+ ['No condemnation to them which are in Christ Jesus.','Romans 8:1'],
+ ['Rejoice not against me, O mine enemy: when I fall, I shall arise; when I sit in darkness, the LORD shall be a light unto me.','Micah 7:8'],
+ ['I can do all things through Christ which strengtheneth me.','Philippians 4:13'],
+ ['Create in me a clean heart, O God; and renew a right spirit within me.','Psalm 51:10'],
+ ['Be strong and of a good courage; be not afraid… for the LORD thy God is with thee whithersoever thou goest.','Joshua 1:9'],
+ ['But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles.','Isaiah 40:31'],
+ ['Thy word is a lamp unto my feet, and a light unto my path.','Psalm 119:105'],
+ ['Greater is he that is in you, than he that is in the world.','1 John 4:4'],
+ ['Let us run with patience the race that is set before us.','Hebrews 12:1'],
+ ['As for me and my house, we will serve the LORD.','Joshua 24:15'],
+ ['He brought me up also out of an horrible pit… and set my feet upon a rock, and established my goings.','Psalm 40:2'],
+ ['Watch and pray, that ye enter not into temptation: the spirit indeed is willing, but the flesh is weak.','Matthew 26:41'],
+ ['There hath no temptation taken you but such as is common to man: but God is faithful… will with the temptation also make a way to escape.','1 Corinthians 10:13'],
+ ['Train up a child in the way he should go: and when he is old, he will not depart from it.','Proverbs 22:6'],
+ ['He which hath begun a good work in you will perform it until the day of Jesus Christ.','Philippians 1:6'],
+ ['Seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you.','Matthew 6:33'],
+ ['If we confess our sins, he is faithful and just to forgive us our sins, and to cleanse us from all unrighteousness.','1 John 1:9'],
+ ['The steps of a good man are ordered by the LORD: and he delighteth in his way.','Psalm 37:23'],
+ ['Not by might, nor by power, but by my spirit, saith the LORD of hosts.','Zechariah 4:6'],
+ ['This is the day which the LORD hath made; we will rejoice and be glad in it.','Psalm 118:24']
+];
+
+/* ---------- anchors ---------- */
+const ANCHORS = [
+ {id:'prayer',  name:'Prayer',   sub:'Speak to the King before the world speaks to you', xp:15, pillar:'spirit'},
+ {id:'word',    name:'The Word', sub:'Open the Book — even one chapter',                 xp:15, pillar:'spirit'},
+ {id:'sweat',   name:'Sweat',    sub:'Move the body — lift, walk, 10,000 steps',         xp:15, pillar:'body'},
+ {id:'presence',name:'Presence', sub:'Undivided minutes with Naomi, Zipporah, or Grace', xp:15, pillar:'family'},
+ {id:'order',   name:'Order',    sub:'One act of order — home, money, or work',          xp:15, pillar:'order'}
+];
+
+const FEELINGS = ['Alive','Grateful','Steady','Tired','Numb','Anxious','Tempted','Angry','Lonely','Joyful','Heavy','At peace'];
+
+const XP = { anchor:15, evening:20, stood:25, battled:35, fellReturn:20 };
+
+const DEFAULT_VOW = 'I wake up on the morning of my 40th birthday a different man.\n\nMy wife and my girls are beside me, and they have watched it happen — not a diet, not a phase, but a husband and father remade. I am stronger in my faith than I have ever been. The chains that owned my twenties and thirties are dead on the road behind me.\n\nI am proud of who I became — not because I was perfect, but because I kept getting up. Full. By forty.';
+
+/* ---------- state helpers ---------- */
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const todayKey=()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI'];
+
+let profile = Store.get('profile');           // {name,start,end,vow}
+let state   = Store.get('state', {xp:0});     // {xp, lastLevel}
+let days    = Store.get('days', {});          // {date:{anchors:{},feel,purity,note,sealed}}
+let falls   = Store.get('falls', []);         // [{at,returnedAt,hours}]
+let log     = Store.get('log', []);           // [{at,text,xp}]
+let world   = Store.get('world', {prayers:[],verses:[],letters:[],warlog:[],bodylog:{},goals:[],money:[],wins:[],tasks:[],joy:[],death:[],growing:[],notes:[]});
+let steward = Store.get('steward', []);        // chat history
+
+const PILLARS={spirit:'Spirit',body:'Body',resolve:'Resolve',heart:'Heart',family:'Family',gold:'Stewardship',craft:'Craft',order:'Order',joy:'Joy'};
+const COLORS=[['#C98A2E','Ember'],['#93402B','Rust'],['#6E7F4E','Moss'],['#52688a','Steel'],['#6B4E8E','Royal'],['#8a8a8a','Iron']];
+const EMBLEMS={
+ cross:'<path d="M12 3v18M6 9h12"/>',
+ sword:'<path d="M14 4l6 6-9 9-3 1-3 3-2-2 3-3 1-3z M14 4l-1 3 4 4 3-1"/>',
+ mountain:'<path d="M3 20L10 7l4 7 2-3 5 9z"/>',
+ lamp:'<path d="M8 21h8M12 21v-3M6 13a6 6 0 1 1 12 0c0 2.5-2 3.5-2 5h-8c0-1.5-2-2.5-2-5z"/>',
+ tree:'<path d="M12 22v-5M12 3l5 6h-3l4 5h-4l3 4H7l3-4H6l4-5H7z"/>',
+ star:'<path d="M12 3l2.5 5.5L20 9.5l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-1z"/>'
+};
+const saveWorld=()=>Store.set('world',world);
+
+const saveAll=()=>{ Store.set('state',state); Store.set('days',days); Store.set('falls',falls); Store.set('log',log); };
+const day=()=>{ const k=todayKey(); if(!days[k]) days[k]={anchors:{},feel:null,purity:null,note:'',sealed:false}; return days[k]; };
+
+function levelInfo(xp){
+  let i=0; for(let j=0;j<LEVELS.length;j++) if(xp>=LEVELS[j][0]) i=j;
+  const cur=LEVELS[i], next=LEVELS[i+1]||null;
+  return {n:i+1, title:cur[1], floor:cur[0], next};
+}
+function addXP(amount, why, pillar){
+  const before=levelInfo(state.xp).n;
+  state.xp+=amount;
+  if(pillar){ if(!state.pillars) state.pillars={}; state.pillars[pillar]=(state.pillars[pillar]||0)+amount; }
+  log.unshift({at:new Date().toISOString(), text:why, xp:amount});
+  if(log.length>60) log.length=60;
+  const after=levelInfo(state.xp);
+  saveAll();
+  if(after.n>before) toast('The pilgrim grows', 'Level '+after.n+' — '+after.title);
+  renderPilgrim(); renderFeed();
+}
+function toast(a,b){ $('#toast-1').textContent=a; $('#toast-2').textContent=b; $('#toast').classList.add('on');
+  setTimeout(()=>$('#toast').classList.remove('on'), 3200); }
+
+/* ---------- journey math ---------- */
+function journey(){
+  if(!profile) return null;
+  const s=new Date(profile.start+'T00:00:00'), e=new Date(profile.end+'T00:00:00'), now=new Date();
+  const total=e-s, done=Math.min(Math.max(now-s,0), total);
+  const pct=total>0? done/total : 0;
+  const q=Math.min(16, Math.max(1, Math.floor(pct*16)+1));
+  const daysLeft=Math.max(0, Math.ceil((e-now)/86400000));
+  return {pct, q, daysLeft};
+}
+
+/* ---------- standing / return stats ---------- */
+function standingDays(){
+  if(!falls.length){
+    if(!profile) return 0;
+    return Math.max(0, Math.floor((Date.now()-new Date(profile.start+'T00:00:00'))/86400000));
+  }
+  const last=new Date(falls[falls.length-1].at);
+  return Math.max(0, Math.floor((Date.now()-last)/86400000));
+}
+function avgReturn(){
+  const withR=falls.filter(f=>typeof f.hours==='number');
+  if(!withR.length) return null;
+  const h=withR.reduce((a,f)=>a+f.hours,0)/withR.length;
+  return h<24? Math.round(h)+'h' : (h/24).toFixed(1)+'d';
+}
+
+/* ---------- rendering ---------- */
+function renderPilgrim(){
+  const li=levelInfo(state.xp);
+  $('#p-lvl').textContent=ROMAN[Math.min(li.n-1,15)]||li.n;
+  $('#p-title').textContent=li.title;
+  $('#p-xp').textContent=state.xp+' XP';
+  if(li.next){
+    const span=li.next[0]-li.floor;
+    $('#p-fill').style.width=Math.round(((state.xp-li.floor)/span)*100)+'%';
+    $('#p-next').textContent=(li.next[0]-state.xp)+' XP to '+li.next[1];
+  } else { $('#p-fill').style.width='100%'; $('#p-next').textContent='The final title. Walk it out.'; }
+  $('#s-standing').textContent=standingDays();
+  $('#s-return').textContent=avgReturn()||'—';
+  const j=journey(); if(j) $('#s-land').textContent=ROMAN[j.q-1];
+}
+
+function renderCamp(){
+  const d=new Date();
+  $('#camp-date').textContent=d.toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'});
+  const h=d.getHours();
+  const name=profile? profile.name.split(' ')[0] : 'Pilgrim';
+  $('#camp-greet').textContent=(h<12?'Morning, ':h<17?'Afternoon, ':'Evening, ')+name;
+  // verse of day (stable per date)
+  const seed=parseInt(todayKey().replace(/-/g,''),10)%VERSES.length;
+  $('#verse-text').textContent='\u201C'+VERSES[seed][0]+'\u201D';
+  $('#verse-ref').textContent=VERSES[seed][1].toUpperCase();
+  renderAnchors(); renderPilgrim(); renderEvening(); renderFeed();
+}
+
+function renderAnchors(){
+  const d=day(), wrap=$('#anchors'); wrap.innerHTML='';
+  ANCHORS.forEach(a=>{
+    const done=!!d.anchors[a.id];
+    const b=document.createElement('button');
+    b.className='anchor'+(done?' done':'');
+    b.innerHTML='<span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15100a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 7"/></svg></span>'+
+      '<span><span class="a-name">'+a.name+'</span><div class="a-sub">'+a.sub+'</div></span>'+
+      '<span class="a-xp">'+(done?'+'+a.xp:a.xp+' XP')+'</span>';
+    b.onclick=()=>{
+      const dd=day();
+      if(dd.anchors[a.id]){ delete dd.anchors[a.id]; state.xp=Math.max(0,state.xp-a.xp); saveAll(); }
+      else { dd.anchors[a.id]=new Date().toISOString(); Store.set('days',days); addXP(a.xp, a.name+' anchored', a.pillar); }
+      renderAnchors(); renderPilgrim();
+    };
+    wrap.appendChild(b);
+  });
+}
+
+function renderEvening(){
+  const d=day();
+  $('#evening-sub').textContent = d.sealed ? 'Sealed. '+(d.feel? 'Heart: '+d.feel+'.':'')+' Rest well.' : 'Name the day before you sleep. +20 XP';
+  $('#evening-btn').textContent = d.sealed ? 'Reopen' : 'Open';
+}
+
+function renderFeed(){
+  const f=$('#logfeed');
+  if(!log.length){ f.innerHTML='<small>Nothing yet. The road begins with the first anchor.</small>'; return; }
+  f.innerHTML=log.slice(0,8).map(e=>{
+    const t=new Date(e.at);
+    const when=t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    return '<div class="between" style="padding:7px 0;border-bottom:1px solid rgba(58,47,32,.5)">'+
+      '<span style="font-size:15px">'+e.text+'</span><small style="white-space:nowrap;margin-left:12px">'+(e.xp?'+'+e.xp+' · ':'')+when+'</small></div>';
+  }).join('');
+}
+/* ---------- the map ---------- */
+function buildMap(){
+  const j=journey()||{q:1};
+  // serpentine node positions, bottom (land I) to top (gate)
+  const pts=[]; const W=430, H=1560;
+  for(let i=0;i<16;i++){
+    const y=1430 - i*84;
+    const x=215 + Math.sin(i*1.15+0.6)*120;
+    pts.push([Math.round(x),y]);
+  }
+  let path='M '+pts[0][0]+' '+pts[0][1];
+  for(let i=1;i<16;i++){
+    const [x1,y1]=pts[i-1],[x2,y2]=pts[i];
+    path+=' C '+x1+' '+(y1-42)+', '+x2+' '+(y2+42)+', '+x2+' '+y2;
+  }
+  let nodes='';
+  pts.forEach(([x,y],i)=>{
+    const n=i+1, cur=n===j.q, past=n<j.q, locked=n>j.q;
+    const ring = past? 'var(--moss)' : cur? 'var(--ember-hi)' : '#3d4654';
+    const fill = past? '#222a18' : cur? '#3d2e12' : '#14181f';
+    const txt  = past? '#a9bc85' : cur? 'var(--ember-hi)' : '#586374';
+    nodes+='<g class="t-node'+(cur?' cur':'')+'" data-i="'+i+'">'+
+      (cur?'<circle class="halo" cx="'+x+'" cy="'+y+'" r="18" fill="none" stroke="var(--ember)" stroke-width="2" opacity=".4"/>':'')+
+      '<circle class="ring" cx="'+x+'" cy="'+y+'" r="13" fill="'+fill+'" stroke="'+ring+'" stroke-width="1.6"/>'+
+      '<text x="'+x+'" y="'+(y+3.5)+'" text-anchor="middle" font-family="Cinzel,serif" font-size="9.5" font-weight="700" fill="'+txt+'">'+ROMAN[i]+'</text>'+
+      '<text x="'+(x + (x>215? -22 : 22))+'" y="'+(y+4)+'" text-anchor="'+(x>215?'end':'start')+'" font-family="Cinzel,serif" font-size="10.5" letter-spacing="1" fill="'+(locked?'#4a5260':past?'#8d9f6e':'var(--parchment-dim)')+'">'+LANDS[i][0].toUpperCase()+'</text>'+
+      (locked?'<circle cx="'+x+'" cy="'+y+'" r="13" fill="rgba(20,24,31,.45)"/>':'')+
+      '</g>';
+  });
+  const svg=
+  '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The pilgrim road map">'+
+   '<defs>'+
+    '<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">'+
+     '<stop offset="0" stop-color="#1a1812"/><stop offset=".18" stop-color="#12100c"/><stop offset="1" stop-color="#0b0906"/>'+
+    '</linearGradient>'+
+    '<radialGradient id="gate" cx=".5" cy="0" r=".8">'+
+     '<stop offset="0" stop-color="#E8B254" stop-opacity=".5"/><stop offset=".4" stop-color="#C98A2E" stop-opacity=".12"/><stop offset="1" stop-opacity="0"/>'+
+    '</radialGradient>'+
+    '<linearGradient id="mt1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#23282f"/><stop offset="1" stop-color="#121519"/></linearGradient>'+
+    '<linearGradient id="mt2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1610"/><stop offset="1" stop-color="#0f0c08"/></linearGradient>'+
+   '</defs>'+
+   '<rect width="'+W+'" height="'+H+'" fill="url(#sky)"/>'+
+   '<rect width="'+W+'" height="420" fill="url(#gate)"/>'+
+   // stars
+   Array.from({length:34},(s,k)=>{const sx=(k*97)%W, sy=(k*53)%320+14, o=(k%3+1)*0.14;
+     return '<circle cx="'+sx+'" cy="'+sy+'" r="1" fill="#E6D6B0" opacity="'+o+'"/>';}).join('')+
+   // the gate
+   '<g transform="translate(215,86)"><path d="M-26 44 L-26 -6 Q0 -34 26 -6 L26 44 Z" fill="#171209" stroke="var(--ember)" stroke-width="1.6"/>'+
+   '<path d="M-13 44 L-13 2 Q0 -16 13 2 L13 44 Z" fill="#2e2310" stroke="#E8B254" stroke-width="1"/>'+
+   '<circle cx="0" cy="-38" r="3" fill="#E8B254"/><text y="64" text-anchor="middle" font-family="Cinzel,serif" font-size="11" letter-spacing="3" fill="var(--ember-hi)">THE GATE \u00B7 40</text></g>'+
+   // distant mountains
+   '<path d="M0 300 L70 212 L128 286 L196 196 L262 282 L330 208 L392 276 L430 234 L430 360 L0 360 Z" fill="url(#mt1)" opacity=".8"/>'+
+   '<path d="M0 380 L90 290 L170 372 L260 282 L348 366 L430 300 L430 470 L0 470 Z" fill="url(#mt2)"/>'+
+   // road
+   '<path d="'+path+'" fill="none" stroke="#0a0805" stroke-width="11" stroke-linecap="round"/>'+
+   '<path d="'+path+'" fill="none" stroke="#4a3a22" stroke-width="7" stroke-linecap="round"/>'+
+   '<path d="'+path+'" fill="none" stroke="var(--ember)" stroke-width="2.2" stroke-dasharray="1 9" stroke-linecap="round" opacity=".75"/>'+
+   nodes+
+  '</svg>';
+  $('#mapwrap').innerHTML=svg;
+  $$('#mapwrap .t-node').forEach(g=>g.addEventListener('click',()=>showLand(parseInt(g.dataset.i,10))));
+}
+
+function showLand(i){
+  const j=journey()||{q:1};
+  $('#td-num').textContent='Land '+ROMAN[i]+(i+1===j.q?' · You are here':(i+1<j.q?' · Behind you':' · Ahead'));
+  $('#td-name').textContent=LANDS[i][0];
+  $('#td-desc').textContent=LANDS[i][1];
+  const img=$('#td-img');
+  img.style.display='none';
+  img.onerror=()=>{ img.style.display='none'; };
+  img.onload=()=>{ img.style.display='block'; };
+  img.src='art/land_'+String(i+1).padStart(2,'0')+'.webp'; // lazy art slot — drops in when you add files
+  $('#t-detail').style.display='block';
+  $('#t-detail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function renderRoad(){
+  const j=journey(); if(!j) return;
+  $('#road-q').textContent=ROMAN[j.q-1];
+  $('#road-title').textContent=LANDS[j.q-1][0];
+  buildMap();
+}
+
+/* ---------- vow ---------- */
+function renderVow(){
+  $('#vow-text').textContent=profile.vow;
+  const j=journey();
+  $('#vw-days').textContent=j.daysLeft.toLocaleString();
+  $('#vw-pct').textContent=Math.round(j.pct*100)+'%';
+  $('#vw-q').textContent=ROMAN[j.q-1]+' / XVI';
+}
+
+/* ---------- evening watch ---------- */
+let evFeel=null, evPurity=null;
+function openEvening(){
+  const d=day();
+  evFeel=d.feel; evPurity=d.purity;
+  $('#ev-note').value=d.note||'';
+  const fw=$('#ev-feel'); fw.innerHTML='';
+  FEELINGS.forEach(f=>{
+    const c=document.createElement('button');
+    c.className='chip'+(evFeel===f?' on':''); c.textContent=f;
+    c.onclick=()=>{ evFeel=f; fw.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); };
+    fw.appendChild(c);
+  });
+  $$('#ev-purity .chip').forEach(c=>{
+    c.classList.toggle('on', evPurity===c.dataset.p);
+    c.onclick=()=>{ evPurity=c.dataset.p; $$('#ev-purity .chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); };
+  });
+  $('#m-evening').classList.add('on');
+}
+function sealEvening(){
+  const d=day();
+  const firstSeal=!d.sealed;
+  d.feel=evFeel; d.note=$('#ev-note').value.trim();
+  if(evPurity==='fell' && d.purity!=='fell'){
+    d.purity='fell'; Store.set('days',days);
+    $('#m-evening').classList.remove('on');
+    openRestore(); return;
+  }
+  d.purity=evPurity; d.sealed=true; Store.set('days',days);
+  $('#m-evening').classList.remove('on');
+  let bonus=0, why='Evening watch sealed';
+  if(firstSeal){
+    bonus=XP.evening;
+    if(evPurity==='stood'){ bonus+=XP.stood; why='Day sealed — stood firm'; }
+    if(evPurity==='battled'){ bonus+=XP.battled; why='Day sealed — battled and stood'; }
+    addXP(bonus, why, evPurity? 'resolve':'heart');
+  }
+  renderEvening();
+}
+/* ---------- restoration (the fall flow) ---------- */
+let restoreStep=0, fallWhen=null, restoreNext=null;
+const RESTORE=[
+ {t:'Truth', body:function(){ return ''+
+   '<p style="font-size:18px;line-height:1.7">You fell. You are not destroyed.</p>'+
+   '<p class="scripture" style="margin-top:12px">\u201CThere is therefore now no condemnation to them which are in Christ Jesus.\u201D<br><span class="ref">ROMANS 8:1</span></p>'+
+   '<p class="small" style="margin-top:12px">The enemy wants the next hour more than he wanted the fall — the hiding, the spiral, the giving up. We are not doing that. Walk these four steps.</p>'+
+   '<label class="f">When did it happen?</label>'+
+   '<div class="chips" id="rs-when">'+
+     '<button class="chip" data-h="0.5">Just now</button>'+
+     '<button class="chip" data-h="4">Earlier today</button>'+
+     '<button class="chip" data-h="18">Last night</button>'+
+     '<button class="chip" data-h="30">Yesterday+</button>'+
+   '</div>'; } },
+ {t:'Confession', body:function(){ return ''+
+   '<p class="small">Say it plainly to God. Not performance — honesty. What happened, and what was underneath it?</p>'+
+   '<textarea id="rs-confess" rows="4" placeholder="Father, I..."></textarea>'+
+   '<p class="scripture" style="margin-top:12px">\u201CIf we confess our sins, he is faithful and just to forgive us our sins, and to cleanse us from all unrighteousness.\u201D<br><span class="ref">1 JOHN 1:9</span></p>'; } },
+ {t:'Rise', body:function(){ return ''+
+   '<p class="scripture" style="font-size:18px">\u201CRejoice not against me, O mine enemy: when I fall, I shall arise; when I sit in darkness, the LORD shall be a light unto me.\u201D<br><span class="ref">MICAH 7:8</span></p>'+
+   '<p class="small" style="margin-top:12px">Forgiven means forgiven. The record of this fall exists for one reason — to learn its pattern and starve it. It is not a verdict on you.</p>'; } },
+ {t:'One next step', body:function(){ return ''+
+   '<p class="small">Pick one concrete thing to do in the next ten minutes. Movement breaks the spiral.</p>'+
+   '<div class="chips" id="rs-next">'+
+     '<button class="chip" data-n="Walk outside">Walk outside</button>'+
+     '<button class="chip" data-n="Read one Psalm">Read one Psalm</button>'+
+     '<button class="chip" data-n="Drink water, leave the room">Leave the room</button>'+
+     '<button class="chip" data-n="Go to sleep">Go to sleep</button>'+
+     '<button class="chip" data-n="Pray out loud">Pray out loud</button>'+
+   '</div>'; } }
+];
+function openRestore(){ restoreStep=0; fallWhen=null; restoreNext=null; renderRestore(); $('#m-restore').classList.add('on'); }
+function renderRestore(){
+  const s=RESTORE[restoreStep];
+  $('#restore-body').innerHTML=
+   '<div class="eyebrow">Restoration · '+(restoreStep+1)+' of 4</div>'+
+   '<h2 class="display" style="font-size:20px;color:var(--parchment);text-transform:none;letter-spacing:.05em;margin:6px 0 12px">'+s.t+'</h2>'+
+   s.body()+
+   '<button class="btn primary block" id="rs-go" style="margin-top:18px">'+(restoreStep<3?'Continue':'Return to the road · +'+XP.fellReturn+' XP')+'</button>';
+  const whenWrap=$('#rs-when');
+  if(whenWrap) whenWrap.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    fallWhen=parseFloat(c.dataset.h);
+    whenWrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+  });
+  const nextWrap=$('#rs-next');
+  if(nextWrap) nextWrap.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    restoreNext=c.dataset.n;
+    nextWrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+  });
+  $('#rs-go').onclick=()=>{
+    if(restoreStep===1){
+      const txt=($('#rs-confess')||{}).value||'';
+      if(txt.trim()){ const d=day(); d.note=(d.note?d.note+'\n':'')+'[Confession] '+txt.trim(); Store.set('days',days); }
+    }
+    if(restoreStep<3){ restoreStep++; renderRestore(); }
+    else finishRestore();
+  };
+}
+function finishRestore(){
+  const hours = fallWhen==null? 1 : fallWhen;
+  const at=new Date(Date.now()-hours*3600000).toISOString();
+  falls.push({at, returnedAt:new Date().toISOString(), hours, nextStep:restoreNext||null});
+  const d=day(); d.purity='fell'; d.sealed=true; Store.set('days',days); Store.set('falls',falls);
+  $('#m-restore').classList.remove('on');
+  addXP(XP.fellReturn, 'Fell — and returned'+(hours<=1?' fast':''), 'resolve');
+  toast('Back on the road','Returned in '+(hours<24? Math.round(hours)+' hours':'over a day'));
+  renderEvening(); renderPilgrim();
+}
+
+/* ---------- onboarding / settings / nav ---------- */
+function show(v){
+  $$('.view').forEach(x=>x.classList.remove('on'));
+  $('#v-'+v).classList.add('on');
+  $$('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  if(v==='camp') renderCamp();
+  if(v==='keep') renderKeep();
+  if(v==='road') renderRoad();
+  if(v==='vow') renderVow();
+  if(v==='set') fillSettings();
+  window.scrollTo({top:0});
+}
+$$('#nav button').forEach(b=>b.onclick=()=>show(b.dataset.v));
+
+function fillSettings(){
+  $('#st-name').value=profile.name; $('#st-start').value=profile.start; $('#st-end').value=profile.end;
+  $('#key-status').textContent = Store.get('secret_anthropic') ? 'A key is stored on this device ('+mask(Store.get('secret_anthropic'))+').' : 'No key stored yet.';
+}
+const mask=k=>k? k.slice(0,9)+'\u2026'+k.slice(-4) : '';
+
+$('#st-save').onclick=()=>{
+  profile.name=$('#st-name').value.trim()||'Robert';
+  profile.start=$('#st-start').value||profile.start;
+  profile.end=$('#st-end').value||profile.end;
+  Store.set('profile',profile); toast('Saved','The road is updated'); 
+};
+$('#st-key-save').onclick=()=>{
+  const k=$('#st-key').value.trim();
+  if(!k) return;
+  Store.set('secret_anthropic',k); $('#st-key').value=''; fillSettings();
+  toast('Key stored','On this device only — never exported');
+};
+$('#st-key-clear').onclick=()=>{ Store.del('secret_anthropic'); fillSettings(); };
+
+$('#st-export').onclick=()=>{
+  const blob=new Blob([JSON.stringify(Store.exportable(),null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fullby40_'+todayKey()+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+};
+$('#st-import').onclick=()=>$('#st-file').click();
+$('#st-file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+    const o=JSON.parse(r.result);
+    if(o._app!=='fullby40') throw 0;
+    DATA_KEYS.forEach(k=>{ if(o[k]!==undefined) Store.set(k,o[k]); });
+    profile=Store.get('profile'); state=Store.get('state',{xp:0}); days=Store.get('days',{}); falls=Store.get('falls',[]); log=Store.get('log',[]);
+    toast('Journey restored','Welcome back, pilgrim'); show('camp');
+  }catch(err){ toast('Could not read that file','Is it a Full by 40 export?'); } };
+  r.readAsText(f);
+};
+$('#st-reset').onclick=()=>{
+  if(confirm('Burn the map? Everything on this device is erased. Exports are not affected.')){
+    Store.wipeAll(); location.reload();
+  }
+};
+
+/* vow edit */
+$('#vow-edit').onclick=()=>{ $('#vow-input').value=profile.vow; $('#m-vowedit').classList.add('on'); };
+$('#vow-save').onclick=()=>{ profile.vow=$('#vow-input').value.trim()||profile.vow; Store.set('profile',profile); $('#m-vowedit').classList.remove('on'); renderVow(); };
+$('#vow-cancel').onclick=()=>$('#m-vowedit').classList.remove('on');
+
+/* evening modal wires */
+$('#evening-btn').onclick=openEvening;
+$('#ev-save').onclick=sealEvening;
+$('#ev-cancel').onclick=()=>$('#m-evening').classList.remove('on');
+
+/* onboarding */
+$('#ob-go').onclick=()=>{
+  const name=$('#ob-name').value.trim()||'Robert';
+  const start=$('#ob-start').value, end=$('#ob-end').value;
+  if(!start||!end){ toast('Two dates needed','Set the start and the gate'); return; }
+  if(new Date(end)<=new Date(start)){ toast('Check the dates','The gate must come after the start'); return; }
+  profile={name,start,end,vow:$('#ob-vow').value.trim()||DEFAULT_VOW,
+    character:{color:obColor,emblem:obEmblem,motto:$('#ob-motto').value.trim()||'Rise again'}};
+  Store.set('profile',profile);
+  $('#nav').style.display='flex';
+  show('camp');
+  toast('The journey begins','Land I — '+LANDS[0][0]);
+};
+
+/* splash + init */
+$('#splash-btn').onclick=()=>{
+  $('#splash').classList.add('gone');
+  if(!profile){
+    const d=new Date(); $('#ob-start').value=todayKey();
+    $('#ob-vow').value=DEFAULT_VOW;
+    show('camp'); $$('.view').forEach(x=>x.classList.remove('on')); $('#v-onboard').classList.add('on');
+  } else { $('#nav').style.display='flex'; show('camp'); }
+};
+
+/* splash embers */
+(function(){
+  const s=$('#splash');
+  for(let i=0;i<14;i++){
+    const e=document.createElement('div'); e.className='ember';
+    e.style.left=(8+Math.random()*84)+'%'; e.style.bottom=(Math.random()*22)+'%';
+    e.style.animationDelay=(Math.random()*7)+'s'; e.style.animationDuration=(5.5+Math.random()*4)+'s';
+    s.appendChild(e);
+  }
+})();
+if(profile) $('#splash-btn').textContent='Continue the journey';
+else $('#splash-btn').textContent='Begin the journey';
+
+/* ============================================================
+   PHASE 2 — THE KEEP, THE BUILDINGS, THE STEWARD, THE CHARACTER
+   ============================================================ */
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nowISO=()=>new Date().toISOString();
+const shortDate=iso=>new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const charOf=()=> (profile&&profile.character)||{color:'#C98A2E',emblem:'cross',motto:'Rise again'};
+const embSVG=(id,sz,col)=>'<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="'+(col||'currentColor')+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(EMBLEMS[id]||EMBLEMS.cross)+'</svg>';
+
+/* ---------- buildings registry ---------- */
+const BICON={
+ chapel:'<path d="M12 2v4M10 4h4M7 21V11l5-4 5 4v10M7 21h10M11 21v-4a1 1 0 0 1 2 0v4"/>',
+ watchtower:'<path d="M9 21V8h6v13M9 8l-2-4h10l-2 4M7 21h10M11 12h2"/>',
+ hall:'<path d="M4 21V10l8-5 8 5v11M4 21h16M8 21v-6h8v6M10 15v6M14 15v6"/>',
+ yard:'<path d="M6 7v10M18 7v10M4 9v6M20 9v6M6 12h12"/>',
+ treasury:'<path d="M5 21V9h14v12M5 21h14M5 9l7-5 7 5M10 14h4v7h-4z"/>',
+ hearth:'<path d="M12 4c2 3 5 4.6 5 8a5 5 0 0 1-10 0c0-3.4 3-5 5-8z M12 12c.9 1.2 2 2 2 3.4a2 2 0 1 1-4 0c0-1.4 1.1-2.2 2-3.4z"/>',
+ forge:'<path d="M4 14l6-6 2 2 4-4 2 2-1 1 3 3-4 4-3-3-1 1-2-2-4 4z M3 21l4-4"/>',
+ granary:'<path d="M5 21V9l7-5 7 5v12M5 21h14M9 21v-8h6v8M9 17h6"/>',
+ garden:'<path d="M12 21v-7M12 14a5 5 0 0 0 5-5V6a8 8 0 0 0-5 8 8 8 0 0 0-5-8v3a5 5 0 0 0 5 5z"/>',
+ vault:'<path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M5 21h14M12 10v4M9 12h6"/>'
+};
+function bcardIcon(id){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+BICON[id]+'</svg>';}
+
+const BUILDINGS=[
+ {id:'chapel',    name:'The Chapel',      pillar:'spirit', desc:'Prayer rises here, and the Word is hidden in the heart.',
+   status:()=>{const a=world.prayers.filter(p=>!p.answered).length; return a? a+' prayers before the throne':'Light the first candle';}},
+ {id:'watchtower',name:'The Watchtower',  pillar:'resolve', desc:'The walls are watched from here. Name the enemy when he approaches \u2014 before the fight, not after.',
+   status:()=>standingDays()+' days standing'},
+ {id:'hall',      name:'The Great Hall',  pillar:'family', desc:'Where the family gathers. Naomi, Zipporah, and Grace each have a seat \u2014 and a letter waiting to be written.',
+   status:()=>{const l=world.letters.length; return l? l+(l===1?' letter':' letters')+' in the chest':'The table is set';}},
+ {id:'yard',      name:'The Training Yard',pillar:'body',  desc:'Iron, sweat, and the long walk. The body is the horse the pilgrim rides \u2014 keep it strong.',
+   status:()=>{const k=Object.keys(world.bodylog).sort();const last=k[k.length-1]; return last&&world.bodylog[last].weight? 'Last weigh-in: '+world.bodylog[last].weight+' lb':'No weigh-in yet';}},
+ {id:'treasury',  name:'The Treasury',    pillar:'gold',   desc:'Every coin given a name and a job. Stewardship, not scarcity.',
+   status:()=>{const g=world.goals.length; return g? g+(g===1?' goal':' goals')+' funded':'Count the coins';}},
+ {id:'hearth',    name:'The Hearth',      pillar:'heart',  desc:'The inner room. What the heart actually feels gets named here \u2014 numbness included.',
+   status:()=>{const d=days[todayKey()]; return d&&d.feel? 'Today: '+d.feel : 'How is your heart?';}},
+ {id:'forge',     name:'The Forge',       pillar:'craft',  desc:'The work of your hands \u2014 leading the sixteen, sharpening the craft.',
+   status:()=>{const w=world.wins.length; return w? w+(w===1?' win':' wins')+' hammered out':'The fire is lit';}},
+ {id:'granary',   name:'The Granary',     pillar:'order',  desc:'Provision and order. A kept house is a kept mind.',
+   status:()=>{const t=world.tasks.filter(x=>!x.done).length; return t? t+' tasks open':'All is in order';}},
+ {id:'garden',    name:'The Garden',      pillar:'joy',    desc:'What makes you feel alive gets planted and watered here. Joy is not optional on this road.',
+   status:()=>{const j=world.joy.length; return j? j+(j===1?' moment':' moments')+' of life':'Plant something';}},
+ {id:'vault',     name:'The Vault',       pillar:null,     desc:'The deep room under the keep. The Vow, the Death List, and what is being grown in its place.',
+   status:()=>{const d=world.death.filter(x=>!x.dead).length; return d? d+' named for death':'Name what must die';}}
+];
+
+/* ---------- castle hero ---------- */
+function castleSVG(){
+  const c=charOf(), col=c.color;
+  const win=(x,y)=>'<rect x="'+x+'" y="'+y+'" width="4" height="6" rx="1" fill="#E8B254" opacity=".85"/>';
+  return '<svg viewBox="0 0 430 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Keep">'+
+  '<defs><linearGradient id="ksky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#15120c"/><stop offset="1" stop-color="#0b0906"/></linearGradient>'+
+  '<linearGradient id="kst" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2e261b"/><stop offset="1" stop-color="#1a150e"/></linearGradient></defs>'+
+  '<rect width="430" height="250" fill="url(#ksky)"/>'+
+  Array.from({length:26},(q,k)=>'<circle cx="'+((k*89)%430)+'" cy="'+((k*37)%110+8)+'" r="1" fill="#E6D6B0" opacity="'+((k%3+1)*.13)+'"/>').join('')+
+  '<circle cx="368" cy="44" r="17" fill="#E6D6B0" opacity=".14"/><circle cx="368" cy="44" r="13" fill="#d8caa6" opacity=".22"/>'+
+  '<path d="M0 250 L0 205 Q 215 178 430 205 L430 250 Z" fill="#13100a"/>'+
+  /* curtain wall */
+  '<rect x="30" y="160" width="370" height="58" fill="url(#kst)"/>'+
+  '<path d="M30 160h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14v-9h12v9h14" fill="none" stroke="#2e261b" stroke-width="9"/>'+
+  /* gate */
+  '<path d="M196 218 L196 184 Q215 166 234 184 L234 218 Z" fill="#0c0905" stroke="#4a3a22" stroke-width="2"/>'+
+  '<path d="M203 218 L203 189 Q215 176 227 189 L227 218 Z" fill="#241a0c"/>'+
+  win(186,176)+win(240,176)+
+  /* side towers */
+  '<rect x="52" y="108" width="44" height="110" fill="url(#kst)"/><path d="M48 108h8v-10h9v10h9v-10h9v10h9v-10h9v10h8" fill="none" stroke="#2e261b" stroke-width="8"/>'+
+  '<rect x="334" y="108" width="44" height="110" fill="url(#kst)"/><path d="M330 108h8v-10h9v10h9v-10h9v10h9v-10h9v10h8" fill="none" stroke="#2e261b" stroke-width="8"/>'+
+  win(66,128)+win(80,150)+win(348,128)+win(362,150)+
+  /* central keep */
+  '<rect x="172" y="64" width="86" height="100" fill="url(#kst)"/>'+
+  '<path d="M166 64h12v-12h12v12h12v-12h12v12h12v-12h12v12h12v-12h12v12h12" fill="none" stroke="#2e261b" stroke-width="10"/>'+
+  win(190,84)+win(213,84)+win(236,84)+win(202,110)+win(224,110)+
+  /* banner pole + flag */
+  '<line x1="215" y1="52" x2="215" y2="16" stroke="#4a3a22" stroke-width="2.5"/>'+
+  '<path d="M215 18 L258 24 L215 33 Z" fill="'+col+'" opacity=".9"/>'+
+  '<g transform="translate(228,18.5) scale(.42)" opacity=".95">'+embSVG(charOf().emblem,'24','#0E0B07')+'</g>'+
+  /* torches at gate */
+  '<circle cx="186" cy="172" r="7" fill="#C98A2E" opacity=".22"/><circle cx="244" cy="172" r="7" fill="#C98A2E" opacity=".22"/>'+
+  '<text x="215" y="243" text-anchor="middle" font-family="Cinzel,serif" font-size="11" letter-spacing="4" fill="#B5A684">'+esc((charOf().motto||'').toUpperCase())+'</text>'+
+  '</svg>';
+}
+
+/* ---------- keep render ---------- */
+function renderKeep(){
+  $('#keep-main').style.display='block'; $('#interior').style.display='none';
+  const hero=$('#keep-hero');
+  hero.innerHTML=castleSVG();
+  const img=new Image();
+  img.onload=()=>{ hero.innerHTML=''; img.style.width='100%'; hero.appendChild(img); };
+  img.src='art/keep.webp';
+  const g=$('#bgrid'); g.innerHTML='';
+  BUILDINGS.forEach(b=>{
+    const card=document.createElement('button');
+    card.className='bcard';
+    card.innerHTML=bcardIcon(b.id)+
+      '<div class="b-name">'+b.name+'</div>'+
+      '<div class="b-pill">'+(b.pillar? PILLARS[b.pillar] : 'Legacy')+'</div>'+
+      '<div class="b-status">'+esc(b.status())+'</div>';
+    card.onclick=()=>enterBuilding(b.id);
+    g.appendChild(card);
+  });
+}
+function enterBuilding(id){
+  const b=BUILDINGS.find(x=>x.id===id);
+  $('#keep-main').style.display='none';
+  const el=$('#interior'); el.style.display='block';
+  el.innerHTML='<button class="back" id="int-back">\u2190 The courtyard</button>'+
+    '<div class="flex" style="margin-top:6px"><span style="width:34px;height:34px;color:var(--ember)">'+bcardIcon(b.id)+'</span>'+
+    '<div><h1 class="display" style="font-size:22px">'+b.name+'</h1>'+
+    '<div class="eyebrow">'+(b.pillar? PILLARS[b.pillar]:'Legacy')+'</div></div></div>'+
+    '<p class="small" style="margin:10px 0 4px">'+b.desc+'</p>'+
+    '<img id="b-art" alt="" style="display:none;width:100%;border-radius:10px;border:1px solid var(--edge);margin-top:8px">'+
+    '<div id="b-tools"></div>';
+  const art=$('#b-art'); art.onload=()=>art.style.display='block'; art.onerror=()=>art.style.display='none';
+  art.src='art/b_'+id+'.webp';
+  $('#int-back').onclick=renderKeep;
+  INTERIORS[id]($('#b-tools'));
+  window.scrollTo({top:0});
+}
+
+/* ---------- shared interior helpers ---------- */
+function panelHTML(title,inner){return '<div class="panel"><h2 class="display">'+title+'</h2>'+inner+'</div>';}
+function addRowUI(ph,btn){return '<div class="stew-row" style="margin-top:10px"><input type="text" class="add-in" placeholder="'+ph+'"><button class="btn add-go">'+btn+'</button></div>';}
+function wireAdd(scope,fn){const i=scope.querySelector('.add-in'),b=scope.querySelector('.add-go');
+  const go=()=>{const v=i.value.trim(); if(!v) return; fn(v); i.value='';};
+  b.onclick=go; i.onkeydown=e=>{if(e.key==='Enter')go();};}
+
+/* ---------- interiors ---------- */
+const INTERIORS={
+
+chapel(el){
+  const rerender=()=>INTERIORS.chapel(el);
+  let pr=world.prayers.map((p,i)=>'<div class="row-item"><div class="grow"><span class="'+(p.answered?'struck':'')+'">'+esc(p.text)+'</span><div class="meta">'+shortDate(p.at)+(p.answered?' \u00B7 answered '+shortDate(p.answered):'')+'</div></div>'+
+    (p.answered?'':'<button class="mini-btn gold" data-a="'+i+'">Answered</button>')+'</div>').join('')||'<small>No prayers yet. Bring one.</small>';
+  let vs=world.verses.map((v,i)=>{const today=v.last===todayKey();
+    return '<div class="row-item"><div class="grow"><b>'+esc(v.ref)+'</b><div class="meta">'+esc(v.text)+'</div></div>'+
+    '<button class="mini-btn '+(today?'done':'gold')+'" data-r="'+i+'">'+(today?'Reviewed':'Review +5')+'</button></div>';}).join('')||'<small>Hide the Word in your heart \u2014 add a verse.</small>';
+  el.innerHTML=
+   panelHTML('Prayers Before the Throne', pr+addRowUI('Lord, I ask...','Pray'))+
+   panelHTML('Scripture Memory', vs+addRowUI('Reference | verse text','Hide it'));
+  el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{world.prayers[+b.dataset.a].answered=nowISO();saveWorld();addXP(10,'A prayer answered','spirit');rerender();});
+  el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const v=world.verses[+b.dataset.r]; if(v.last===todayKey())return; v.last=todayKey();saveWorld();addXP(5,'Verse reviewed \u2014 '+v.ref,'spirit');rerender();});
+  const scopes=el.querySelectorAll('.panel');
+  wireAdd(scopes[0],v=>{world.prayers.unshift({text:v,at:nowISO(),answered:null});saveWorld();addXP(5,'Prayer lifted','spirit');rerender();});
+  wireAdd(scopes[1],v=>{const sp=v.split('|');world.verses.unshift({ref:(sp[0]||'').trim(),text:(sp[1]||'').trim(),last:null});saveWorld();addXP(10,'Verse hidden in the heart','spirit');rerender();});
+},
+
+watchtower(el){
+  const rerender=()=>INTERIORS.watchtower(el);
+  const now=Date.now(), d30=30*86400000;
+  const stood30=world.warlog.filter(w=>w.outcome==='stood'&&now-new Date(w.at)<d30).length;
+  const falls30=falls.filter(f=>now-new Date(f.at)<d30).length;
+  const hp=Math.max(5,Math.min(100,40+falls30*8-stood30*3));
+  const TRIGGERS=['Tired','Alone','Late night','Stress','Boredom','Phone in bed','Saw something','Conflict'];
+  let recent=world.warlog.slice(0,6).map(w=>'<div class="row-item"><div class="grow">'+
+    (w.outcome==='stood'?'<b style="color:#a9bc85">Stood</b>':'<b style="color:#d8907c">Fell</b>')+
+    ' \u00B7 '+esc(w.trigger||'unnamed')+'<div class="meta">'+shortDate(w.at)+'</div></div></div>').join('')||'<small>The watch is quiet. Log the enemy when he shows himself.</small>';
+  el.innerHTML=
+   '<div class="panel" style="border-color:#4a2a1e"><div class="between"><h2 class="display" style="color:var(--rust)">The Beast: Lust</h2>'+
+   '<span class="display" style="font-size:13px;color:#d8907c">'+hp+'/100</span></div>'+
+   '<div class="beastbar"><div class="f" style="width:'+hp+'%"></div></div>'+
+   '<p class="small" style="margin-top:8px">Weakened by every battle you win and every fast return. Fed by hiding. Slain by quarters of standing \u2014 confirmed at the Summit.</p></div>'+
+   panelHTML('Sound the Horn','<p class="small">Temptation is at the wall. Name the trigger \u2014 naming it is half the fight.</p>'+
+    '<div class="chips" id="wt-trig">'+TRIGGERS.map(t=>'<button class="chip">'+t+'</button>').join('')+'</div>'+
+    '<div class="flex" style="margin-top:8px"><button class="btn block" id="wt-stood" style="border-color:var(--moss);color:#a9bc85">I stood \u00B7 +15</button>'+
+    '<button class="btn danger block" id="wt-fell">I fell</button></div>')+
+   '<div class="stat-row"><div class="stat"><div class="v">'+standingDays()+'</div><div class="k">Days standing</div></div>'+
+   '<div class="stat"><div class="v">'+(avgReturn()||'\u2014')+'</div><div class="k">Avg return</div></div>'+
+   '<div class="stat"><div class="v">'+stood30+'</div><div class="k">Wins \u00B7 30d</div></div></div>'+
+   panelHTML('The Watch Log',recent);
+  let trig=null;
+  el.querySelectorAll('#wt-trig .chip').forEach(c=>c.onclick=()=>{trig=c.textContent;
+    el.querySelectorAll('#wt-trig .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');});
+  $('#wt-stood').onclick=()=>{world.warlog.unshift({at:nowISO(),trigger:trig,outcome:'stood'});saveWorld();
+    addXP(15,'Temptation met \u2014 stood firm','resolve');rerender();};
+  $('#wt-fell').onclick=()=>{world.warlog.unshift({at:nowISO(),trigger:trig,outcome:'fell'});saveWorld();openRestore();};
+},
+
+hall(el){
+  const rerender=()=>INTERIORS.hall(el);
+  const GIRLS=['Naomi','Zipporah','Grace'];
+  if(!world.girls) world.girls={};
+  let cards=GIRLS.map(g=>{const d=world.girls[g]||{};
+    return '<div class="dcard"><div class="d-name">'+g+'</div>'+
+    '<div class="meta" style="margin:4px 0 10px;color:var(--faint)">'+
+      (d.time?'Last one-on-one: '+shortDate(d.time):'No one-on-one logged')+' \u00B7 '+
+      (d.prayer?'Last prayed: '+shortDate(d.prayer):'Not yet prayed for')+'</div>'+
+    '<div class="flex"><button class="mini-btn gold" data-g="'+g+'" data-k="time">One-on-one +10</button>'+
+    '<button class="mini-btn gold" data-g="'+g+'" data-k="prayer">Prayed +5</button></div></div>';}).join('');
+  let letters=world.letters.map(l=>'<div class="row-item"><div class="grow"><b>To '+esc(l.to)+'</b> \u2014 opens at '+esc(l.age)+'<div class="meta">'+shortDate(l.at)+' \u00B7 sealed</div></div></div>').join('')||'<small>The chest is empty. Write the first one \u2014 she will hold it someday.</small>';
+  el.innerHTML='<div id="hall-cards">'+cards+'</div>'+
+   panelHTML('The Letter Chest',letters+
+    '<label class="f">To</label><div class="chips" id="lt-to">'+GIRLS.map(g=>'<button class="chip">'+g+'</button>').join('')+'<button class="chip">Robert at 40</button></div>'+
+    '<label class="f">Opens at age (or year)</label><input type="text" id="lt-age" placeholder="18">'+
+    '<label class="f">The letter</label><textarea id="lt-body" rows="5" placeholder="My girl..."></textarea>'+
+    '<button class="btn primary block" id="lt-seal" style="margin-top:12px">Seal it in the chest \u00B7 +25</button>');
+  el.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g,k=b.dataset.k;
+    if(!world.girls[g])world.girls[g]={}; world.girls[g][k]=nowISO();saveWorld();
+    addXP(k==='time'?10:5,(k==='time'?'Time with ':'Prayed for ')+g,'family');rerender();});
+  let to=null;
+  el.querySelectorAll('#lt-to .chip').forEach(c=>c.onclick=()=>{to=c.textContent;
+    el.querySelectorAll('#lt-to .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');});
+  $('#lt-seal').onclick=()=>{const body=$('#lt-body').value.trim();
+    if(!to||!body){toast('The chest waits','Pick who it\u2019s for and write it');return;}
+    world.letters.unshift({to,age:$('#lt-age').value.trim()||'18',body,at:nowISO()});saveWorld();
+    addXP(25,'A letter sealed for '+to,'family');rerender();};
+},
+
+yard(el){
+  const rerender=()=>INTERIORS.yard(el);
+  const tk=todayKey(), today=world.bodylog[tk]||{};
+  const keys=Object.keys(world.bodylog).sort().slice(-14);
+  const ws=keys.map(k=>world.bodylog[k].weight).filter(Boolean);
+  let spark='';
+  if(ws.length>1){const mn=Math.min(...ws),mx=Math.max(...ws),rg=mx-mn||1;
+    const pts=ws.map((w,i)=>(i*(300/(ws.length-1)))+','+(44-((w-mn)/rg)*36+4)).join(' ');
+    spark='<svg viewBox="0 0 300 52" style="width:100%;margin-top:10px"><polyline points="'+pts+'" fill="none" stroke="var(--ember)" stroke-width="2"/><text x="0" y="50" font-size="10" fill="#7d7160">'+mx+'</text><text x="280" y="50" font-size="10" fill="#7d7160">'+mn+'</text></svg>';}
+  el.innerHTML=panelHTML('Today\u2019s Measure',
+   '<label class="f">Weight (lb)</label><input type="text" inputmode="decimal" id="yd-w" value="'+(today.weight||'')+'">'+
+   '<label class="f">Steps</label><input type="text" inputmode="numeric" id="yd-s" value="'+(today.steps||'')+'">'+
+   '<button class="btn primary block" id="yd-save" style="margin-top:12px">Log it'+(world.bodylog[tk]?'':' \u00B7 +5')+'</button>'+spark+
+   '<p class="small" style="margin-top:8px">The road to 150 is walked one weigh-in at a time. The Sweat anchor at Camp covers the workout itself.</p>');
+  $('#yd-save').onclick=()=>{const first=!world.bodylog[tk];
+    world.bodylog[tk]={weight:parseFloat($('#yd-w').value)||null,steps:parseInt($('#yd-s').value)||null};
+    saveWorld(); if(first)addXP(5,'Measured at the yard','body'); else {toast('Updated','The measure is kept');} rerender();};
+},
+
+treasury(el){
+  const rerender=()=>INTERIORS.treasury(el);
+  let gs=world.goals.map((g,i)=>{const pct=g.target?Math.min(100,Math.round((g.current||0)/g.target*100)):0;
+    return '<div class="statbar"><div class="between"><span class="k">'+esc(g.name)+'</span><small>'+(g.current||0)+' / '+g.target+'</small></div>'+
+    '<div class="track"><div class="f" style="width:'+pct+'%"></div></div>'+
+    '<div class="flex" style="margin-top:6px"><input type="text" inputmode="decimal" data-gi="'+i+'" placeholder="Update amount" style="padding:7px 10px;font-size:14px"><button class="mini-btn gold" data-gu="'+i+'">Set</button></div></div>';}).join('')||'<small>No goals yet. Debt down, savings up \u2014 name one.</small>';
+  const wk=world.money[0];
+  const thisWeek=wk&&(Date.now()-new Date(wk.at))<7*86400000;
+  el.innerHTML=
+   panelHTML('The Weekly Count','<p class="small">Once a week: where did the coin go, what changes next week.</p>'+
+    '<textarea id="tr-note" rows="3" placeholder="This week the money..."></textarea>'+
+    '<button class="btn primary block" id="tr-done" style="margin-top:10px" '+(thisWeek?'disabled':'')+'>'+(thisWeek?'Counted this week \u2713':'Seal the count \u00B7 +15')+'</button>')+
+   panelHTML('Goals \u00B7 name | target',gs+addRowUI('Emergency fund | 5000','Fund it'));
+  $('#tr-done').onclick=()=>{world.money.unshift({at:nowISO(),note:$('#tr-note').value.trim()});saveWorld();
+    addXP(15,'The weekly count sealed','gold');rerender();};
+  el.querySelectorAll('[data-gu]').forEach(b=>b.onclick=()=>{const i=+b.dataset.gu;
+    const inp=el.querySelector('[data-gi="'+i+'"]');const v=parseFloat(inp.value);if(isNaN(v))return;
+    world.goals[i].current=v;saveWorld();addXP(5,'Treasury updated','gold');rerender();});
+  wireAdd(el.querySelectorAll('.panel')[1],v=>{const sp=v.split('|');
+    world.goals.push({name:(sp[0]||v).trim(),target:parseFloat(sp[1])||100,current:0});saveWorld();rerender();});
+},
+
+hearth(el){
+  const recent=Object.keys(days).sort().slice(-14).reverse()
+   .map(k=>{const d=days[k];if(!d.feel)return '';return '<div class="row-item"><div class="grow"><b>'+esc(d.feel)+'</b>'+(d.note?'<div class="meta">'+esc(d.note.split('\n')[0])+'</div>':'')+'</div><small>'+shortDate(k+'T12:00:00')+'</small></div>';})
+   .filter(Boolean).join('')||'<small>The hearth learns your heart from the Evening Watch at Camp.</small>';
+  const numb=Object.values(days).filter(d=>d.feel==='Numb').length;
+  el.innerHTML=
+   panelHTML('The Heart\u2019s Record',recent)+
+   panelHTML('Patterns','<p class="small">Numbness named so far: <b>'+numb+'</b> evenings. Naming it is how it loses ground \u2014 the Steward can help you read the pattern.</p>');
+},
+
+forge(el){
+  const rerender=()=>INTERIORS.forge(el);
+  let ws=world.wins.slice(0,10).map(w=>'<div class="row-item"><div class="grow">'+esc(w.text)+'<div class="meta">'+shortDate(w.at)+'</div></div></div>').join('')||'<small>Hammer out the first win.</small>';
+  el.innerHTML=panelHTML('Wins From the Anvil','<p class="small">Leading the sixteen, the coaching that landed, the deal that closed.</p>'+ws+addRowUI('What did you forge today?','Strike'));
+  wireAdd(el.querySelector('.panel'),v=>{world.wins.unshift({text:v,at:nowISO()});saveWorld();addXP(5,'A win at the forge','craft');rerender();});
+},
+
+granary(el){
+  const rerender=()=>INTERIORS.granary(el);
+  let ts=world.tasks.map((t,i)=>'<div class="row-item"><div class="grow '+(t.done?'struck':'')+'">'+esc(t.text)+'</div>'+
+   (t.done?'':'<button class="mini-btn gold" data-t="'+i+'">Done +5</button>')+'</div>').join('')||'<small>The granary is swept. Add what the house needs.</small>';
+  el.innerHTML=panelHTML('The House\u2019s Needs',ts+addRowUI('Fix, clean, prep...','Add'));
+  el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{world.tasks[+b.dataset.t].done=true;saveWorld();addXP(5,'Order kept','order');rerender();});
+  wireAdd(el.querySelector('.panel'),v=>{world.tasks.unshift({text:v,done:false});saveWorld();rerender();});
+},
+
+garden(el){
+  const rerender=()=>INTERIORS.garden(el);
+  let js=world.joy.slice(0,10).map(j=>'<div class="row-item"><div class="grow">'+esc(j.text)+'<div class="meta">'+shortDate(j.at)+'</div></div></div>').join('')||'<small>What made you feel alive? Plant it.</small>';
+  el.innerHTML=panelHTML('Moments of Life',js+addRowUI('Hiked with the girls, repotted the monstera...','Plant'));
+  wireAdd(el.querySelector('.panel'),v=>{world.joy.unshift({text:v,at:nowISO()});saveWorld();addXP(5,'Joy planted','joy');rerender();});
+},
+
+vault(el){
+  const rerender=()=>INTERIORS.vault(el);
+  let dl=world.death.map((d,i)=>'<div class="row-item"><div class="grow '+(d.dead?'struck':'')+'">'+esc(d.text)+(d.dead?'<div class="meta">put to death '+shortDate(d.dead)+'</div>':'')+'</div>'+
+   (d.dead?'':'<button class="mini-btn" style="border-color:var(--rust);color:#d8907c" data-d="'+i+'">It died +20</button>')+'</div>').join('')||'<small>Name what must die. You don\u2019t have to know it all today.</small>';
+  let gr=world.growing.map(g=>'<div class="row-item"><div class="grow">'+esc(g.text)+'<div class="meta">planted '+shortDate(g.at)+'</div></div></div>').join('')||'<small>What is being grown in its place?</small>';
+  el.innerHTML=
+   '<div class="panel sacred"><h2 class="display">The Vow</h2><p style="font-style:italic;margin-top:8px;white-space:pre-wrap">'+esc(profile.vow)+'</p></div>'+
+   panelHTML('The Death List',dl+addRowUI('What must die...','Name it'))+
+   panelHTML('The Growing',gr+addRowUI('What is growing...','Plant it'));
+  el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{world.death[+b.dataset.d].dead=nowISO();saveWorld();
+    addXP(20,'Something old put to death','spirit');toast('It is finished','The Garden has room now');rerender();});
+  const ps=el.querySelectorAll('.panel');
+  wireAdd(ps[1],v=>{world.death.unshift({text:v,dead:null});saveWorld();rerender();});
+  wireAdd(ps[2],v=>{world.growing.unshift({text:v,at:nowISO()});saveWorld();rerender();});
+}
+};
+
+/* ---------- character sheet ---------- */
+function openChar(){
+  const c=charOf(), p=state.pillars||{};
+  const bars=Object.keys(PILLARS).map(k=>{
+    const xp=p[k]||0, rank=Math.min(10,Math.floor(xp/100)+ (xp>0?1:0)), pct=Math.min(100,(xp%100)||(xp>=1000?100:0));
+    return '<div class="statbar"><div class="between"><span class="k">'+PILLARS[k]+'</span><small>Rank '+rank+' \u00B7 '+xp+' XP</small></div>'+
+    '<div class="track"><div class="f" style="width:'+(rank>=10?100:pct)+'%"></div></div></div>';}).join('');
+  const li=levelInfo(state.xp);
+  $('#char-body').innerHTML=
+   '<div class="flex" style="margin:14px 0">'+
+    '<div class="lvl-badge" style="border-color:'+c.color+'">'+embSVG(c.emblem,26,c.color)+'</div>'+
+    '<div><div class="display" style="font-size:17px;font-weight:700">'+esc(profile.name)+'</div>'+
+    '<div class="small">Level '+li.n+' \u00B7 '+li.title+' \u00B7 <i>\u201C'+esc(c.motto)+'\u201D</i></div></div></div>'+
+   bars+
+   '<hr class="rule"><h2 class="display">Reforge the Banner</h2>'+
+   '<div class="swatches" id="ch-colors"></div><div class="emblems" id="ch-emblems"></div>'+
+   '<input type="text" id="ch-motto" value="'+esc(c.motto)+'">'+
+   '<button class="btn block" id="ch-save" style="margin-top:10px">Save banner</button>';
+  buildForge('#ch-colors','#ch-emblems',c.color,c.emblem,(col,emb)=>{chColor=col;chEmblem=emb;});
+  let chColor=c.color, chEmblem=c.emblem;
+  $('#ch-save').onclick=()=>{profile.character={color:chColor,emblem:chEmblem,motto:$('#ch-motto').value.trim()||'Rise again'};
+    Store.set('profile',profile); $('#m-char').classList.remove('on'); toast('The banner flies','Reforged'); if($('#v-keep').classList.contains('on'))renderKeep();};
+  $('#m-char').classList.add('on');
+}
+function buildForge(colSel,embSel,curCol,curEmb,onPick){
+  const cw=$(colSel); cw.innerHTML='';
+  COLORS.forEach(([hex])=>{const s=document.createElement('button');s.className='swatch'+(hex===curCol?' on':'');
+    s.style.background=hex; s.onclick=()=>{curCol=hex;onPick(curCol,curEmb);cw.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));s.classList.add('on');};
+    cw.appendChild(s);});
+  const ew=$(embSel); ew.innerHTML='';
+  Object.keys(EMBLEMS).forEach(id=>{const e=document.createElement('button');e.className='emb'+(id===curEmb?' on':'');
+    e.innerHTML=embSVG(id,28); e.onclick=()=>{curEmb=id;onPick(curCol,curEmb);ew.querySelectorAll('.emb').forEach(x=>x.classList.remove('on'));e.classList.add('on');};
+    ew.appendChild(e);});
+}
+$('#char-open').onclick=openChar;
+$('#char-close').onclick=()=>$('#m-char').classList.remove('on');
+
+/* ---------- the steward ---------- */
+function stewardContext(){
+  const li=levelInfo(state.xp), j=journey()||{q:1,daysLeft:0}, d=days[todayKey()]||{};
+  const p=state.pillars||{};
+  const anchorsDone=ANCHORS.filter(a=>(d.anchors||{})[a.id]).map(a=>a.name).join(', ')||'none yet';
+  const feels=Object.keys(days).sort().slice(-7).map(k=>days[k].feel).filter(Boolean).join(', ')||'none recorded';
+  return 'PILGRIM STATE \u2014 Name: '+profile.name+'. Level '+li.n+' ('+li.title+'), '+state.xp+' XP. '+
+   'Land '+j.q+' of 16: '+LANDS[j.q-1][0]+'. Days to the gate (40th birthday): '+j.daysLeft+'. '+
+   'Days standing in purity: '+standingDays()+'. Avg return after a fall: '+(avgReturn()||'n/a')+'. '+
+   'Today\u2019s anchors done: '+anchorsDone+'. Heart-words last 7 days: '+feels+'. '+
+   'Active prayers: '+world.prayers.filter(x=>!x.answered).length+'. Letters sealed: '+world.letters.length+'. '+
+   'Open tasks: '+world.tasks.filter(t=>!t.done).length+'. Death list open: '+world.death.filter(x=>!x.dead).length+'. '+
+   'Pillar XP: '+Object.keys(PILLARS).map(k=>PILLARS[k]+' '+(p[k]||0)).join(', ')+'.';
+}
+const STEW_SYS=()=>
+ 'You are the Steward of the Keep in \u201CFull by 40 \u2014 The Pilgrim\u2019s Road,\u201D a personal life-transformation app built as a Pilgrim\u2019s Progress role-playing world. '+
+ 'You serve Robert, a 30s Christian husband and father of three daughters (Naomi, Zipporah, Grace), a sales leader, walking a four-year road to wholeness by his 40th birthday: faith, purity, fatherhood, fitness, finances, work, order, joy. '+
+ 'Your voice: a wise older brother and man of God \u2014 plain-spoken, warm, direct, firm when needed, never shaming, never cheesy. Lightly flavored like a castle steward (you may say \u201Cthe Keep,\u201D \u201Cthe road,\u201D \u201Cthe watch\u201D) but always practical and biblical. Quote Scripture (KJV) sparingly and aptly. '+
+ 'If he confesses a fall: no condemnation (Romans 8:1), get him back up, look for the pattern, point him to the Watchtower. Celebrate real wins. Ask one good question when it serves. Keep replies under 120 words. '+
+ 'The Keep\u2019s buildings you can open for him: chapel (prayer/scripture), watchtower (purity battle), hall (daughters/letters), yard (body), treasury (money), hearth (emotions), forge (work), granary (home tasks), garden (joy), vault (vow/death list). '+
+ 'Respond ONLY with raw JSON, no markdown fences: {"say":"your words","open":null or one building id}. Use "open" when he asks to see, log, or work on something that lives in a building.\n\n'+stewardContext();
+
+function stewMsg(role,text){
+  const m=document.createElement('div'); m.className='smsg '+(role==='me'?'me':'ai');
+  m.innerHTML='<div class="who">'+(role==='me'?esc((profile.name||'P')[0]):'S')+'</div><div class="bub">'+esc(text)+'</div>';
+  $('#stew-msgs').appendChild(m); $('#stew-msgs').scrollTop=99999;
+}
+function openSteward(){
+  $('#stew-msgs').innerHTML='';
+  const key=Store.get('secret_anthropic');
+  $('#stew-note').textContent=key? 'Your words go to the Anthropic API with your key. Nothing else leaves the device.' : 'No key in the Pack yet \u2014 add your Anthropic API key under Pack \u2192 Mentor Key.';
+  if(!steward.length) stewMsg('ai','Welcome back to the Keep, '+(profile.name.split(' ')[0])+'. What do you seek \u2014 the Chapel, the Watchtower, the Hall? Or just tell me how the road is treating you.');
+  else steward.slice(-12).forEach(m=>stewMsg(m.role==='user'?'me':'ai',m.shown||m.content));
+  $('#m-stew').classList.add('on');
+  $('#stew-in').focus();
+}
+async function askSteward(){
+  const text=$('#stew-in').value.trim(); if(!text) return;
+  const key=Store.get('secret_anthropic');
+  $('#stew-in').value=''; stewMsg('me',text);
+  if(!key){ stewMsg('ai','I cannot speak without the key, pilgrim. Add your Anthropic API key in the Pack, then return to the gate.'); return; }
+  steward.push({role:'user',content:text});
+  $('#stew-typing').style.display='block'; $('#stew-send').disabled=true;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:STEW_SYS(),
+        messages:steward.slice(-12).map(m=>({role:m.role,content:m.content}))})
+    });
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json();
+    const raw=(data.content||[]).map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    let say=raw, open=null;
+    try{ const o=JSON.parse(raw); say=o.say||raw; open=o.open||null; }catch(e){}
+    steward.push({role:'assistant',content:raw,shown:say});
+    if(steward.length>24) steward=steward.slice(-24);
+    Store.set('steward',steward);
+    stewMsg('ai',say);
+    if(open && INTERIORS[open]){ setTimeout(()=>{ $('#m-stew').classList.remove('on'); show('keep'); enterBuilding(open); }, 900); }
+  }catch(err){
+    steward.pop();
+    stewMsg('ai','The ravens are not flying tonight \u2014 I could not reach the wire. ('+err.message+') Check the key in the Pack, or try again.');
+  }
+  $('#stew-typing').style.display='none'; $('#stew-send').disabled=false;
+}
+$('#stew-open').onclick=openSteward;
+$('#stew-close').onclick=()=>$('#m-stew').classList.remove('on');
+$('#stew-send').onclick=askSteward;
+$('#stew-in').addEventListener('keydown',e=>{if(e.key==='Enter')askSteward();});
+
+/* ---------- onboarding forge wiring ---------- */
+let obColor=COLORS[0][0], obEmblem='cross';
+if($('#ob-colors')) buildForge('#ob-colors','#ob-emblems',obColor,obEmblem,(c,e2)=>{obColor=c;obEmblem=e2;});
+
+/* ---------- THE ROAD, REDRAWN (overrides v1 buildMap) ---------- */
+function buildMap(){
+  const j=journey()||{q:1};
+  const W=430,H=1620, pts=[];
+  for(let i=0;i<16;i++){
+    const y=1480 - i*88;
+    const x=215 + Math.sin(i*1.18+0.6)*122;
+    pts.push([Math.round(x),y]);
+  }
+  let path='M '+pts[0][0]+' '+pts[0][1];
+  for(let i=1;i<16;i++){const [x1,y1]=pts[i-1],[x2,y2]=pts[i];
+    path+=' C '+x1+' '+(y1-44)+', '+x2+' '+(y2+44)+', '+x2+' '+y2;}
+  const pine=(x,y,s,o)=>'<path d="M'+x+' '+y+' l'+(5*s)+' '+(14*s)+' h'+(-3.2*s)+' l'+(4.6*s)+' '+(12*s)+' h'+(-13*s)+' l'+(4.6*s)+' '+(-12*s)+' h'+(-3.2*s)+' z" fill="#11150f" opacity="'+o+'"/>';
+  let trees='';
+  for(let k=0;k<26;k++){const tx=30+((k*173)%370), ty=520+((k*257)%980);
+    const nearRoad=pts.some(([px,py])=>Math.abs(px-tx)<46&&Math.abs(py-ty)<46);
+    if(!nearRoad) trees+=pine(tx,ty,0.8+((k%3)*0.25),0.5+((k%2)*0.25));}
+  let nodes='';
+  pts.forEach(([x,y],i)=>{
+    const n=i+1, cur=n===j.q, past=n<j.q, locked=n>j.q;
+    const ring=past?'var(--moss)':cur?'var(--ember-hi)':'#39424f';
+    const fill=past?'#212a17':cur?'#3d2e12':'#131820';
+    const txt=past?'#a9bc85':cur?'var(--ember-hi)':'#566174';
+    nodes+='<g class="t-node'+(cur?' cur':'')+'" data-i="'+i+'">'+
+     (cur?'<circle class="halo" cx="'+x+'" cy="'+y+'" r="20" fill="none" stroke="var(--ember)" stroke-width="2" opacity=".4"/>':'')+
+     '<circle cx="'+x+'" cy="'+y+'" r="17" fill="'+fill+'" stroke="'+ring+'" stroke-width="1.8"/>'+
+     '<circle cx="'+x+'" cy="'+y+'" r="13" fill="none" stroke="'+ring+'" stroke-width=".7" opacity=".6"/>'+
+     '<text x="'+x+'" y="'+(y+4)+'" text-anchor="middle" font-family="Cinzel,serif" font-size="10.5" font-weight="700" fill="'+txt+'">'+ROMAN[i]+'</text>'+
+     '<text x="'+(x+(x>215?-27:27))+'" y="'+(y+4)+'" text-anchor="'+(x>215?'end':'start')+'" font-family="Cinzel,serif" font-size="10.5" letter-spacing="1.2" fill="'+(locked?'#49525f':past?'#8d9f6e':'var(--parchment-dim)')+'">'+LANDS[i][0].toUpperCase()+'</text>'+
+     (locked?'<circle cx="'+x+'" cy="'+y+'" r="17" fill="rgba(16,20,26,.5)"/>':'')+
+     (cur?'<g transform="translate('+x+','+(y-30)+')"><path d="M0 0v-14" stroke="#4a3a22" stroke-width="2"/><path d="M0 -14 l13 2.4 L0 -8 Z" fill="'+charOf().color+'"/></g>':'')+
+    '</g>';
+  });
+  const svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The pilgrim road">'+
+   '<defs>'+
+   '<linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1a13"/><stop offset=".14" stop-color="#12100c"/><stop offset=".5" stop-color="#0c0a07"/><stop offset="1" stop-color="#0a0805"/></linearGradient>'+
+   '<radialGradient id="gate2" cx=".5" cy="0" r=".75"><stop offset="0" stop-color="#E8B254" stop-opacity=".55"/><stop offset=".45" stop-color="#C98A2E" stop-opacity=".12"/><stop offset="1" stop-opacity="0"/></radialGradient>'+
+   '<linearGradient id="m1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#272d36"/><stop offset="1" stop-color="#13161b"/></linearGradient>'+
+   '<linearGradient id="m2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1812"/><stop offset="1" stop-color="#0f0c08"/></linearGradient>'+
+   '<filter id="soft"><feGaussianBlur stdDeviation="7"/></filter>'+
+   '</defs>'+
+   '<rect width="'+W+'" height="'+H+'" fill="url(#sky2)"/>'+
+   '<rect width="'+W+'" height="460" fill="url(#gate2)"/>'+
+   Array.from({length:42},(q,k)=>'<circle cx="'+((k*101)%W)+'" cy="'+((k*47)%340+10)+'" r="'+(k%4===0?1.4:0.9)+'" fill="#E6D6B0" opacity="'+((k%3+1)*.13)+'"/>').join('')+
+   '<g transform="translate(215,92)"><circle cx="0" cy="-8" r="34" fill="#E8B254" opacity=".12" filter="url(#soft)"/>'+
+   '<path d="M-28 48 L-28 -6 Q0 -36 28 -6 L28 48 Z" fill="#171209" stroke="var(--ember)" stroke-width="1.8"/>'+
+   '<path d="M-14 48 L-14 2 Q0 -17 14 2 L14 48 Z" fill="#2e2310" stroke="#E8B254" stroke-width="1"/>'+
+   '<path d="M-14 48 L-14 2 Q0 -17 14 2 L14 48" fill="none" stroke="#E8B254" stroke-width="1" opacity=".4"/>'+
+   '<circle cx="0" cy="-42" r="3.2" fill="#E8B254"/><text y="70" text-anchor="middle" font-family="Cinzel,serif" font-size="12" letter-spacing="3.5" fill="var(--ember-hi)">THE GATE \u00B7 40</text></g>'+
+   '<path d="M0 318 L66 224 L126 300 L198 206 L266 296 L334 218 L394 288 L430 244 L430 380 L0 380 Z" fill="url(#m1)" opacity=".85"/>'+
+   '<path d="M0 396 L92 300 L176 388 L268 292 L356 380 L430 312 L430 500 L0 500 Z" fill="url(#m2)"/>'+
+   '<ellipse class="fog" cx="140" cy="430" rx="190" ry="26" fill="#7C8CA0" opacity=".05" filter="url(#soft)"/>'+
+   '<ellipse class="fog2" cx="320" cy="760" rx="200" ry="30" fill="#7C8CA0" opacity=".05" filter="url(#soft)"/>'+
+   '<ellipse class="fog" cx="180" cy="1120" rx="210" ry="30" fill="#7C8CA0" opacity=".055" filter="url(#soft)"/>'+
+   trees+
+   '<path d="'+path+'" fill="none" stroke="#080603" stroke-width="13" stroke-linecap="round"/>'+
+   '<path d="'+path+'" fill="none" stroke="#4a3a22" stroke-width="8" stroke-linecap="round"/>'+
+   '<path d="'+path+'" fill="none" stroke="var(--ember)" stroke-width="2.4" stroke-dasharray="1 10" stroke-linecap="round" opacity=".8"/>'+
+   nodes+'</svg>';
+  $('#mapwrap').innerHTML=svg;
+  $$('#mapwrap .t-node').forEach(g=>g.addEventListener('click',()=>showLand(parseInt(g.dataset.i,10))));
+}
+
+
+/* ============================================================
+   PHASE 3 — THE CAST, THE DIALOGUE, THE TOWN
+   ============================================================ */
+const DEFAULT_PINS={ // measured from the painted town
+ chapel:{x:21,y:36}, watchtower:{x:13,y:15}, hall:{x:47,y:19}, yard:{x:79,y:24},
+ treasury:{x:83,y:47}, hearth:{x:36,y:47}, forge:{x:60,y:48}, granary:{x:20,y:66},
+ garden:{x:50,y:69}, vault:{x:81,y:75} };
+const GATE_PIN={x:44,y:88};
+let pins=Store.get('pins') || DEFAULT_PINS;   // {buildingId:{x:%, y:%}}
+let npcchat=Store.get('npcchat',{}); // {buildingId:[{role,content,shown}]}
+
+/* ---------- the cast ---------- */
+const NPCS={
+ chapel:{nm:'Brother Aldous',rl:'The Chaplain',
+  voice:'Brother Aldous, the chaplain: gentle, gray-bearded, deep in the Word. Speaks slowly and warmly, rich in Scripture (KJV), never preachy. Loves to ask what Robert is praying for and reminds him prayers get answered here.',
+  open:()=>{const a=world.prayers.filter(p=>!p.answered).length;
+    return a? 'Peace to you, pilgrim. '+a+(a===1?' prayer stands':' prayers stand')+' before the throne \u2014 shall we bring another, or has the King answered one?'
+            : 'Peace to you, pilgrim. The candles are lit and the room is quiet. What shall we lay before the King today?';},
+  ch:['I want to pray about something','Help me memorize a verse','How do I hear God better?']},
+ watchtower:{nm:'Garrick',rl:'The Watchman',
+  voice:'Garrick, the watchman: a gruff old soldier who fought the beast Lust himself for twenty years and won. Zero shame, zero softness about the enemy, total mercy for the man. Short sentences. Practical tactics: name the trigger, move the body, never hide. If Robert fell, Romans 8:1 first, then debrief like a soldier \u2014 what time, what trigger, what opening.',
+  open:()=>{const s=standingDays();
+    return s>0? s+(s===1?' day':' days')+' standing. Good. The beast hates a counted wall. What do you see from up here \u2014 anything moving in the treeline?'
+              : 'You came back up the tower. That\u2019s the whole war, pilgrim \u2014 coming back up. Report: what happened?';},
+  ch:['Temptation is close right now','I fell. Walk me through it','Show me my patterns']},
+ hall:{nm:'Elder Tomas',rl:'Keeper of the Hall',
+  voice:'Elder Tomas: a grandfather figure, keeper of the Great Hall. Asks about Naomi, Zipporah, and Grace by name. Believes letters and one-on-one time are how a father builds a cathedral no one sees finished. Warm, story-like, occasionally playful.',
+  open:()=>{const l=world.letters.length;
+    return l? 'Ah, the father returns. '+l+(l===1?' letter sleeps':' letters sleep')+' in the chest \u2014 your girls will hold them someday. Who needs their father\u2019s eyes today: Naomi, Zipporah, or Grace?'
+            : 'Welcome to the Hall, father of three. The chest by the fire is empty \u2014 every great house starts its letters somewhere. Who shall we write to first?';},
+  ch:['Help me write a letter','I need ideas for one-on-one time','I lost my patience with them today']},
+ yard:{nm:'Brand',rl:'Master-at-Arms',
+  voice:'Brand, master-at-arms: barks like a drill sergeant who loves you. Very short sentences. Celebrates every weigh-in and every 10,000 steps. Goal: 150 lb, strong, disciplined. No crash nonsense \u2014 consistency, protein, sleep, the walking pad at 4 AM.',
+  open:()=>{const k=Object.keys(world.bodylog).sort();const last=k[k.length-1];
+    return last&&world.bodylog[last].weight? 'Last measure: '+world.bodylog[last].weight+' pounds. The iron doesn\u2019t care how you feel. On the scale or on the floor \u2014 which is it today?'
+                  : 'New recruit energy. I like it. Step on the scale, pilgrim \u2014 we count everything in this yard.';},
+  ch:['Log today\u2019s weigh-in','Give me a workout for today','I have no energy lately']},
+ treasury:{nm:'Mercer',rl:'The Bursar',
+  voice:'Mercer, the bursar: precise, dry wit, ledger always open. Believes every coin gets a name and a job. Pushes the weekly count, debt down, margin up, giving first. Stewardship language, never greed.',
+  open:()=>{const wk=world.money[0];const fresh=wk&&(Date.now()-new Date(wk.at))<7*86400000;
+    return fresh? 'The count is current. The ledger approves \u2014 a rare mood for it. Goals, then: where does the next coin march?'
+                : 'The week\u2019s count is overdue, pilgrim. Coins unwatched become coins unowned. Shall we count?';},
+  ch:['Do the weekly count','Check my goals','Help me think about a purchase']},
+ hearth:{nm:'Marta',rl:'The Hearthkeeper',
+  voice:'Marta, the hearthkeeper: a wise older woman who tends the inner fire. Asks what the heart actually feels and waits. Treats numbness as a signal, not a flaw. Gentle, perceptive, biblical wisdom without lecture. Helps Robert name feelings and notice patterns.',
+  open:()=>{const d=days[todayKey()];
+    return d&&d.feel? 'You named it \u201C'+d.feel+'\u201D tonight. Sit \u2014 the fire\u2019s warm. Tell me where that word lives in you today.'
+                    : 'Come in by the fire, pilgrim. One word \u2014 how is your heart, really? Not the report. The truth.';},
+  ch:['I feel numb again','Something good happened today','Help me figure out what I\u2019m feeling']},
+ forge:{nm:'Wulf',rl:'The Smith',
+  voice:'Wulf, the smith: few words, all about the work. Respects craft, leadership, and follow-through. Knows Robert leads sixteen reps. Asks what got forged today \u2014 a coaching conversation, a closed deal, a hard decision. Hammer metaphors, sparingly.',
+  open:()=>{const w0=world.wins[0];
+    return w0? 'Last thing off the anvil: \u201C'+w0.text.slice(0,60)+'\u201D. Good steel. What\u2019s in the fire today?'
+             : 'The fire\u2019s hot and the anvil\u2019s clear. What are we forging \u2014 the team, the craft, or a hard call you\u2019ve been dodging?';},
+  ch:['Log a win','Talk through a rep I\u2019m coaching','Help me plan the week']},
+ granary:{nm:'Oren',rl:'Keeper of Stores',
+  voice:'Oren, keeper of stores: practical, list-minded, cheerful about order. A kept house is a kept mind. Helps break chaos into three small tasks. Asks what the house needs.',
+  open:()=>{const t=world.tasks.filter(x=>!x.done).length;
+    return t? t+(t===1?' task stands':' tasks stand')+' open in the ledger of the house. Which falls first?'
+            : 'Stores are counted, floors are swept \u2014 or so the ledger claims. What does the house need from you this week?';},
+  ch:['Add tasks for the house','What should I tackle first?','Meal prep ideas for the week']},
+ garden:{nm:'Linden',rl:'The Gardener',
+  voice:'Linden, the gardener: quiet, observant, full of unhurried joy. Believes joy is not optional on this road \u2014 it\u2019s evidence of life returning. Asks what made Robert feel alive; loves his houseplants, hikes, creative projects, fun with the girls.',
+  open:()=>{const j=world.joy[0];
+    return j? 'Last thing planted here: \u201C'+j.text.slice(0,60)+'\u201D. It\u2019s taken root nicely. What\u2019s made you feel alive since?'
+            : 'Mind the new beds. Nothing planted yet this season \u2014 tell me, pilgrim, when did you last feel properly alive?';},
+  ch:['Plant a joy from today','I can\u2019t remember what I enjoy','Plan an adventure with the girls']},
+ vault:{nm:'Crane',rl:'Keeper of the Vault',
+  voice:'Crane, keeper of the vault: solemn, speaks rarely and with weight. Guards the Vow, the Death List, and the Growing. Talks about what must die and what is being raised in its place \u2014 Colossians 3, Galatians 2:20. Never morbid; resurrection-minded.',
+  open:()=>{const d=world.death.filter(x=>!x.dead).length;
+    return d? d+(d===1?' thing stands':' things stand')+' named for death below us. They do not die of old age, pilgrim \u2014 they are put to death. Which one are we starving today?'
+            : 'The deep room is quiet. Nothing yet named for death. When you are ready to name what must die \u2014 I keep the list.';},
+  ch:['Name something for the Death List','Read me my Vow','What should be growing instead?']}
+};
+
+/* ---------- NPC dialogue engine ---------- */
+function npcSys(id){
+  const n=NPCS[id], b=BUILDINGS.find(x=>x.id===id);
+  return 'You are '+n.nm+', '+n.rl+' of the Keep in \u201CFull by 40 \u2014 The Pilgrim\u2019s Road,\u201D a personal life-transformation app built as a Pilgrim\u2019s Progress RPG world. You serve Robert: a Christian husband, father of Naomi, Zipporah and Grace, sales leader, walking a four-year road to wholeness by 40. '+
+  'PERSONA: '+n.voice+' '+
+  'Never shaming, never cheesy, always Christ-centered and practical. Stay in character but give real counsel. Keep replies under 110 words. '+
+  'Your building: '+b.name+' ('+b.desc+'). If the matter belongs to another keeper, you may send him there. Building ids: chapel, watchtower, hall, yard, treasury, hearth, forge, granary, garden, vault. '+
+  'Respond ONLY with raw JSON, no fences: {"say":"your words","choices":["up to 3 short replies Robert might give"],"open":null or a building id}.\n\n'+stewardContext();
+}
+let typeTimer=null;
+function typeText(el,text,done){
+  clearInterval(typeTimer);
+  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduced){ el.textContent=text; if(done)done(); return; }
+  let i=0; el.innerHTML='<span class="tt"></span><span class="caret"></span>';
+  const tt=el.querySelector('.tt');
+  typeTimer=setInterval(()=>{ i+=2; tt.textContent=text.slice(0,i);
+    if(i>=text.length){ clearInterval(typeTimer); el.textContent=text; if(done)done(); } },18);
+  el.onclick=()=>{ clearInterval(typeTimer); el.textContent=text; el.onclick=null; if(done)done(); };
+}
+function npcSay(id,text,choices){
+  const box=$('#dlg-text'); if(!box) return;
+  const cw=$('#dlg-choices'); cw.innerHTML='';
+  typeText(box,text,()=>{
+    (choices||[]).slice(0,3).forEach(c=>{
+      const b=document.createElement('button'); b.className='dlg-choice'; b.textContent=c;
+      b.onclick=()=>askNPC(id,c); cw.appendChild(b);
+    });
+  });
+}
+async function askNPC(id,text){
+  text=(text||'').trim(); if(!text) return;
+  const inEl=$('#dlg-in'); if(inEl) inEl.value='';
+  $('#dlg-choices').innerHTML='';
+  const key=Store.get('secret_anthropic');
+  if(!npcchat[id]) npcchat[id]=[];
+  if(!key){ npcSay(id,'I would answer, pilgrim, but the wire to the wider world is not strung \u2014 add your Anthropic key in the Pack and return.',NPCS[id].ch); return; }
+  npcchat[id].push({role:'user',content:text});
+  npcSay(id,'\u2026');
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:npcSys(id),
+        messages:npcchat[id].slice(-12).map(m=>({role:m.role,content:m.content}))})
+    });
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json();
+    const raw=(data.content||[]).map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    let say=raw, choices=[], open=null;
+    try{ const o=JSON.parse(raw); say=o.say||raw; choices=o.choices||[]; open=o.open||null; }catch(e){}
+    npcchat[id].push({role:'assistant',content:raw,shown:say});
+    if(npcchat[id].length>20) npcchat[id]=npcchat[id].slice(-20);
+    Store.set('npcchat',npcchat);
+    npcSay(id,say,choices);
+    if(open && open!==id && NPCS[open]) setTimeout(()=>enterBuilding(open),1400);
+  }catch(err){
+    npcchat[id].pop();
+    npcSay(id,'The ravens are grounded \u2014 I could not reach the wire ('+err.message+'). Check the key in the Pack, then ask me again.',NPCS[id].ch);
+  }
+}
+
+/* ---------- enterBuilding, rebuilt with dialogue ---------- */
+function enterBuilding(id){
+  const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
+  $('#keep-main').style.display='none';
+  const el=$('#interior'); el.style.display='block';
+  el.innerHTML='<button class="back" id="int-back">\u2190 The town</button>'+
+   '<div class="flex" style="margin-top:6px"><span style="width:30px;height:30px;color:var(--ember)">'+bcardIcon(b.id)+'</span>'+
+   '<div><h1 class="display" style="font-size:21px">'+b.name+'</h1>'+
+   '<div class="eyebrow">'+(b.pillar? PILLARS[b.pillar]:'Legacy')+'</div></div></div>'+
+   '<img id="dlg-backdrop" alt="">'+
+   '<div class="dlg">'+
+    '<div class="portrait" id="dlg-portrait"><span class="ph">'+esc(n.nm[0])+'</span></div>'+
+    '<div class="dlg-main">'+
+      '<div class="nameplate"><span class="nm">'+n.nm+'</span><span class="rl">'+n.rl+'</span></div>'+
+      '<div class="dlg-box" id="dlg-text"></div>'+
+      '<div class="dlg-choices" id="dlg-choices"></div>'+
+      '<div class="stew-row" style="margin-top:9px"><input type="text" id="dlg-in" placeholder="Say something\u2026" autocomplete="off"><button class="btn primary" id="dlg-send">Speak</button></div>'+
+    '</div></div>'+
+   '<div class="work-divider">THE WORK</div>'+
+   '<div id="b-tools"></div>';
+  const bd=$('#dlg-backdrop'); bd.onload=()=>bd.style.display='block'; bd.onerror=()=>bd.style.display='none';
+  bd.src='art/b_'+id+'.webp';
+  const pi=new Image();
+  pi.onload=()=>{ $('#dlg-portrait').innerHTML=''; $('#dlg-portrait').appendChild(pi); };
+  pi.src='art/npc_'+id+'.webp';
+  $('#int-back').onclick=renderKeep;
+  $('#dlg-send').onclick=()=>askNPC(id,$('#dlg-in').value);
+  $('#dlg-in').addEventListener('keydown',e=>{if(e.key==='Enter')askNPC(id,$('#dlg-in').value);});
+  INTERIORS[id]($('#b-tools'));
+  npcSay(id,n.open(),n.ch);
+  window.scrollTo({top:0});
+}
+
+/* ---------- the town map (overrides renderKeep when art+pins exist) ---------- */
+let townReady=null; // null unknown, true/false cached
+function renderKeep(){
+  $('#keep-main').style.display='block'; $('#interior').style.display='none';
+  const pinCount=Object.keys(pins).filter(k=>pins[k]).length;
+  if(townReady===true && pinCount>0){ renderTown(); return; }
+  if(townReady===null){
+    const probe=new Image();
+    probe.onload=()=>{ townReady=true; if(pinCount>0 && $('#v-keep').classList.contains('on') && $('#keep-main').style.display!=='none') renderTown(); };
+    probe.onerror=()=>{ townReady=false; };
+    probe.src='art/town.webp';
+  }
+  renderKeepGrid();
+}
+function renderKeepGrid(){
+  const hero=$('#keep-hero');
+  hero.innerHTML=castleSVG();
+  const img=new Image();
+  img.onload=()=>{ hero.innerHTML=''; img.style.width='100%'; hero.appendChild(img); };
+  img.src='art/keep.webp';
+  const g=$('#bgrid'); g.style.display='grid'; g.innerHTML='';
+  BUILDINGS.forEach(b=>{
+    const card=document.createElement('button');
+    card.className='bcard';
+    card.innerHTML=bcardIcon(b.id)+'<div class="b-name">'+b.name+'</div>'+
+      '<div class="b-pill">'+(b.pillar? PILLARS[b.pillar]:'Legacy')+'</div>'+
+      '<div class="b-status">'+esc(b.status())+'</div>';
+    card.onclick=()=>enterBuilding(b.id);
+    g.appendChild(card);
+  });
+}
+function renderTown(){
+  const hero=$('#keep-hero');
+  hero.innerHTML='<div id="town"><img src="art/town.webp" alt="The town"></div>';
+  const t=$('#town');
+  BUILDINGS.forEach(b=>{
+    const p=pins[b.id]; if(!p) return;
+    const btn=document.createElement('button'); btn.className='pin';
+    btn.style.left=p.x+'%'; btn.style.top=p.y+'%';
+    btn.innerHTML='<span class="ring"></span><span class="dot" style="background:'+charOf().color+'"></span><span class="lbl">'+b.name.replace('The ','')+'</span>';
+    btn.onclick=()=>enterBuilding(b.id);
+    t.appendChild(btn);
+  });
+  const gate=document.createElement('button'); gate.className='pin';
+  gate.style.left=GATE_PIN.x+'%'; gate.style.top=GATE_PIN.y+'%';
+  gate.innerHTML='<span class="ring"></span><span class="dot" style="background:var(--ember-hi)"></span><span class="lbl">The Gate · Steward</span>';
+  gate.onclick=openSteward;
+  t.appendChild(gate);
+  const g=$('#bgrid'); g.style.display='none';
+}
+
+/* ---------- pin calibration ---------- */
+let calQueue=[], calDone=[];
+function startCal(){
+  const probe=new Image();
+  probe.onload=()=>{
+    calQueue=BUILDINGS.map(b=>b.id); calDone=[];
+    $('#cal-stage').innerHTML='<img src="art/town.webp" alt="">';
+    $('#m-cal').classList.add('on');
+    calNext();
+    $('#cal-stage').onclick=e=>{
+      const r=$('#cal-stage').getBoundingClientRect();
+      const x=Math.round(((e.clientX-r.left)/r.width)*1000)/10;
+      const y=Math.round(((e.clientY-r.top)/r.height)*1000)/10;
+      const id=calQueue[0]; if(!id) return;
+      pins[id]={x,y}; Store.set('pins',pins);
+      const d=document.createElement('div'); d.className='cal-dot'; d.style.left=x+'%'; d.style.top=y+'%';
+      $('#cal-stage').appendChild(d);
+      calDone.push(id); calQueue.shift(); calNext();
+    };
+  };
+  probe.onerror=()=>{ toast('No town yet','Add art/town.webp to the repo first'); };
+  probe.src='art/town.webp';
+}
+function calNext(){
+  if(!calQueue.length){
+    $('#cal-banner').textContent='All pins placed. The town is alive.';
+    townReady=true;
+    setTimeout(()=>{ $('#m-cal').classList.remove('on'); show('keep'); },900);
+    return;
+  }
+  const b=BUILDINGS.find(x=>x.id===calQueue[0]);
+  $('#cal-banner').textContent='Tap: '+b.name;
+}
+$('#cal-start').onclick=startCal;
+$('#cal-close').onclick=()=>$('#m-cal').classList.remove('on');
+$('#cal-skip').onclick=()=>{ if(calQueue.length){ pins[calQueue[0]]=null; Store.set('pins',pins); calQueue.shift(); calNext(); } };
+$('#cal-redo').onclick=()=>{ const last=calDone.pop(); if(last){ delete pins[last]; Store.set('pins',pins); calQueue.unshift(last);
+  const ds=$('#cal-stage').querySelectorAll('.cal-dot'); if(ds.length) ds[ds.length-1].remove(); calNext(); } };
+
+</script>
+</body>
+</html>
