@@ -2290,6 +2290,107 @@ function openHouseSection(id){
   window.scrollTo({top:0});
 }
 
+
+/* ============================================================
+   PHASE 6 — THE ARMORY & THE TROPHY WALL, MADE REAL
+   ============================================================ */
+function armorStandSVG(){
+  const E=id=>!!world.armor[id];
+  const glow='<filter id="ag"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+  const m=(id)=>E(id)?'fill="url(#au)" stroke="#E8B254" stroke-width="2" filter="url(#ag)"':'fill="#16110b" stroke="#3a2f20" stroke-width="1.6" stroke-dasharray="3 3"';
+  return '<svg viewBox="0 0 430 470" xmlns="http://www.w3.org/2000/svg">'+
+  '<defs>'+glow+
+  '<linearGradient id="au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8B254"/><stop offset="1" stop-color="#9c6a1e"/></linearGradient>'+
+  '<linearGradient id="aw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241d14"/><stop offset="1" stop-color="#15100a"/></linearGradient></defs>'+
+  '<rect width="430" height="470" fill="url(#aw)"/>'+
+  '<ellipse cx="215" cy="438" rx="130" ry="14" fill="#0c0905"/>'+
+  /* stand */
+  '<rect x="209" y="84" width="12" height="340" rx="3" fill="#2b2317" stroke="#3a2f20"/>'+
+  '<rect x="118" y="148" width="194" height="9" rx="3" fill="#2b2317" stroke="#3a2f20"/>'+
+  '<path d="M170 424 h90 l16 18 H154 Z" fill="#2b2317" stroke="#3a2f20"/>'+
+  /* helmet */
+  '<g class="piece" data-p="helmet"><path d="M188 88 q0 -34 27 -34 q27 0 27 34 v18 h-10 l-3 12 h-28 l-3 -12 h-10 Z" '+m('helmet')+'/>'+
+  '<line x1="215" y1="62" x2="215" y2="100" stroke="'+(E('helmet')?'#5d3f12':'#2b2317')+'" stroke-width="2"/></g>'+
+  /* breastplate */
+  '<g class="piece" data-p="breastplate"><path d="M178 160 q37 -14 74 0 l-6 56 q-8 34 -31 42 q-23 -8 -31 -42 Z" '+m('breastplate')+'/>'+
+  '<path d="M215 162 v92" stroke="'+(E('breastplate')?'#5d3f12':'#2b2317')+'" stroke-width="2" fill="none"/></g>'+
+  /* belt */
+  '<g class="piece" data-p="belt"><rect x="172" y="266" width="86" height="16" rx="4" '+m('belt')+'/>'+
+  '<rect x="206" y="263" width="18" height="22" rx="3" '+m('belt')+'/></g>'+
+  /* boots */
+  '<g class="piece" data-p="boots"><path d="M176 330 v58 q0 10 10 10 h26 v-14 l-12 -8 v-46 Z" '+m('boots')+'/>'+
+  '<path d="M254 330 v58 q0 10 -10 10 h-26 v-14 l12 -8 v-46 Z" '+m('boots')+'/></g>'+
+  /* shield */
+  '<g class="piece" data-p="shield"><path d="M86 176 l34 12 34 -12 v44 q0 30 -34 42 q-34 -12 -34 -42 Z" '+m('shield')+'/>'+
+  '<path d="M120 192 v62 M100 216 h40" stroke="'+(E('shield')?'#5d3f12':'#2b2317')+'" stroke-width="3" fill="none"/></g>'+
+  /* sword */
+  '<g class="piece" data-p="sword"><path d="M310 156 l8 -8 8 8 -2 110 -6 10 -6 -10 Z" '+m('sword')+'/>'+
+  '<rect x="296" y="262" width="44" height="9" rx="3" '+m('sword')+'/>'+
+  '<rect x="313" y="271" width="10" height="26" rx="3" '+m('sword')+'/><circle cx="318" cy="303" r="6" '+m('sword')+'/></g>'+
+  '<text x="215" y="462" text-anchor="middle" font-family="Cinzel,serif" font-size="10" letter-spacing="3" fill="#7d7160">TAP A PIECE</text>'+
+  '</svg>';
+}
+HOUSE_SECTIONS.armor=function(el){
+  armorCheck();
+  const earned=ARMOR.filter(a=>world.armor[a.id]).length;
+  el.innerHTML=
+   '<div class="panel" style="padding:10px"><div id="ar-svg">'+armorStandSVG()+'</div>'+
+   '<div id="ar-cap" class="small" style="text-align:center;min-height:40px;padding:6px 4px;font-style:italic">'+
+   (earned===6?'The whole armour of God. Stand therefore.':'Pieces earned: '+earned+' of 6 \u2014 \u201CPut on the whole armour of God.\u201D')+'</div></div>';
+  el.querySelectorAll('.piece').forEach(g=>{
+    g.style.cursor='pointer';
+    g.addEventListener('click',()=>{
+      const a=ARMOR.find(x=>x.id===g.dataset.p);
+      const e=world.armor[a.id], [v,t]=a.prog();
+      const pct=Math.min(100,Math.round(v/t*100));
+      $('#ar-cap').innerHTML='<b class="display" style="font-size:13px;color:'+(e?'var(--ember-hi)':'var(--parchment-dim)')+'">'+a.nm+'</b><br>'+
+       (e?'Earned '+shortDate(e)+' \u2014 it is yours.':esc(a.req)+' \u2014 '+Math.min(v,t).toLocaleString()+' / '+t.toLocaleString()+' ('+pct+'%)');
+    });
+  });
+};
+
+function trophyWallSVG(){
+  const earnedArr=DEEDS.map(d=>d[2]());
+  let planks='';
+  for(let i=0;i<6;i++) planks+='<rect y="'+(i*65)+'" width="430" height="65" fill="'+(i%2?'#221b11':'#261e13')+'"/>'+
+    '<line y1="'+(i*65)+'" y2="'+(i*65)+'" x1="0" x2="430" stroke="#15100a" stroke-width="2"/>'+
+    '<line y1="'+(i*65+30)+'" y2="'+(i*65+33)+'" x1="'+(40+i*60)+'" x2="'+(95+i*60)+'" stroke="#1a140c" stroke-width="1"/>';
+  /* the beast mount — center top, chained, empty */
+  let beast='<g><rect x="145" y="22" width="140" height="86" rx="6" fill="#1d1610" stroke="#3a2f20" stroke-width="2"/>'+
+   '<path d="M158 30 l-8 70 M272 30 l8 70" stroke="#3a2f20" stroke-width="3"/>'+
+   '<circle cx="215" cy="58" r="22" fill="none" stroke="#3a2f20" stroke-width="2" stroke-dasharray="4 4"/>'+
+   '<text x="215" y="124" text-anchor="middle" font-family="Cinzel,serif" font-size="9.5" letter-spacing="2.5" fill="#6b5638">RESERVED \u00B7 THE FIRST BEAST</text></g>';
+  let mounts='';
+  DEEDS.forEach((d,i)=>{
+    const col=i%4, row=Math.floor(i/4);
+    const x=58+col*105, y=178+row*68;
+    const e=earnedArr[i];
+    mounts+='<g class="mount" data-i="'+i+'" style="cursor:pointer">'+
+     '<rect x="'+(x-34)+'" y="'+(y-26)+'" width="68" height="56" rx="5" fill="'+(e?'#2a2113':'#1d1810')+'" stroke="'+(e?'#57441f':'#2b2317')+'"/>'+
+     '<circle cx="'+x+'" cy="'+(y-20)+'" r="2.4" fill="#3a2f20"/>'+
+     (e? '<path d="M'+(x-15)+' '+(y-12)+' l15 6 15 -6 v18 q0 13 -15 18 q-15 -5 -15 -18 Z" fill="url(#tu)" stroke="#E8B254" stroke-width="1.6" filter="url(#tg)"/>'+
+         '<path d="M'+x+' '+(y-2)+' l2.6 5.4 6 .8 -4.4 4.2 1.1 6 -5.3 -2.9 -5.3 2.9 1.1 -6 -4.4 -4.2 6 -.8 Z" fill="#3d2a0a"/>'
+       : '<path d="M'+(x-13)+' '+(y-10)+' l13 5 13 -5 v16 q0 11 -13 16 q-13 -5 -13 -16 Z" fill="none" stroke="#33291b" stroke-width="1.4" stroke-dasharray="3 3"/>')+
+     '</g>';
+  });
+  return '<svg viewBox="0 0 430 390" xmlns="http://www.w3.org/2000/svg">'+
+   '<defs><linearGradient id="tu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8B254"/><stop offset="1" stop-color="#9c6a1e"/></linearGradient>'+
+   '<filter id="tg"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'+
+   planks+beast+mounts+'</svg>';
+}
+HOUSE_SECTIONS.deeds=function(el){
+  const earned=DEEDS.filter(d=>d[2]()).length;
+  el.innerHTML='<div class="panel" style="padding:10px">'+trophyWallSVG()+
+   '<div id="tw-cap" class="small" style="text-align:center;min-height:40px;padding:6px 4px;font-style:italic">'+
+   earned+' of '+DEEDS.length+' deeds hang on the wall. Tap a mount.</div></div>';
+  el.querySelectorAll('.mount').forEach(g=>{
+    g.addEventListener('click',()=>{
+      const d=DEEDS[+g.dataset.i], e=d[2]();
+      $('#tw-cap').innerHTML='<b class="display" style="font-size:13px;color:'+(e?'var(--ember-hi)':'var(--parchment-dim)')+'">'+(e?'\u2605 ':'')+d[0]+'</b><br>'+esc(d[1])+(e?' \u2014 done.':' \u2014 not yet.');
+    });
+  });
+};
+
 </script>
 </body>
 </html>
