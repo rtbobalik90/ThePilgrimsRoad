@@ -358,6 +358,10 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 .tl .te.fall::before{background:var(--rust)}
 .tl .te .tw{font-size:15.5px}
 .tl .te .tdt{font-size:12.5px;color:var(--faint)}
+#scene-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+#scene-full .scene-inner{position:relative;width:100%}
+#scene-full .scene-inner img,#scene-full .scene-inner svg{display:block;width:100%;height:auto}
+.scene-back{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:41;background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.45);border-radius:8px;padding:7px 13px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;letter-spacing:.18em;font-size:12px;color:var(--ember-hi);text-transform:uppercase}
 #cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
 #cal-stage img{display:block;width:100%}
 #cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
@@ -2028,8 +2032,9 @@ function enterHouse(b){
 }
 
 /* full-screen pannable town (overrides the inline version) */
-function removeTownFull(){ const t=document.getElementById('town-full'); if(t)t.remove();
-  const tt=document.querySelectorAll('.town-title,.town-hint'); tt.forEach(x=>x.remove()); }
+function removeTownFull(){
+  ['town-full','scene-full'].forEach(id=>{const t=document.getElementById(id); if(t)t.remove();});
+  document.querySelectorAll('.town-title,.town-hint,.scene-back').forEach(x=>x.remove()); }
 function renderTown(){
   removeTownFull();
   $('#keep-main').style.display='none'; $('#interior').style.display='none';
@@ -2163,12 +2168,12 @@ function houseSceneSVG(){
   '</svg>';
 }
 const HOUSE_SPOTS=[
- {id:'mantle',  x:50, y:36, lbl:'The Portraits'},
- {id:'mirror',  x:14, y:34, lbl:'The Mirror'},
- {id:'armor',   x:14, y:66, lbl:'The Armor Stand'},
- {id:'deeds',   x:84, y:40, lbl:'The Trophy Wall'},
- {id:'desk',    x:82, y:72, lbl:'The Record'},
- {id:'banner',  x:75, y:13, lbl:'The Banner'}
+ {id:'mantle',  x:51, y:31, lbl:'The Portraits'},
+ {id:'mirror',  x:9,  y:44, lbl:'The Mirror'},
+ {id:'armor',   x:16, y:64, lbl:'The Armor Stand'},
+ {id:'deeds',   x:84, y:42, lbl:'The Trophy Wall'},
+ {id:'desk',    x:76, y:69, lbl:'The Record'},
+ {id:'banner',  x:86, y:29, lbl:'The Banner'}
 ];
 
 /* sections */
@@ -2243,33 +2248,45 @@ const HOUSE_SECTIONS={
  }
 };
 
-/* the house, rebuilt as a scene */
+/* the house: full-screen scene, full-page sections */
+const HOUSE_LBL={mantle:'The Portraits',mirror:'The Mirror',armor:'The Armor Stand',deeds:'The Trophy Wall',desk:'The Record',banner:'The Banner'};
 function enterHouse(b){
-  $('#keep-main').style.display='none';
-  const el=$('#interior'); el.style.display='block';
-  el.innerHTML='<button class="back" id="int-back">\u2190 The town</button>'+
-   '<div class="flex" style="margin-top:6px"><span style="width:30px;height:30px;color:var(--ember)">'+bcardIcon('house')+'</span>'+
-   '<div><h1 class="display" style="font-size:21px">'+b.name+'</h1><div class="eyebrow">'+esc(charOf().motto)+'</div></div></div>'+
-   '<div id="scene"></div>'+
-   '<div id="house-body"><p class="small" style="margin-top:12px;font-style:italic">Tap something in the room \u2014 the portraits over the fire, the mirror, the armor stand, the trophy wall, the desk, the banner.</p></div>';
-  const sc=$('#scene');
-  sc.innerHTML=houseSceneSVG();
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML=houseSceneSVG();
   addSpots();
   const img=new Image();
-  img.onload=()=>{ sc.innerHTML=''; sc.appendChild(img); addSpots(); };
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); };
   img.src='art/house_scene.webp';
   function addSpots(){
     HOUSE_SPOTS.forEach(h=>{
       const btn=document.createElement('button'); btn.className='pin';
       btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
       btn.innerHTML='<span class="ring"></span><span class="dot" style="background:'+charOf().color+'"></span><span class="lbl">'+h.lbl+'</span>';
-      btn.onclick=()=>{ HOUSE_SECTIONS[h.id]($('#house-body'));
-        if($('#house-body').scrollIntoView) $('#house-body').scrollIntoView({behavior:'smooth',block:'start'}); };
-      sc.appendChild(btn);
+      btn.onclick=()=>openHouseSection(h.id);
+      inner.appendChild(btn);
     });
   }
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=renderKeep;
+  document.body.appendChild(back);
   armorCheck();
-  $('#int-back').onclick=renderKeep;
+}
+function openHouseSection(id){
+  removeTownFull();
+  $('#keep-main').style.display='none';
+  const el=$('#interior'); el.style.display='block';
+  el.innerHTML='<button class="back" id="int-back">\u2190 The House</button>'+
+   '<div class="flex" style="margin-top:6px"><span style="width:30px;height:30px;color:var(--ember)">'+bcardIcon('house')+'</span>'+
+   '<div><h1 class="display" style="font-size:21px">'+HOUSE_LBL[id]+'</h1><div class="eyebrow">The Pilgrim\u2019s House</div></div></div>'+
+   '<div id="house-body"></div>';
+  $('#int-back').onclick=()=>enterHouse(BUILDINGS.find(x=>x.id==='house'));
+  HOUSE_SECTIONS[id]($('#house-body'));
   window.scrollTo({top:0});
 }
 
