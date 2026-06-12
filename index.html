@@ -325,6 +325,11 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
   background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.5);border-radius:5px;padding:2px 7px;white-space:nowrap;
   text-shadow:0 1px 2px #000;
 }
+#town-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+#town-full .town-inner{position:relative;height:100%;width:max-content}
+#town-full .town-inner img{height:100%;width:auto;display:block}
+.town-title{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:41;background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.45);border-radius:8px;padding:7px 13px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;letter-spacing:.22em;font-size:12px;color:var(--ember-hi);text-transform:uppercase}
+.town-hint{position:fixed;right:14px;top:calc(12px + env(safe-area-inset-top));z-index:41;background:rgba(14,11,7,.6);border:1px solid var(--edge);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--faint);font-style:italic}
 #cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
 #cal-stage img{display:block;width:100%}
 #cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
@@ -459,7 +464,6 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
       </div>
     </div>
     <div class="bgrid" id="bgrid"></div>
-    <button class="btn ghost block" id="char-open" style="margin-top:14px">Character sheet</button>
   </div>
   <div id="interior" style="display:none"></div>
   <div style="height:10px"></div>
@@ -1096,6 +1100,7 @@ function finishRestore(){
 
 /* ---------- onboarding / settings / nav ---------- */
 function show(v){
+  if(typeof removeTownFull==='function') removeTownFull();
   $$('.view').forEach(x=>x.classList.remove('on'));
   $('#v-'+v).classList.add('on');
   $$('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
@@ -1535,7 +1540,7 @@ function buildForge(colSel,embSel,curCol,curEmb,onPick){
     e.innerHTML=embSVG(id,28); e.onclick=()=>{curEmb=id;onPick(curCol,curEmb);ew.querySelectorAll('.emb').forEach(x=>x.classList.remove('on'));e.classList.add('on');};
     ew.appendChild(e);});
 }
-$('#char-open').onclick=openChar;
+if($('#char-open')) $('#char-open').onclick=openChar;
 $('#char-close').onclick=()=>$('#m-char').classList.remove('on');
 
 /* ---------- the steward ---------- */
@@ -1816,7 +1821,9 @@ async function askNPC(id,text){
 
 /* ---------- enterBuilding, rebuilt with dialogue ---------- */
 function enterBuilding(id){
+  removeTownFull();
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
+  if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
   const el=$('#interior'); el.style.display='block';
   el.innerHTML='<button class="back" id="int-back">\u2190 The town</button>'+
@@ -1936,6 +1943,94 @@ $('#cal-close').onclick=()=>$('#m-cal').classList.remove('on');
 $('#cal-skip').onclick=()=>{ if(calQueue.length){ pins[calQueue[0]]=null; Store.set('pins',pins); calQueue.shift(); calNext(); } };
 $('#cal-redo').onclick=()=>{ const last=calDone.pop(); if(last){ delete pins[last]; Store.set('pins',pins); calQueue.unshift(last);
   const ds=$('#cal-stage').querySelectorAll('.cal-dot'); if(ds.length) ds[ds.length-1].remove(); calNext(); } };
+
+
+/* ============================================================
+   PHASE 4 — FULL-SCREEN TOWN + THE PILGRIM'S HOUSE
+   ============================================================ */
+BICON.house='<path d="M5 21V11l7-6 7 6v10M5 21h14M10 21v-6h4v6M12 5V3M12 3h4v2h-4"/>';
+DEFAULT_PINS.house={x:63,y:12};
+BUILDINGS.push({id:'house',name:'The Pilgrim\u2019s House',pillar:null,
+ desc:'Your own hearth inside the walls. The banner, the titles, the record of who you are becoming \u2014 it all hangs here.',
+ status:()=>{const li=levelInfo(state.xp);return 'Level '+li.n+' \u00B7 '+li.title;}});
+
+/* character sheet rendered anywhere */
+function renderCharBody(host,onSaved){
+  const c=charOf(), p=state.pillars||{};
+  const bars=Object.keys(PILLARS).map(k=>{
+    const xp=p[k]||0, rank=Math.min(10,Math.floor(xp/100)+(xp>0?1:0)), pct=Math.min(100,(xp%100)||(xp>=1000?100:0));
+    return '<div class="statbar"><div class="between"><span class="k">'+PILLARS[k]+'</span><small>Rank '+rank+' \u00B7 '+xp+' XP</small></div>'+
+    '<div class="track"><div class="f" style="width:'+(rank>=10?100:pct)+'%"></div></div></div>';}).join('');
+  const li=levelInfo(state.xp);
+  host.innerHTML=
+   '<div class="flex" style="margin:14px 0">'+
+    '<div class="lvl-badge" style="border-color:'+c.color+'">'+embSVG(c.emblem,26,c.color)+'</div>'+
+    '<div><div class="display" style="font-size:17px;font-weight:700">'+esc(profile.name)+'</div>'+
+    '<div class="small">Level '+li.n+' \u00B7 '+li.title+' \u00B7 <i>\u201C'+esc(c.motto)+'\u201D</i></div></div></div>'+
+   bars+
+   '<hr class="rule"><h2 class="display">Reforge the Banner</h2>'+
+   '<div class="swatches cb-colors"></div><div class="emblems cb-emblems"></div>'+
+   '<input type="text" class="cb-motto" value="'+esc(c.motto)+'">'+
+   '<button class="btn block cb-save" style="margin-top:10px">Save banner</button>';
+  let cc=c.color, ce=c.emblem;
+  const cw=host.querySelector('.cb-colors'), ew=host.querySelector('.cb-emblems');
+  COLORS.forEach(([hex])=>{const sb=document.createElement('button');sb.className='swatch'+(hex===cc?' on':'');
+    sb.style.background=hex;sb.onclick=()=>{cc=hex;cw.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));sb.classList.add('on');};cw.appendChild(sb);});
+  Object.keys(EMBLEMS).forEach(eid=>{const eb=document.createElement('button');eb.className='emb'+(eid===ce?' on':'');
+    eb.innerHTML=embSVG(eid,28);eb.onclick=()=>{ce=eid;ew.querySelectorAll('.emb').forEach(x=>x.classList.remove('on'));eb.classList.add('on');};ew.appendChild(eb);});
+  host.querySelector('.cb-save').onclick=()=>{
+    profile.character={color:cc,emblem:ce,motto:host.querySelector('.cb-motto').value.trim()||'Rise again'};
+    Store.set('profile',profile); toast('The banner flies','Reforged'); if(onSaved)onSaved();
+  };
+}
+function enterHouse(b){
+  $('#keep-main').style.display='none';
+  const el=$('#interior'); el.style.display='block';
+  el.innerHTML='<button class="back" id="int-back">\u2190 The town</button>'+
+   '<div class="flex" style="margin-top:6px"><span style="width:30px;height:30px;color:var(--ember)">'+bcardIcon('house')+'</span>'+
+   '<div><h1 class="display" style="font-size:21px">'+b.name+'</h1><div class="eyebrow">The Pilgrim</div></div></div>'+
+   '<p class="small" style="margin:10px 0 4px">'+b.desc+'</p>'+
+   '<img id="dlg-backdrop" alt="">'+
+   '<div class="panel" id="house-body"></div>';
+  const bd=$('#dlg-backdrop'); bd.onload=()=>bd.style.display='block'; bd.onerror=()=>bd.style.display='none';
+  bd.src='art/b_house.webp';
+  $('#int-back').onclick=renderKeep;
+  renderCharBody($('#house-body'),()=>enterHouse(b));
+  window.scrollTo({top:0});
+}
+
+/* full-screen pannable town (overrides the inline version) */
+function removeTownFull(){ const t=document.getElementById('town-full'); if(t)t.remove();
+  const tt=document.querySelectorAll('.town-title,.town-hint'); tt.forEach(x=>x.remove()); }
+function renderTown(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='town-full';
+  o.innerHTML='<div class="town-inner"><img src="art/town.webp" alt="The town"></div>';
+  document.body.appendChild(o);
+  const title=document.createElement('div'); title.className='town-title'; title.textContent='The Keep';
+  document.body.appendChild(title);
+  const hint=document.createElement('div'); hint.className='town-hint'; hint.textContent='drag to roam';
+  document.body.appendChild(hint);
+  setTimeout(()=>hint.remove(),4000);
+  const inner=o.querySelector('.town-inner');
+  BUILDINGS.forEach(b=>{
+    const p=pins[b.id]||DEFAULT_PINS[b.id]; if(!p) return;
+    const btn=document.createElement('button'); btn.className='pin';
+    btn.style.left=p.x+'%'; btn.style.top=p.y+'%';
+    btn.innerHTML='<span class="ring"></span><span class="dot" style="background:'+charOf().color+'"></span><span class="lbl">'+b.name.replace('The ','')+'</span>';
+    btn.onclick=()=>enterBuilding(b.id);
+    inner.appendChild(btn);
+  });
+  const gate=document.createElement('button'); gate.className='pin';
+  gate.style.left=GATE_PIN.x+'%'; gate.style.top=GATE_PIN.y+'%';
+  gate.innerHTML='<span class="ring"></span><span class="dot" style="background:var(--ember-hi)"></span><span class="lbl">The Gate \u00B7 Steward</span>';
+  gate.onclick=openSteward;
+  inner.appendChild(gate);
+  const img=o.querySelector('img');
+  const center=()=>{ o.scrollLeft=Math.max(0, inner.scrollWidth*(GATE_PIN.x/100) - o.clientWidth/2); };
+  if(img.complete) center(); else img.onload=center;
+}
 
 </script>
 </body>
