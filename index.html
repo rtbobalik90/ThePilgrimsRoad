@@ -1949,6 +1949,7 @@ function enterBuilding(id){
   removeTownFull();
   if(id==='chapel'){ enterChapel(); return; }
   if(id==='watchtower'){ enterWatchtower(); return; }
+  if(id==='hall'){ enterHall(); return; }
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
   if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
@@ -3919,6 +3920,215 @@ function sectionThreadDigest(keeperId){
   const seen=[];
   Object.keys(labels).forEach(t=>{ const h=world.chats[t]; if(h&&h.length){ const last=[...h].reverse().find(m=>m.role==='user'); if(last) seen.push(labels[t]+' (last: \u201C'+last.content.slice(0,40)+(last.content.length>40?'\u2026':'')+'\u201D)'); } });
   return seen.length?(' Recently in other rooms he has talked with you about: '+seen.join('; ')+'. You may gently reference these if relevant.'):'';
+}
+
+
+
+/* ============================================================
+   THE GREAT HALL (Elder Tomas / Marriage + Fatherhood)
+   ============================================================ */
+const HALL_PINS=[
+ {id:'lizzie',     x:50, y:22, lbl:'The Door'},
+ {id:'daughters',  x:84, y:27, lbl:'The Daughters'},
+ {id:'marriage',   x:16, y:30, lbl:'The Hearth'},
+ {id:'letters',    x:82, y:47, lbl:'Letters'},
+ {id:'tomas',      x:46, y:46, lbl:'Elder Tomas'},
+ {id:'days',       x:16, y:74, lbl:'Daddy-Daughter Days'},
+ {id:'guide',      x:72, y:74, lbl:'Family Bible'}
+];
+const HALL_LBL={marriage:'The Hearth',lizzie:'Her Door',daughters:'The Daughters',letters:'Letters',days:'Daddy-Daughter Days',guide:'The Family Bible',tomas:'Elder Tomas'};
+const HALL_SCENE={marriage:'b_hall_marriage',lizzie:'b_hall_lizzie',daughters:'b_hall_daughters',letters:'b_hall_letters',days:'b_hall_days',guide:'b_hall_guide'};
+const HALL_TOPIC={marriage:'tending your marriage',letters:'writing letters to those you love',days:'time with your daughters',guide:'leading your family spiritually',daughters:'raising your daughters'};
+
+/* Keeper registration for the shared chat engines */
+KEEPERS.tomas={name:'Elder Tomas',art:'npc_hall',sys:(t)=>TOMAS_SYS(t)};
+VN_KEEPERS.tomas={name:'Elder Tomas',portrait:'art/npc_hall.webp',topic:'your marriage and your children \u2014 the people you love most'};
+
+function TOMAS_SYS(topic){
+  const d=DAUGHTERS.map(g=>g.name+' ('+g.age+')').join(', ');
+  return 'You are Elder Tomas, the keeper of the Great Hall in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'You are a warm, wise grandfatherly mentor who loved one woman his whole life and raised good children. You disciple the pilgrim in marriage and fatherhood. '+
+    'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. Speak warmly, briefly (2-5 sentences), like a seasoned elder who has walked this road. '+
+    'The pilgrim is '+(profile.name||'a father')+', father to '+d+'. He is separated/divorced from his wife Lizzie and longs, prayerfully, for reconciliation \u2014 hold this tenderly, never glibly; point him to becoming the man God calls him to be, to patience, repentance, and hope, never to manipulation or despair. '+
+    'Current focus: '+topic+'. '+keeperState({topic})+' Never invent facts you were not given.';
+}
+
+const DAUGHTERS=[
+ {id:'naomi',    name:'Naomi',    age:8, art:'npc_naomi'},
+ {id:'zipporah', name:'Zipporah', age:6, art:'npc_zipporah'},
+ {id:'grace',    name:'Grace',    age:4, art:'npc_grace'}
+];
+
+function enterHall(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML='<div style="height:100%;width:100%;background:linear-gradient(#1a140e,#0c0905);display:flex;align-items:center;justify-content:center;color:var(--parchment-dim)">The Great Hall</div>';
+  fitScene(o);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
+  img.onerror=()=>{ addSpots(); };
+  img.src='art/b_hall_room.webp';
+  function addSpots(){
+    o.querySelectorAll('.pin').forEach(p=>p.remove());
+    HALL_PINS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#C98A2E"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=> h.id==='tomas' ? openVNChat('tomas') : (h.id==='lizzie' ? openLizzieDoor() : (h.id==='daughters' ? openDaughters() : openHallStation(h.id)));
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=()=>{ document.querySelectorAll('.pin-gear,.place-banner').forEach(e=>e.remove()); o.remove(); back.remove(); document.querySelector('#nav button[data-v=keep]').click(); };
+  document.body.appendChild(back);
+  const t=document.createElement('div'); t.className='town-title'; t.textContent='The Great Hall';
+  document.body.appendChild(t);
+  const savedHP=Store.get('pins_hall'); if(savedHP) HALL_PINS.forEach(p=>{ if(savedHP[p.id]){ p.x=savedHP[p.id].x; p.y=savedHP[p.id].y; } });
+  attachPinGear({overlayId:'scene-full',pins:HALL_PINS,
+    getXY:p=>({x:p.x,y:p.y}), setXY:(p,x,y)=>{p.x=x;p.y=y;},
+    onDone:()=>{ const m={}; HALL_PINS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_hall',m); enterHall(); }});
+}
+
+function hallTomasHeader(stationId){
+  return '<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/'+HALL_SCENE[stationId]+'.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+   '<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:10px">'+
+   '<img src="art/npc_hall.webp" style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+   '<div><div class="display" style="font-size:15px;color:var(--ember-hi)">Elder Tomas</div><div class="eyebrow">The Hall-Keeper</div></div></div>';
+}
+function openHallStation(id){
+  openFullPage({title:HALL_LBL[id],sub:'The Great Hall',backLabel:'The Great Hall',onBack:()=>enterHall(),
+    render:host=>{ host.innerHTML=hallTomasHeader(id)+'<div id="hs-chat"></div><div id="hs-body" style="margin-top:12px"></div>';
+      mountKeeperChat({mountId:'hs-chat',keeperId:'tomas',threadId:'tomas_'+id,topic:HALL_TOPIC[id]||'family'});
+      (HALL_STATIONS[id]||(()=>{}))($('#hs-body')); }});
+}
+const HALL_STATIONS={};
+
+
+/* ---- The Daughters: pick a girl ---- */
+function openDaughters(){
+  openFullPage({title:'The Daughters',sub:'The Great Hall',backLabel:'The Great Hall',onBack:()=>enterHall(),
+    render:host=>{ host.innerHTML='<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/b_hall_daughters.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+      '<p class="small" style="margin-bottom:12px">Your girls. Tap one to step into her world \u2014 what she needs, what you\u2019re praying, what you\u2019re building in her.</p>'+
+      '<div class="grid3">'+DAUGHTERS.map(g=>'<button class="btn" data-girl="'+g.id+'" style="display:flex;flex-direction:column;gap:6px;padding:10px;height:auto">'+
+        '<img src="art/'+g.art+'.webp" style="width:100%;border-radius:10px;aspect-ratio:1;object-fit:cover" onerror="this.style.display=\'none\'">'+
+        '<span style="color:var(--ember-hi);font-weight:600">'+g.name+'</span><small>age '+g.age+'</small></button>').join('')+'</div>';
+      host.querySelectorAll('[data-girl]').forEach(b=>b.onclick=()=>openDaughterPage(b.dataset.girl)); }});
+}
+
+/* ---- A single daughter's page + Tomas thread about her ---- */
+function openDaughterPage(gid){
+  const g=DAUGHTERS.find(x=>x.id===gid); if(!g) return;
+  world.kids=world.kids||{}; world.kids[gid]=world.kids[gid]||{prayers:[],notes:[],guide:[],dates:[]};
+  const K=world.kids[gid];
+  openFullPage({title:g.name,sub:'age '+g.age,backLabel:'The Daughters',onBack:()=>openDaughters(),
+    render:host=>{
+      host.innerHTML=
+       '<div class="flex" style="gap:12px;align-items:center;margin-bottom:12px">'+
+        '<img src="art/'+g.art+'.webp" style="width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+        '<div><div class="display" style="font-size:20px;color:var(--ember-hi)">'+g.name+'</div><div class="eyebrow">your daughter \u00B7 age '+g.age+'</div></div></div>'+
+       '<div id="kid-chat"></div>'+
+       '<div class="panel" style="margin-top:12px"><div class="eyebrow">Praying for '+g.name+' ('+K.prayers.length+')</div><div id="kid-pray">'+
+        (K.prayers.length?K.prayers.map((p,i)=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(p.text)+'</span><button class="mini-btn" data-pray="'+i+'">\u00D7</button></div>').join(''):'<small>What do you carry to God for her?</small>')+
+        '</div>'+addRowUI('A prayer for '+g.name+'\u2026','Lift it')+'</div>'+
+       '<div class="panel"><div class="eyebrow">Field guide \u2014 who she is</div><div id="kid-guide">'+
+        (K.guide.length?K.guide.map((p,i)=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(p)+'</span><button class="mini-btn" data-guide="'+i+'">\u00D7</button></div>').join(''):'<small>What makes her her? What she loves, fears, needs.</small>')+
+        '</div>'+addRowUI('Something true about '+g.name+'\u2026','Note it')+'</div>'+
+       '<div class="panel"><div class="eyebrow">Days together ('+K.dates.length+')</div><div id="kid-dates">'+
+        (K.dates.length?K.dates.slice(0,8).map(dd=>'<div style="padding:5px 0"><b>'+esc(dd.what)+'</b> <small>'+shortDate(dd.at)+'</small></div>').join(''):'<small>Log your daddy-daughter days.</small>')+
+        '</div>'+addRowUI('A day or moment with her\u2026','Remember')+'</div>';
+      mountKeeperChat({mountId:'kid-chat',keeperId:'tomas',threadId:'tomas_kid_'+gid,topic:'raising your daughter '+g.name+' (age '+g.age+')'});
+      const panels=host.querySelectorAll('.panel');
+      wireAdd(panels[0],v=>{ K.prayers.unshift({text:v,at:nowISO()}); addXP(5,'Prayed for '+g.name,'family'); saveWorld(); openDaughterPage(gid); });
+      wireAdd(panels[1],v=>{ K.guide.unshift(v); saveWorld(); openDaughterPage(gid); });
+      wireAdd(panels[2],v=>{ K.dates.unshift({what:v,at:nowISO()}); addXP(5,'A day with '+g.name,'family'); saveWorld(); openDaughterPage(gid); });
+      host.querySelectorAll('[data-pray]').forEach(b=>b.onclick=()=>{ K.prayers.splice(+b.dataset.pray,1); saveWorld(); openDaughterPage(gid); });
+      host.querySelectorAll('[data-guide]').forEach(b=>b.onclick=()=>{ K.guide.splice(+b.dataset.guide,1); saveWorld(); openDaughterPage(gid); });
+    }});
+}
+
+/* ---- The Door: the Lizzie section (held with hope) ---- */
+function openLizzieDoor(){
+  world.lizzie=world.lizzie||{growth:[],memories:[],prayers:[],letters:[]};
+  const L=world.lizzie;
+  openFullPage({title:'Her Door',sub:'The Great Hall',backLabel:'The Great Hall',onBack:()=>enterHall(),
+    render:host=>{
+      host.innerHTML=
+       '<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/b_hall_lizzie.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+       '<p class="scripture" style="text-align:center;margin-bottom:12px">A door held open in hope. Not a scoreboard \u2014 a place to become, to remember, and to pray.</p>'+
+       '<div id="liz-chat"></div>'+
+       '<div class="panel" style="margin-top:12px"><div class="eyebrow">Becoming the man she needs</div><div id="liz-growth">'+
+        (L.growth.length?L.growth.map((p,i)=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(p)+'</span><button class="mini-btn" data-g="'+i+'">\u00D7</button></div>').join(''):'<small>The work in you \u2014 what you\u2019re changing, by grace.</small>')+
+        '</div>'+addRowUI('A way I\u2019m growing\u2026','Set it')+'</div>'+
+       '<div class="panel"><div class="eyebrow">What I treasure about her</div><div id="liz-mem">'+
+        (L.memories.length?L.memories.map((p,i)=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(p)+'</span><button class="mini-btn" data-m="'+i+'">\u00D7</button></div>').join(''):'<small>Memories, gratitude, what you love about Lizzie.</small>')+
+        '</div>'+addRowUI('Something I treasure\u2026','Keep it')+'</div>'+
+       '<div class="panel"><div class="eyebrow">Prayers for her & for us ('+L.prayers.length+')</div><div id="liz-pray">'+
+        (L.prayers.length?L.prayers.map((p,i)=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(p.text)+'</span><button class="mini-btn" data-p="'+i+'">\u00D7</button></div>').join(''):'<small>Lift her up. Lift up what you hope for.</small>')+
+        '</div>'+addRowUI('A prayer\u2026','Lift it')+'</div>'+
+       '<div class="panel"><div class="eyebrow">Sealed letters ('+L.letters.length+')</div>'+
+        '<p class="small">Words for her \u2014 kept here until the day they\u2019re ready.</p>'+
+        '<div id="liz-letters">'+(L.letters.length?L.letters.map((lt,i)=>'<div style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><div>'+esc(lt.text.slice(0,80))+(lt.text.length>80?'\u2026':'')+'</div><small>sealed '+shortDate(lt.at)+'</small></div>').join(''):'')+'</div>'+
+        '<textarea id="liz-letter" placeholder="Write to her\u2026" style="min-height:80px;margin:8px 0"></textarea>'+
+        '<button class="btn primary block" id="liz-seal">Seal this letter</button></div>';
+      mountKeeperChat({mountId:'liz-chat',keeperId:'tomas',threadId:'tomas_lizzie',topic:'your marriage to Lizzie and your hope, prayerfully, for reconciliation'});
+      const panels=host.querySelectorAll('.panel');
+      wireAdd(panels[0],v=>{ L.growth.unshift(v); addXP(5,'Growth toward Lizzie','heart'); saveWorld(); openLizzieDoor(); });
+      wireAdd(panels[1],v=>{ L.memories.unshift(v); saveWorld(); openLizzieDoor(); });
+      wireAdd(panels[2],v=>{ L.prayers.unshift({text:v,at:nowISO()}); addXP(5,'Prayed for Lizzie','heart'); saveWorld(); openLizzieDoor(); });
+      host.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{ L.growth.splice(+b.dataset.g,1); saveWorld(); openLizzieDoor(); });
+      host.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ L.memories.splice(+b.dataset.m,1); saveWorld(); openLizzieDoor(); });
+      host.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{ L.prayers.splice(+b.dataset.p,1); saveWorld(); openLizzieDoor(); });
+      host.querySelector('#liz-seal').onclick=()=>{ const t=host.querySelector('#liz-letter').value.trim(); if(!t)return; L.letters.unshift({text:t,at:nowISO()}); addXP(5,'Sealed a letter for Lizzie','heart'); saveWorld(); openLizzieDoor(); };
+    }});
+}
+
+/* ---- Station tools (marriage, letters, days, guide) ---- */
+HALL_STATIONS.marriage=function(host){ world.marriage=world.marriage||{moments:[],work:[]};
+  const M=world.marriage;
+  host.innerHTML='<div class="panel"><div class="eyebrow">The work of love</div><div id="mar-work">'+
+    (M.work.length?M.work.map((p,i)=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(p)+'</span><button class="mini-btn" data-w="'+i+'">\u00D7</button></div>').join(''):'<small>What are you tending in your marriage?</small>')+
+    '</div>'+addRowUI('A way to love her well\u2026','Add')+'</div>';
+  wireAdd(host.querySelector('.panel'),v=>{ M.work.unshift(v); saveWorld(); openHallStation('marriage'); });
+  host.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{ M.work.splice(+b.dataset.w,1); saveWorld(); openHallStation('marriage'); });
+};
+HALL_STATIONS.letters=function(host){ world.famletters=world.famletters||[];
+  host.innerHTML='<div class="panel"><div class="eyebrow">Letters to your people ('+world.famletters.length+')</div>'+
+    '<div id="fl-list">'+(world.famletters.length?world.famletters.map(l=>'<div style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><b style="color:var(--ember-hi)">To '+esc(l.to)+'</b><div>'+esc(l.text.slice(0,80))+(l.text.length>80?'\u2026':'')+'</div><small>'+shortDate(l.at)+'</small></div>').join(''):'<small>Write to your wife or your girls.</small>')+'</div>'+
+    '<input id="fl-to" placeholder="To whom?" style="margin:8px 0 6px"><textarea id="fl-text" placeholder="Your letter\u2026" style="min-height:80px;margin-bottom:8px"></textarea>'+
+    '<button class="btn primary block" id="fl-seal">Seal it</button></div>';
+  host.querySelector('#fl-seal').onclick=()=>{ const to=host.querySelector('#fl-to').value.trim(), text=host.querySelector('#fl-text').value.trim(); if(!to||!text)return; world.famletters.unshift({to,text,at:nowISO()}); addXP(5,'Sealed a letter','family'); saveWorld(); openHallStation('letters'); };
+};
+HALL_STATIONS.days=function(host){ world.ddays=world.ddays||[];
+  host.innerHTML='<div class="panel"><div class="eyebrow">Daddy-daughter days ('+world.ddays.length+')</div><div id="dd-list">'+
+    (world.ddays.length?world.ddays.slice(0,12).map(d=>'<div style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><b>'+esc(d.who)+'</b> \u2014 '+esc(d.what)+' <small>'+shortDate(d.at)+'</small></div>').join(''):'<small>Plan and remember days with your girls.</small>')+
+    '</div><input id="dd-who" placeholder="With whom?" style="margin:8px 0 6px"><div class="flex"><input id="dd-what" placeholder="What you did / will do\u2026" style="flex:1"><button class="btn primary" id="dd-add">Add</button></div></div>';
+  host.querySelector('#dd-add').onclick=()=>{ const who=host.querySelector('#dd-who').value.trim(), what=host.querySelector('#dd-what').value.trim(); if(!what)return; world.ddays.unshift({who,what,at:nowISO()}); addXP(5,'A day with the girls','family'); saveWorld(); openHallStation('days'); };
+};
+HALL_STATIONS.guide=function(host){
+  host.innerHTML='<div class="panel"><div class="eyebrow">Leading them in the Word</div>'+
+    '<p class="small">Ask Elder Tomas to prepare a simple family devotion for tonight \u2014 something the girls can hold onto.</p>'+
+    '<button class="btn primary block" id="fam-dev">Prepare a family devotion</button><div id="fam-dev-out"></div></div>';
+  host.querySelector('#fam-dev').onclick=()=>familyDevotion(host.querySelector('#fam-dev-out'));
+};
+async function familyDevotion(out){ if(!out) return; const key=Store.get('secret_anthropic');
+  if(!key){ out.innerHTML='<p class="small" style="margin-top:8px">Add your Anthropic API key under Pack \u2192 Mentor Key.</p>'; return; }
+  out.innerHTML='<p class="small" style="opacity:.6;margin-top:8px">Tomas is preparing it\u2026</p>';
+  try{
+    const sys='You are Elder Tomas preparing a SHORT family devotion for a father to lead with daughters ages 8, 6, and 4. Respond ONLY with JSON: {"verse":"ref + short text","idea":"one plain sentence","question":"one simple question for little ones","prayer":"one short prayer"}. No markdown.';
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:sys,messages:[{role:'user',content:'Tonight\u2019s devotion'}]})});
+    if(!res.ok) throw new Error('API '+res.status); const o=JSON.parse((await res.json()).content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim());
+    out.innerHTML='<div class="panel sacred" style="margin-top:10px"><div class="eyebrow">Verse</div><p class="scripture">'+esc(o.verse)+'</p>'+
+      '<div class="eyebrow" style="margin-top:8px">The idea</div><p class="small">'+esc(o.idea)+'</p>'+
+      '<div class="eyebrow" style="margin-top:8px">Ask them</div><p class="small">'+esc(o.question)+'</p>'+
+      '<div class="eyebrow" style="margin-top:8px">Pray</div><p class="scripture" style="font-size:15px">'+esc(o.prayer)+'</p></div>';
+    addXP(5,'Led a family devotion','family');
+  }catch(err){ out.innerHTML='<p class="small" style="margin-top:8px">Could not prepare it ('+err.message+').</p>'; }
 }
 
 </script>
