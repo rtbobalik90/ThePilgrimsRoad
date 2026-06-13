@@ -380,6 +380,16 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 .ink .ie{margin-bottom:2.5%;font-size:inherit}
 .ink .ie .id8{font-size:.78em;opacity:.75;font-style:normal;letter-spacing:.04em}
 .ink .ie.fall{color:#6b2f1d}
+/* camp weather fx */
+@keyframes rainfall{from{transform:translateY(-80px)}to{transform:translateY(80px)}}
+@keyframes snowfall{from{transform:translateY(-60px) translateX(0)}to{transform:translateY(620px) translateX(30px)}}
+@keyframes flash{0%,92%,96%{opacity:0}93%,95%{opacity:.55}}
+@keyframes flick{0%,100%{opacity:.92}50%{opacity:1}}
+.wx-rain{animation:rainfall .55s linear infinite}
+.wx-rain2{animation:rainfall .42s linear infinite}
+.wx-flash{animation:flash 7s linear infinite}
+.fire-glow{animation:flick 1.6s ease-in-out infinite}
+.wx-chip{position:fixed;right:14px;top:calc(12px + env(safe-area-inset-top));z-index:41;background:rgba(14,11,7,.78);border:1px solid var(--edge);border-radius:8px;padding:7px 12px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.14em;color:var(--parchment-dim)}
 #cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
 #cal-stage img{display:block;width:100%}
 #cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
@@ -1154,7 +1164,7 @@ function show(v){
   $$('.view').forEach(x=>x.classList.remove('on'));
   $('#v-'+v).classList.add('on');
   $$('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
-  if(v==='camp') renderCamp();
+  if(v==='camp'){ if(typeof renderCampScene==='function') renderCampScene(); else renderCamp(); }
   if(v==='keep') renderKeep();
   if(v==='road') renderRoad();
   if(v==='vow') renderVow();
@@ -2051,7 +2061,7 @@ function enterHouse(b){
 
 /* full-screen pannable town (overrides the inline version) */
 function removeTownFull(){
-  ['town-full','scene-full','page-full'].forEach(id=>{const t=document.getElementById(id); if(t)t.remove();});
+  ['town-full','scene-full','page-full','camp-full'].forEach(id=>{const t=document.getElementById(id); if(t)t.remove();});
   document.querySelectorAll('.town-title,.town-hint,.scene-back').forEach(x=>x.remove()); }
 function renderTown(){
   removeTownFull();
@@ -2613,6 +2623,242 @@ HOUSE_SECTIONS.desk=function(el){
   base.src='art/record_base.webp';
   DESK_FALLBACK(el);
 };
+
+
+/* ============================================================
+   PHASE 9 — BASE CAMP: LIVING SKY, REAL WEATHER, THE FIRE
+   ============================================================ */
+const CAMP_SPOTS=[
+ {id:'fire',  x:50, y:72, lbl:'The Fire \u00B7 Anchors'},
+ {id:'tent',  x:17, y:55, lbl:'The Tent \u00B7 Evening'},
+ {id:'book',  x:76, y:78, lbl:'The Book \u00B7 Verse'},
+ {id:'standard', x:86, y:46, lbl:'The Standard'},
+ {id:'signpost', x:12, y:80, lbl:'The Signpost'}
+];
+
+/* ---------- weather (open-meteo, no key) ---------- */
+function wxKind(code){
+ if(code===0||code===1) return 'clear';
+ if(code===2) return 'clouds';
+ if(code===3) return 'overcast';
+ if(code>=45&&code<=48) return 'fog';
+ if((code>=51&&code<=67)||(code>=80&&code<=82)) return 'rain';
+ if((code>=71&&code<=77)||code===85||code===86) return 'snow';
+ if(code>=95) return 'storm';
+ return 'clear';
+}
+async function fetchWeather(){
+  const cached=Store.get('wx');
+  if(cached && Date.now()-cached.at<30*60*1000) return cached;
+  let loc=Store.get('wx_loc');
+  if(!loc){
+    try{
+      const pos=await new Promise((res,rej)=>{ if(!navigator.geolocation) return rej(0);
+        navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000,maximumAge:600000}); });
+      loc={lat:Math.round(pos.coords.latitude*100)/100, lon:Math.round(pos.coords.longitude*100)/100};
+      Store.set('wx_loc',loc);
+    }catch(e){ return null; }
+  }
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+loc.lat+'&longitude='+loc.lon+
+      '&current=temperature_2m,weather_code,is_day&daily=sunrise,sunset&temperature_unit=fahrenheit&timezone=auto&forecast_days=1');
+    const d=await r.json();
+    const wx={at:Date.now(), temp:Math.round(d.current.temperature_2m), code:d.current.weather_code,
+      isDay:d.current.is_day===1, sunrise:d.daily.sunrise[0], sunset:d.daily.sunset[0]};
+    Store.set('wx',wx); return wx;
+  }catch(e){ return cached||null; }
+}
+function timeState(wx){
+  const now=new Date();
+  if(wx&&wx.sunrise&&wx.sunset){
+    const sr=new Date(wx.sunrise), ss=new Date(wx.sunset);
+    if(now>=new Date(sr-45*60000)&&now<new Date(+sr+60*60000)) return 'dawn';
+    if(now>=new Date(ss-60*60000)&&now<new Date(+ss+35*60000)) return 'dusk';
+    if(now>=sr&&now<ss) return 'day';
+    return 'night';
+  }
+  const h=now.getHours();
+  if(h>=5&&h<8) return 'dawn'; if(h>=8&&h<17) return 'day'; if(h>=17&&h<20) return 'dusk'; return 'night';
+}
+
+/* ---------- the camp scene ---------- */
+const SKY={
+ dawn:['#2a1c20','#6b3324','#c97a3a','#3a2c2e'],
+ day:['#5a7290','#8aa0b8','#b8c4cc','#4a5a6e'],
+ dusk:['#241a2e','#5a2a3c','#b85a34','#2e2230'],
+ night:['#07080f','#0c1020','#141a2e','#0a0c14']
+};
+function campSceneSVG(ts, wkind, lit){
+  const sky=SKY[ts], c=charOf();
+  const night=ts==='night', dim=(ts==='night'||ts==='dusk');
+  let celest='';
+  if(ts==='day') celest='<circle cx="330" cy="90" r="26" fill="#f2e8c8" opacity=".9"/><circle cx="330" cy="90" r="40" fill="#f2e8c8" opacity=".15"/>';
+  if(ts==='dawn') celest='<circle cx="105" cy="150" r="30" fill="#f0c068" opacity=".9"/><circle cx="105" cy="150" r="52" fill="#e8943a" opacity=".2"/>';
+  if(ts==='dusk') celest='<circle cx="340" cy="158" r="28" fill="#e8813a" opacity=".85"/><circle cx="340" cy="158" r="48" fill="#c95a2a" opacity=".22"/>';
+  if(night) celest='<circle cx="328" cy="86" r="20" fill="#dcd6c0" opacity=".85"/><circle cx="322" cy="82" r="18" fill="'+sky[0]+'"/>'+
+    Array.from({length:40},(q,k)=>'<circle cx="'+((k*89)%430)+'" cy="'+((k*47)%200+8)+'" r="'+(k%5===0?1.4:0.9)+'" fill="#E6D6B0" opacity="'+((k%3+1)*.16)+'"/>').join('');
+  let wx='';
+  if(wkind==='clouds'||wkind==='overcast'||wkind==='storm'){
+    const o=wkind==='overcast'?0.5:0.32, n=wkind==='overcast'?5:3;
+    for(let i=0;i<n;i++) wx+='<ellipse class="fog" cx="'+(60+i*95)+'" cy="'+(54+(i%2)*36)+'" rx="92" ry="22" fill="'+(night?'#10141e':'#7C8CA0')+'" opacity="'+o+'"/>';
+  }
+  if(wkind==='fog') for(let i=0;i<4;i++) wx+='<ellipse class="'+(i%2?'fog':'fog2')+'" cx="'+(80+i*92)+'" cy="'+(330+i*60)+'" rx="160" ry="26" fill="#9aa4ae" opacity=".14"/>';
+  if(wkind==='rain'||wkind==='storm'){
+    let drops='';
+    for(let i=0;i<34;i++) drops+='<line x1="'+((i*53)%430)+'" y1="'+((i*37)%560-60)+'" x2="'+((i*53)%430-5)+'" y2="'+((i*37)%560-42)+'" stroke="#8fa2b8" stroke-width="1.1" opacity=".4"/>';
+    wx+='<g class="wx-rain">'+drops+'</g><g class="wx-rain2" transform="translate(20,-30)">'+drops+'</g>';
+  }
+  if(wkind==='snow'){
+    for(let i=0;i<26;i++) wx+='<circle class="snowflake" cx="'+((i*67)%430)+'" cy="'+((i*43)%500-50)+'" r="'+(1.4+(i%3)*.7)+'" fill="#e8eef2" opacity=".7" style="animation:snowfall '+(7+(i%5))+'s linear infinite;animation-delay:-'+(i%7)+'s"/>';
+  }
+  if(wkind==='storm') wx+='<rect class="wx-flash" width="430" height="640" fill="#dce8f2"/>';
+  /* fire by anchors lit (0..5) */
+  const fs=0.45+lit*0.16, fg=lit===0?0.12:0.18+lit*0.1;
+  const fire= lit===0
+   ? '<ellipse cx="215" cy="468" rx="20" ry="5" fill="#702c12" opacity=".5"/><circle cx="210" cy="465" r="2.4" fill="#c95a2a" opacity=".8"/><circle cx="221" cy="466" r="1.8" fill="#c97a3a" opacity=".7"/>'
+   : '<g class="fire-glow"><ellipse cx="215" cy="452" rx="'+(40*fs)+'" ry="'+(56*fs)+'" fill="#C9612E" opacity=".3"/>'+
+     '<path d="M215 '+(470-66*fs)+' Q'+(215-16*fs)+' '+(470-30*fs)+' '+(215-10*fs)+' 466 Q215 '+(470-14*fs)+' '+(215+11*fs)+' 466 Q'+(215+17*fs)+' '+(470-32*fs)+' 215 '+(470-66*fs)+' Z" fill="#E8943A"/>'+
+     '<path d="M215 '+(470-44*fs)+' Q'+(215-8*fs)+' '+(470-20*fs)+' 215 466 Q'+(215+9*fs)+' '+(470-22*fs)+' 215 '+(470-44*fs)+' Z" fill="#F2C868"/></g>';
+  const glow='<ellipse cx="215" cy="470" rx="'+(110*fs+40)+'" ry="'+(46*fs+18)+'" fill="#C9612E" opacity="'+fg+'"/>';
+  return '<svg viewBox="0 0 430 640" xmlns="http://www.w3.org/2000/svg">'+
+  '<defs><linearGradient id="csky" x1="0" y1="0" x2="0" y2="1">'+
+   '<stop offset="0" stop-color="'+sky[0]+'"/><stop offset=".45" stop-color="'+sky[1]+'"/><stop offset=".72" stop-color="'+sky[2]+'"/><stop offset="1" stop-color="'+sky[3]+'"/></linearGradient></defs>'+
+  '<rect width="430" height="640" fill="url(#csky)"/>'+celest+
+  /* gate glow on horizon */
+  '<circle cx="215" cy="318" r="26" fill="#E8B254" opacity="'+(dim?.3:.18)+'"/><path d="M210 322 l5 -10 5 10 z" fill="#E8B254" opacity=".7"/>'+
+  '<path d="M0 330 L80 268 L160 322 L250 258 L340 316 L430 276 L430 640 L0 640 Z" fill="'+(night?'#0b0d12':'#252a30')+'" opacity=".9"/>'+
+  '<path d="M0 366 L110 306 L220 360 L330 300 L430 350 L430 640 L0 640 Z" fill="'+(night?'#08090d':'#181c20')+'"/>'+
+  wx+
+  '<rect y="430" width="430" height="210" fill="'+(night?'#0a0805':'#15100a')+'"/>'+
+  /* tent */
+  '<path d="M28 372 L75 282 L122 372 Z" fill="'+(night?'#1a140c':'#2b2317')+'" stroke="#3a2f20" stroke-width="2"/>'+
+  '<path d="M62 372 L75 330 L88 372 Z" fill="#0c0905"/>'+
+  /* standard */
+  '<line x1="370" y1="232" x2="370" y2="380" stroke="#3a2f20" stroke-width="4"/>'+
+  '<path d="M370 238 L412 246 L370 258 Z" fill="'+c.color+'"/>'+
+  /* signpost */
+  '<line x1="52" y1="448" x2="52" y2="530" stroke="#3a2f20" stroke-width="5"/>'+
+  '<path d="M40 452 h44 l10 8 -10 8 h-44 z" fill="#2b2317" stroke="#3a2f20"/>'+
+  /* log + book */
+  '<rect x="278" y="486" width="92" height="20" rx="9" fill="#2b2317" stroke="#3a2f20"/>'+
+  '<path d="M306 482 l18 -6 18 6 v4 l-18 -5 -18 5 z" fill="#E6D6B0" opacity=".9"/>'+
+  /* fire ring + logs */
+  glow+
+  '<ellipse cx="215" cy="470" rx="46" ry="13" fill="#0c0905"/>'+
+  Array.from({length:7},(q,k)=>{const a=k/7*6.28;return '<circle cx="'+(215+Math.cos(a)*44)+'" cy="'+(470+Math.sin(a)*11)+'" r="4.5" fill="'+(night?'#1d1810':'#2b2317')+'"/>';}).join('')+
+  '<rect x="196" y="462" width="38" height="6" rx="3" fill="#241a0c" transform="rotate(-14 215 465)"/>'+
+  '<rect x="196" y="462" width="38" height="6" rx="3" fill="#1d1509" transform="rotate(16 215 465)"/>'+
+  fire+'</svg>';
+}
+
+/* ---------- camp render + pages ---------- */
+let campWX=null;
+function renderCampScene(){
+  if(!profile){ renderCamp(); return; }
+  removeTownFull();
+  const wx=Store.get('wx'); campWX=wx;
+  const ts=timeState(wx), wkind=wx?wxKind(wx.code):'clear';
+  const lit=Object.keys(day().anchors||{}).length;
+  const o=document.createElement('div'); o.id='camp-full';
+  o.style.cssText='position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:var(--night);overflow-y:auto;-webkit-overflow-scrolling:touch';
+  o.innerHTML='<div class="scene-inner" style="position:relative;width:100%"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML=campSceneSVG(ts,wkind,lit);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; img.style.width='100%'; img.style.display='block'; inner.appendChild(img);
+    const fx=document.createElement('div'); fx.style.cssText='position:absolute;inset:0;pointer-events:none';
+    fx.innerHTML='<svg viewBox="0 0 430 640" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%">'+ (function(){let t='';
+      if(wkind==='rain'||wkind==='storm'){let d2='';for(let i=0;i<34;i++)d2+='<line x1="'+((i*53)%430)+'" y1="'+((i*37)%560-60)+'" x2="'+((i*53)%430-5)+'" y2="'+((i*37)%560-42)+'" stroke="#8fa2b8" stroke-width="1.1" opacity=".4"/>';t+='<g class="wx-rain">'+d2+'</g>';}
+      if(wkind==='snow'){for(let i=0;i<26;i++)t+='<circle cx="'+((i*67)%430)+'" cy="-20" r="'+(1.4+(i%3)*.7)+'" fill="#e8eef2" opacity=".7" style="animation:snowfall '+(7+(i%5))+'s linear infinite;animation-delay:-'+(i%7)+'s"/>';}
+      if(wkind==='fog'){for(let i=0;i<4;i++)t+='<ellipse class="'+(i%2?'fog':'fog2')+'" cx="'+(80+i*92)+'" cy="'+(330+i*60)+'" rx="160" ry="26" fill="#9aa4ae" opacity=".14"/>';}
+      if(wkind==='storm')t+='<rect class="wx-flash" width="430" height="640" fill="#dce8f2"/>';
+      return t;})()+'</svg>';
+    inner.appendChild(fx); addSpots(); };
+  img.src='art/camp_'+ts+'.webp';
+  function addSpots(){
+    CAMP_SPOTS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:'+charOf().color+'"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=>openCampSection(h.id);
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const t1=document.createElement('div'); t1.className='town-title';
+  const h=new Date().getHours();
+  t1.textContent=(h<12?'Morning':h<17?'Afternoon':'Evening')+', '+profile.name.split(' ')[0];
+  document.body.appendChild(t1);
+  if(wx){ const t2=document.createElement('div'); t2.className='wx-chip town-hint';
+    t2.style.fontStyle='normal';
+    t2.textContent=wx.temp+'\u00B0 \u00B7 '+wkind.charAt(0).toUpperCase()+wkind.slice(1);
+    document.body.appendChild(t2); }
+  fetchWeather().then(w2=>{ if(w2 && (!wx || w2.at!==wx.at) && document.getElementById('camp-full')) renderCampScene(); });
+}
+const CAMP_LBL={fire:'The Fire',tent:'The Tent',book:'The Book',standard:'The Standard',signpost:'The Signpost'};
+function renderAnchorsInto(host){
+  host.innerHTML='';
+  const d=day();
+  ANCHORS.forEach(a=>{
+    const done=!!d.anchors[a.id];
+    const b=document.createElement('button');
+    b.className='anchor'+(done?' done':'');
+    b.innerHTML='<span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15100a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 7"/></svg></span>'+
+      '<span><span class="a-name">'+a.name+'</span><div class="a-sub">'+a.sub+'</div></span>'+
+      '<span class="a-xp">'+(done?'+'+a.xp:a.xp+' XP')+'</span>';
+    b.onclick=()=>{
+      const dd=day();
+      if(dd.anchors[a.id]){ delete dd.anchors[a.id]; state.xp=Math.max(0,state.xp-a.xp); saveAll(); }
+      else { dd.anchors[a.id]=new Date().toISOString(); Store.set('days',days); addXP(a.xp, a.name+' anchored', a.pillar); }
+      renderAnchorsInto(host);
+      const lit=Object.keys(day().anchors||{}).length;
+      const cap=document.getElementById('fire-cap');
+      if(cap) cap.textContent=lit===0?'The fire is cold. Feed it.':lit<5?'The fire burns \u2014 '+lit+' of 5 anchors feed it.':'The fire roars. All five anchors today.';
+    };
+    host.appendChild(b);
+  });
+}
+function openCampSection(id){
+  const lit=Object.keys(day().anchors||{}).length;
+  if(id==='tent'){ openEvening(); return; }
+  openFullPage({
+    title:CAMP_LBL[id], sub:'Base Camp', backLabel:'The Camp',
+    onBack:()=>{ removeTownFull(); renderCampScene(); },
+    render:host=>{
+      if(id==='fire'){
+        host.innerHTML='<p class="small" id="fire-cap" style="font-style:italic;margin:4px 0 10px">'+
+         (lit===0?'The fire is cold. Feed it.':lit<5?'The fire burns \u2014 '+lit+' of 5 anchors feed it.':'The fire roars. All five anchors today.')+'</p><div id="camp-anchors"></div>';
+        renderAnchorsInto(host.querySelector('#camp-anchors'));
+      }
+      if(id==='book'){
+        const seed=parseInt(todayKey().replace(/-/g,''),10)%VERSES.length;
+        host.innerHTML='<div class="panel sacred" style="margin-top:10px"><p class="scripture" style="font-size:21px;line-height:1.7">\u201C'+VERSES[seed][0]+'\u201D</p>'+
+         '<p class="scripture" style="margin-top:12px"><span class="ref">'+VERSES[seed][1].toUpperCase()+'</span></p></div>'+
+         '<p class="small" style="font-style:italic">Carry it through the day. Brother Aldous keeps more at the Chapel.</p>';
+      }
+      if(id==='standard'){
+        const li=levelInfo(state.xp), j=journey()||{q:1,daysLeft:0};
+        host.innerHTML='<div class="panel"><div class="flex">'+
+         '<div class="lvl-badge" style="border-color:'+charOf().color+'">'+embSVG(charOf().emblem,26,charOf().color)+'</div>'+
+         '<div style="flex:1"><div class="between"><span class="display" style="font-size:15px;font-weight:600">'+li.title+'</span><small>'+state.xp+' XP</small></div>'+
+         '<div class="xpbar" style="margin-top:7px"><div class="fill" style="width:'+(li.next?Math.round(((state.xp-li.floor)/(li.next[0]-li.floor))*100):100)+'%"></div></div>'+
+         '<small style="display:block;margin-top:5px">'+(li.next?(li.next[0]-state.xp)+' XP to '+li.next[1]:'The final title.')+'</small></div></div>'+
+         '<div class="stat-row"><div class="stat"><div class="v">'+standingDays()+'</div><div class="k">Days standing</div></div>'+
+         '<div class="stat"><div class="v">'+(avgReturn()||'\u2014')+'</div><div class="k">Avg return</div></div>'+
+         '<div class="stat"><div class="v">'+j.daysLeft.toLocaleString()+'</div><div class="k">To the gate</div></div></div></div>'+
+         '<button class="btn ghost block" id="std-house">Visit the Pilgrim\u2019s House</button>';
+        host.querySelector('#std-house').onclick=()=>enterHouse(BUILDINGS.find(x=>x.id==='house'));
+      }
+      if(id==='signpost'){
+        host.innerHTML=panelHTML('The Road Behind', log.length? log.slice(0,14).map(e=>{
+          const t=new Date(e.at);
+          return '<div class="between" style="padding:7px 0;border-bottom:1px solid rgba(58,47,32,.5)"><span style="font-size:15px">'+esc(e.text)+'</span><small style="white-space:nowrap;margin-left:12px">'+(e.xp?'+'+e.xp+' \u00B7 ':'')+t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</small></div>';
+        }).join('') : '<small>Nothing yet. The road begins with the first anchor.</small>');
+      }
+    }
+  });
+}
 
 </script>
 </body>
