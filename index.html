@@ -362,6 +362,11 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 #scene-full .scene-inner{position:relative;width:100%}
 #scene-full .scene-inner img,#scene-full .scene-inner svg{display:block;width:100%;height:auto}
 .scene-back{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:41;background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.45);border-radius:8px;padding:7px 13px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;letter-spacing:.18em;font-size:12px;color:var(--ember-hi);text-transform:uppercase}
+.layerwrap{position:relative;border-radius:8px;overflow:hidden}
+.layerwrap img.base{width:100%;display:block}
+.ovp{position:absolute;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 0 12px rgba(232,178,84,.5))}
+.ovtap{position:absolute;transform:translate(-50%,-50%);background:none;border:0;border-radius:50%;cursor:pointer}
+.ovtap.flash{box-shadow:0 0 0 2px var(--ember-hi), 0 0 18px rgba(232,178,84,.6)}
 #cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
 #cal-stage img{display:block;width:100%}
 #cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
@@ -2389,6 +2394,91 @@ HOUSE_SECTIONS.deeds=function(el){
       $('#tw-cap').innerHTML='<b class="display" style="font-size:13px;color:'+(e?'var(--ember-hi)':'var(--parchment-dim)')+'">'+(e?'\u2605 ':'')+d[0]+'</b><br>'+esc(d[1])+(e?' \u2014 done.':' \u2014 not yet.');
     });
   });
+};
+
+
+/* ============================================================
+   PHASE 7 — PAINTED ARMORY & TROPHY WALL (layered compositor)
+   ============================================================ */
+const ARMOR_POS={
+ helmet:{x:53.5,y:13,w:17}, breastplate:{x:53.5,y:31,w:25}, belt:{x:54,y:52,w:20},
+ boots:{x:53,y:85,w:25}, shield:{x:21,y:57,w:22}, sword:{x:88,y:56,w:16} };
+const TROPHY_COLS=[17.6,38.1,60.4,82.5], TROPHY_ROWS=[43.4,60.5,78.1], TROPHY_W=11.5;
+const BEAST_POS={x:48,y:20,w:38};
+
+const ARMOR_SVG_RENDER=HOUSE_SECTIONS.armor;
+const DEEDS_SVG_RENDER=HOUSE_SECTIONS.deeds;
+
+HOUSE_SECTIONS.armor=function(el){
+  armorCheck();
+  const base=new Image();
+  base.onload=()=>{
+    const earned=ARMOR.filter(a=>world.armor[a.id]).length;
+    el.innerHTML='<div class="panel" style="padding:10px"><div class="layerwrap" id="ar-wrap"></div>'+
+     '<div id="ar-cap" class="small" style="text-align:center;min-height:40px;padding:8px 4px;font-style:italic">'+
+     (earned===6?'The whole armour of God. Stand therefore.':'Pieces earned: '+earned+' of 6 \u2014 tap a place on the stand.')+'</div></div>';
+    const w=$('#ar-wrap'); base.className='base'; w.appendChild(base);
+    ARMOR.forEach(a=>{
+      const p=ARMOR_POS[a.id];
+      if(world.armor[a.id]){
+        const ov=new Image(); ov.className='ovp';
+        ov.style.left=p.x+'%'; ov.style.top=p.y+'%'; ov.style.width=p.w+'%';
+        ov.onerror=()=>{ ov.remove(); const dot=document.createElement('span'); dot.className='pin';
+          dot.style.left=p.x+'%'; dot.style.top=p.y+'%';
+          dot.innerHTML='<span class="ring"></span><span class="dot" style="background:var(--ember-hi)"></span>'; w.appendChild(dot); };
+        ov.src='art/armor_'+a.id+'.webp'; w.appendChild(ov);
+      }
+      const tap=document.createElement('button'); tap.className='ovtap';
+      tap.style.left=p.x+'%'; tap.style.top=p.y+'%'; tap.style.width=Math.max(14,p.w)+'%'; tap.style.aspectRatio='1';
+      tap.onclick=()=>{
+        w.querySelectorAll('.ovtap').forEach(t=>t.classList.remove('flash')); tap.classList.add('flash');
+        const e=world.armor[a.id], [v,t]=a.prog(), pct=Math.min(100,Math.round(v/t*100));
+        $('#ar-cap').innerHTML='<b class="display" style="font-size:13px;color:'+(e?'var(--ember-hi)':'var(--parchment-dim)')+'">'+a.nm+'</b><br>'+
+         (e?'Earned '+shortDate(e)+' \u2014 it is yours.':esc(a.req)+' \u2014 '+Math.min(v,t).toLocaleString()+' / '+t.toLocaleString()+' ('+pct+'%)');
+      };
+      w.appendChild(tap);
+    });
+  };
+  base.onerror=()=>ARMOR_SVG_RENDER(el);
+  base.src='art/armory_base.webp';
+  ARMOR_SVG_RENDER(el); // instant paint; replaced if the painted base loads
+};
+
+HOUSE_SECTIONS.deeds=function(el){
+  const base=new Image();
+  base.onload=()=>{
+    const earned=DEEDS.filter(d=>d[2]()).length;
+    el.innerHTML='<div class="panel" style="padding:10px"><div class="layerwrap" id="tw-wrap"></div>'+
+     '<div id="tw-cap" class="small" style="text-align:center;min-height:40px;padding:8px 4px;font-style:italic">'+
+     earned+' of '+DEEDS.length+' deeds hang on the wall. Tap a plaque.</div></div>';
+    const w=$('#tw-wrap'); base.className='base'; w.appendChild(base);
+    DEEDS.forEach((d,i)=>{
+      const x=TROPHY_COLS[i%4], y=TROPHY_ROWS[Math.floor(i/4)];
+      if(d[2]()){
+        const ov=new Image(); ov.className='ovp';
+        ov.style.left=x+'%'; ov.style.top=y+'%'; ov.style.width=TROPHY_W+'%';
+        ov.onerror=()=>{ ov.remove(); const dot=document.createElement('span'); dot.className='pin';
+          dot.style.left=x+'%'; dot.style.top=y+'%';
+          dot.innerHTML='<span class="dot" style="background:var(--ember-hi)"></span>'; w.appendChild(dot); };
+        ov.src='art/trophy_shield.webp'; w.appendChild(ov);
+      }
+      const tap=document.createElement('button'); tap.className='ovtap';
+      tap.style.left=x+'%'; tap.style.top=y+'%'; tap.style.width='14%'; tap.style.aspectRatio='1';
+      tap.onclick=()=>{
+        w.querySelectorAll('.ovtap').forEach(t=>t.classList.remove('flash')); tap.classList.add('flash');
+        const e=d[2]();
+        $('#tw-cap').innerHTML='<b class="display" style="font-size:13px;color:'+(e?'var(--ember-hi)':'var(--parchment-dim)')+'">'+(e?'\u2605 ':'')+d[0]+'</b><br>'+esc(d[1])+(e?' \u2014 done.':' \u2014 not yet.');
+      };
+      w.appendChild(tap);
+    });
+    const bt=document.createElement('button'); bt.className='ovtap';
+    bt.style.left=BEAST_POS.x+'%'; bt.style.top=BEAST_POS.y+'%'; bt.style.width=BEAST_POS.w+'%'; bt.style.aspectRatio='1.6';
+    bt.onclick=()=>{ $('#tw-cap').innerHTML='<b class="display" style="font-size:13px;color:var(--rust)">RESERVED \u00B7 THE FIRST BEAST</b><br>The chains wait. Slay him at a Summit and his head hangs here.'; };
+    w.appendChild(bt);
+  };
+  base.onerror=()=>DEEDS_SVG_RENDER(el);
+  base.src='art/trophy_base.webp';
+  DEEDS_SVG_RENDER(el);
 };
 
 </script>
