@@ -3293,14 +3293,13 @@ async function familyLesson(out){
 }
 
 
-function ALDOUS_SYS(topic){
-  const _digest=(/heart|walking with you/i.test(topic))?sectionThreadDigest('aldous'):'';
-  return _digest+'You are Brother Aldous, the chaplain and discipler in a Pilgrim\u2019s Progress-themed Christian life app. '+
+function ALDOUS_SYS(topic, thread){
+  return 'You are Brother Aldous, the chaplain and discipler in a Pilgrim\u2019s Progress-themed Christian life app. '+
     'Your voice is that of a seasoned pastor, discipler, and mentor in the Evangelical Free tradition (EFCA): gospel-centered, Scripture-first, grace-driven, warm and personal. '+
     'You are NOT sacramental or liturgical \u2014 confession means honest repentance before God and brotherly accountability, not a priestly sacrament; you point men to Christ directly, not through ritual. '+
     'Speak briefly (2-4 sentences), like a trusted older brother who has walked with the Lord a long time. Ground everything in Scripture naturally, never preachy. '+
     'Disciple the pilgrim: meet him where he is, call him gently forward, never shame him. Current focus: '+topic+'. '+
-    aldousContext(topic)+
+    keeperContext('aldous', thread)+
     ' Never invent facts about the pilgrim you were not given. If he is in real crisis or despair, urge him toward the living people who love him and toward immediate help, not just words.';
 }
 /* per-station awareness: what has he done here, what's next */
@@ -3388,6 +3387,79 @@ function keeperState(opts){
   const paths=Object.entries(world.paths||{}).filter(([k,v])=>v.day>0);
   if(paths.length) P.push('Discipleship paths: '+paths.map(([k,v])=>k+' (day '+v.day+'/30)').join(', ')+'.');
   return P.join(' ');
+}
+
+/* ============================================================
+   SECTION-SCOPED KEEPER CONTEXT (v2)
+   Each keeper reads the REAL entries in its OWN building.
+   - Subsection chat (thread = keeperId_section): ONLY that
+     section's data + the building's small core. Strictly scoped.
+   - Main keeper chat (thread = keeperId): every section's data
+     + a digest of the subsection chat threads. Pulls both.
+   ============================================================ */
+function _ctxList(arr,n,fmt){ return (arr||[]).slice(0,n).map(fmt).filter(Boolean); }
+function _entryText(x){ return (x && typeof x==='object') ? (x.text||x.song||x.what||x.note||x.to||'') : (x||''); }
+
+const KEEPER_CTX = {
+  aldous: {
+    _core(){ return ''; },
+    bible(){ const r=world.reading||{log:[]}; const d=day(); let s=d.wordRead?'He has read the Word today. ':'He has not opened the Word yet today. ';
+      s+=(r.log&&r.log.length)?('Recent readings: '+_ctxList(r.log,4,x=>x.what+' ('+daysAgo(x.at)+')').join('; ')+'. '):'No readings logged yet. '; return s; },
+    prayer(){ const pr=(world.prayers||[]).filter(p=>!p.answered), an=(world.prayers||[]).filter(p=>p.answered); let s='';
+      s+=pr.length?('He is praying for: '+_ctxList(pr,8,p=>(p.who?p.who+' \u2014 ':'')+p.text).join('; ')+'. '):'No active prayer requests logged. ';
+      if(an.length) s+='Recently answered: '+_ctxList(an,3,p=>p.text).join('; ')+'. '; return s; },
+    confession(){ const cf=(world.confessions||[]); if(!cf.length) return 'He has logged no confession yet; if he opens up, receive it with great gentleness. ';
+      return 'He has confessed '+cf.length+' time'+(cf.length>1?'s':'')+'; most recent '+daysAgo(cf[0].at)+'. Recurring themes (for YOUR awareness only): '+_ctxList(cf,5,c=>c.text.slice(0,40)).join(' / ')+'. You NEVER read his confessions back to him word-for-word; you gently notice patterns and point him to grace and real change. '; },
+    memory(){ const v=(world.verses||[]); if(!v.length) return 'No memory verses yet; encourage him to begin with one. ';
+      const weak=v.slice().sort((a,b)=>(a.drills||0)-(b.drills||0))[0]; return 'He is memorizing '+v.length+' verse'+(v.length>1?'s':'')+': '+_ctxList(v,6,x=>x.ref).join(', ')+'. Weakest (fewest drills): '+weak.ref+'. '; },
+    worship(){ const m=(world.worship&&world.worship.moments)||[]; return m.length?('Recent worship: '+_ctxList(m,4,x=>x.song).join(', ')+'. '):'No worship moments logged yet. '; },
+    discipleship(){ const p=world.paths||{}; const act=Object.entries(p).filter(([k,v])=>v.day>0); return act.length?('Active discipleship: '+act.map(([k,v])=>k+' (day '+v.day+'/30)').join(', ')+'. '):'No discipleship path started yet. '; },
+    family(){ return 'He is leading family worship for his daughters: '+DAUGHTERS.map(g=>g.name+' ('+g.age+')').join(', ')+'. '; }
+  },
+  garrick: {
+    _core(){ const w=world.watch||{}; return 'THE WATCH \u2014 current clean streak: '+(w.current||0)+' day'+((w.current||0)===1?'':'s')+'; longest ever: '+(w.longest||0)+'. '; },
+    why(){ const w=world.watch||{}; let s=''; if(w.mission) s+='His mission: \u201C'+w.mission+'\u201D. '; s+=(w.why||[]).length?('His reasons to fight: '+_ctxList(w.why,6,x=>x).join('; ')+'. '):'He has not written his reasons to fight yet. '; return s; },
+    oath(){ const w=world.watch||{}; let s=''; const id=(w.identity||[])[w.anchorIdentity||0]; if(id) s+='His anchor identity: \u201C'+id+'\u201D. '; if(w.vow) s+='His vow: \u201C'+w.vow+'\u201D. '; return s||'He has not set an anchor identity or vow yet. '; },
+    arsenal(){ const w=world.watch||{}; return (w.arsenal||[]).length?('His Scripture arsenal: '+_ctxList(w.arsenal,6,x=>x).join(' | ')+'. '):'His arsenal is empty; help him stock it. '; },
+    plan(){ const w=world.watch||{}; let s=''; if((w.escape||[]).length) s+='His escape-plan steps: '+_ctxList(w.escape,7,x=>x).join('; ')+'. '; if((w.calls||[]).length) s+='Men on his call list: '+w.calls.length+'. '; return s||'No battle plan set yet. '; },
+    bell(){ const w=world.watch||{}; return (w.calls||[]).length?('He has '+w.calls.length+' people he can call for aid. '):'He has nobody on his call-for-aid list yet \u2014 fighting alone is dangerous; gently urge him to add a brother. '; }
+  },
+  tomas: {
+    _core(){ return 'His daughters: '+DAUGHTERS.map(g=>g.name+' ('+g.age+')').join(', ')+'. '; },
+    marriage(){ const m=world.marriage||{moments:[],work:[]}; let s=''; if((m.moments||[]).length) s+='Marriage moments noted: '+_ctxList(m.moments,4,_entryText).join('; ')+'. '; if((m.work||[]).length) s+='What he is working on in marriage: '+_ctxList(m.work,4,_entryText).join('; ')+'. '; return s||'He has not logged marriage notes yet. '; },
+    lizzie(){ const L=world.lizzie||{growth:[],memories:[],prayers:[],letters:[]}; let s='This room is about Lizzie \u2014 his wife, from whom he is separated, for whose reconciliation he prays. Hold it with great tenderness, never glibly. '; if((L.prayers||[]).length) s+='His prayers over her and the marriage: '+_ctxList(L.prayers,5,_entryText).join('; ')+'. '; if((L.growth||[]).length) s+='How he is growing for her sake: '+_ctxList(L.growth,4,_entryText).join('; ')+'. '; if((L.memories||[]).length) s+='Memories he treasures: '+_ctxList(L.memories,3,_entryText).join('; ')+'. '; if((L.letters||[]).length) s+='He has set down '+L.letters.length+' sealed letter(s) for her. '; return s; },
+    letters(){ const l=world.letters||[]; return l.length?('He has written '+l.length+' letter(s): '+_ctxList(l,6,x=>(x.to?'to '+x.to:_entryText(x).slice(0,30))).join('; ')+'. '):'He has not written any letters yet. '; },
+    days(){ const dd=world.ddays||[]; return dd.length?('Daddy-daughter days logged: '+_ctxList(dd,6,x=>(x.who?x.who+' \u2014 ':'')+x.what+' ('+daysAgo(x.at)+')').join('; ')+'. '):'No daddy-daughter days logged yet \u2014 gently encourage one. '; },
+    guide(){ return 'He wants to lead his family spiritually \u2014 worship, prayer, and Scripture in the home. '; },
+    kid(gid){ const K=(world.kids&&world.kids[gid])||{prayers:[],guide:[],dates:[]}; const g=DAUGHTERS.find(x=>x.id===gid); const nm=g?g.name:gid; let s='About '+nm+(g?' (age '+g.age+')':'')+': '; if((K.prayers||[]).length) s+='prayers \u2014 '+_ctxList(K.prayers,4,_entryText).join('; ')+'. '; if((K.guide||[]).length) s+='who she is \u2014 '+_ctxList(K.guide,4,x=>x).join('; ')+'. '; if((K.dates||[]).length) s+='days together \u2014 '+_ctxList(K.dates,3,x=>x.what).join('; ')+'. '; if(!(K.prayers||[]).length&&!(K.guide||[]).length&&!(K.dates||[]).length) s+='nothing logged for her yet. '; return s; }
+  },
+  mercer: {
+    _core(){ return ''; },
+    ledger(){ const m=world.money2||{}; const sp=(m.spend||[]); const inc=(m.income||[]); let s=''; s+=inc.length?('Income sources logged: '+inc.length+'. '):'No income logged yet. '; s+=sp.length?('Recent spending: '+_ctxList(sp,5,x=>(_entryText(x)||'')+(x.amt?' ($'+x.amt+')':'')).join('; ')+'. '):'No spending entries logged yet. '; return s; },
+    balance(){ const m=world.money2||{}; const inc=(m.income||[]).reduce((a,b)=>a+(+b.amt||0),0); const bil=(m.bills||[]).reduce((a,b)=>a+(+b.amt||0),0); if(!inc&&!bil) return 'No income or bills logged yet, so there is no budget to weigh; ask him plainly for the numbers. '; return 'Monthly income logged: $'+inc+'; monthly bills logged: $'+bil+'; left over: $'+(inc-bil)+'. '; },
+    calendar(){ const b=(world.money2&&world.money2.bills)||[]; if(!b.length) return 'No bills on the calendar yet. '; const tot=b.reduce((a,x)=>a+(+x.amt||0),0); return 'Bills logged ('+b.length+', $'+tot+'/mo): '+_ctxList(b,8,x=>x.name+(x.amt?' $'+x.amt:'')+(x.day?' (day '+x.day+')':'')+(x.rec?' \u00B7 recurring':'')).join('; ')+'. '; },
+    jars(){ const c=(world.money2&&world.money2.cats)||[]; return c.length?('Budget jars/envelopes: '+_ctxList(c,10,x=>x.name+(x.amt?' $'+x.amt:'')).join('; ')+'. '):'No budget categories set up yet. '; },
+    vault(){ const sv=(world.money2&&world.money2.savings)||[]; return sv.length?('Savings goals: '+_ctxList(sv,8,x=>x.name+': $'+(x.saved||0)+'/'+(x.target||0)).join('; ')+'. '):'No savings goals set yet. '; },
+    giving(){ const gv=(world.money2&&world.money2.giving)||[]; return gv.length?('Giving logged ('+gv.length+'): '+_ctxList(gv,6,x=>(x.to?x.to:'')+(x.amt?' $'+x.amt:'')+' ('+daysAgo(x.at)+')').join('; ')+'. '):'No giving logged yet. '; }
+  }
+};
+
+function keeperContext(keeperId, thread){
+  const reg=KEEPER_CTX[keeperId]||{};
+  const nm=(profile&&profile.name)?profile.name.split(' ')[0]:'the pilgrim';
+  const core=(typeof reg._core==='function')?reg._core():'';
+  const section=(thread&&keeperId&&thread.indexOf(keeperId+'_')===0)?thread.slice(keeperId.length+1):null;
+  if(section){
+    let body='';
+    if(section.indexOf('kid_')===0 && typeof reg.kid==='function') body=reg.kid(section.slice(4));
+    else if(typeof reg[section]==='function') body=reg[section]();
+    return 'Pilgrim: '+nm+'. '+core+body+' Stay on this subject; do not raise matters from other rooms unless he brings them up.';
+  }
+  // main keeper chat: every section + a digest of the subsection threads
+  const parts=Object.keys(reg).filter(k=>k!=='_core'&&k!=='kid').map(k=>reg[k]());
+  if(typeof reg.kid==='function' && typeof DAUGHTERS!=='undefined') DAUGHTERS.forEach(g=>parts.push(reg.kid(g.id)));
+  const digest=(typeof sectionThreadDigest==='function')?sectionThreadDigest(keeperId):'';
+  return 'Pilgrim: '+nm+'. '+core+parts.filter(Boolean).join(' ')+digest;
 }
 
 
@@ -3586,13 +3658,12 @@ function openTheWatch(){
 }
 
 /* ---------- Garrick chat (crisis-aware, people first then 988) ---------- */
-function GARRICK_SYS(topic){
-  const _digest=(/the watch, standing firm|whatever is on/i.test(topic)||/the fight, the watch/i.test(topic))?sectionThreadDigest('garrick'):'';
-  return _digest+'You are Garrick, the watchman of the Watchtower in a Pilgrim\u2019s Progress-themed Christian life app. '+
+function GARRICK_SYS(topic, thread){
+  return 'You are Garrick, the watchman of the Watchtower in a Pilgrim\u2019s Progress-themed Christian life app. '+
     'You are a weathered old soldier who fought his own war with besetting sin and addiction and came through by grace. '+
     'You disciple the pilgrim in the fight for purity and freedom. Voice: a hard-bitten but deeply loving older brother / mentor / sergeant who has been to the bottom and back. Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental, never shaming. '+
     'Coach HARD but with LOVE \u2014 you call him up, never tear him down; the gospel means his standing is secure even when he falls. Speak briefly (2-5 sentences), plainly, like a man who means it. '+
-    'Current focus: '+topic+'. '+keeperState({topic})+
+    'Current focus: '+topic+'. '+keeperContext('garrick', thread)+
     ' CRISIS RULE: If he expresses despair, hopelessness, or any thought of harming himself, do NOT try to be his only help. Urge him \u2014 warmly and directly \u2014 to reach a real person who loves him right now (point him to his accountability call list in this very room), and if he may be in danger, tell him to call or text 988 (the Suicide & Crisis Lifeline) immediately. People first, then 988. Never minimize, never lecture.';
 }
 function openGarrickChat(seed){
@@ -3764,8 +3835,8 @@ function pushChat(threadId,role,content){ const h=chatHistory(threadId); h.push(
 
 /* keeper config: who they are, art, sys-prompt builder */
 const KEEPERS={
-  aldous:{name:'Brother Aldous',art:'npc_chapel',sys:(t)=>ALDOUS_SYS(t)},
-  garrick:{name:'Garrick',art:'npc_watchtower',sys:(t)=>GARRICK_SYS(t)}
+  aldous:{name:'Brother Aldous',art:'npc_chapel',sys:(t,th)=>ALDOUS_SYS(t,th)},
+  garrick:{name:'Garrick',art:'npc_watchtower',sys:(t,th)=>GARRICK_SYS(t,th)}
 };
 
 function mountKeeperChat(opts){
@@ -3814,7 +3885,7 @@ async function sendKeeper(opts,text){
     const hist=chatHistory(thread).slice(-16).map(m=>({role:m.role,content:m.content}));
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,system:K.sys(opts.topic),messages:hist})});
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,system:K.sys(opts.topic, thread),messages:hist})});
     if(!res.ok) throw new Error('API '+res.status);
     const data=await res.json(); const say=(data.content||[]).map(b=>b.text||'').join('').trim();
     typing.remove();
@@ -3960,7 +4031,7 @@ async function vnSend(keeperId, topic, text){
   setTimeout(()=>{ const b=document.getElementById('vn-them-bubble'); if(b) b.innerHTML='<div class="vn-think">'+esc(K.name)+' is with you\u2026</div>'; setActive('them'); },300);
   try{
     const hist=chatHistory(keeperId).slice(-16).map(m=>({role:m.role,content:m.content}));
-    const sys=(KEEPERS[keeperId]?KEEPERS[keeperId].sys:ALDOUS_SYS)(topic);
+    const sys=(KEEPERS[keeperId]?KEEPERS[keeperId].sys:ALDOUS_SYS)(topic, keeperId);
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,system:sys,messages:hist})});
     if(!res.ok) throw new Error('API '+res.status);
     const data=await res.json(); const say=(data.content||[]).map(b=>b.text||'').join('').trim();
@@ -3973,12 +4044,21 @@ async function vnSend(keeperId, topic, text){
 /* main keeper can reference (not replay) what was discussed in section threads */
 function sectionThreadDigest(keeperId){
   world.chats=world.chats||{};
-  const labels=keeperId==='aldous'
-    ? {aldous_bible:'the Word',aldous_prayer:'prayer',aldous_confession:'confession',aldous_memory:'memory verses',aldous_worship:'worship',aldous_discipleship:'a discipleship path',aldous_family:'the family altar'}
-    : {garrick_why:'his why & mission',garrick_oath:'identity & the vow',garrick_arsenal:'the Scripture arsenal',garrick_plan:'his battle plan',garrick_bell:'reaching his people'};
+  const LABELS={
+    aldous_bible:'the Word',aldous_prayer:'prayer',aldous_confession:'confession',aldous_memory:'memory verses',aldous_worship:'worship',aldous_discipleship:'a discipleship path',aldous_family:'the family altar',
+    garrick_why:'his why & mission',garrick_oath:'identity & the vow',garrick_arsenal:'the Scripture arsenal',garrick_plan:'his battle plan',garrick_bell:'reaching his people',
+    tomas_marriage:'his marriage',tomas_letters:'letters he is writing',tomas_days:'days with his daughters',tomas_guide:'leading his family',tomas_lizzie:'Lizzie',tomas_kid_naomi:'Naomi',tomas_kid_zipporah:'Zipporah',tomas_kid_grace:'Grace',
+    mercer_ledger:'income & spending',mercer_balance:'the budget',mercer_calendar:'the bills',mercer_jars:'budget jars',mercer_vault:'savings goals',mercer_giving:'giving'
+  };
   const seen=[];
-  Object.keys(labels).forEach(t=>{ const h=world.chats[t]; if(h&&h.length){ const last=[...h].reverse().find(m=>m.role==='user'); if(last) seen.push(labels[t]+' (last: \u201C'+last.content.slice(0,40)+(last.content.length>40?'\u2026':'')+'\u201D)'); } });
-  return seen.length?(' Recently in other rooms he has talked with you about: '+seen.join('; ')+'. You may gently reference these if relevant.'):'';
+  Object.keys(world.chats).forEach(t=>{
+    if(t===keeperId || t.indexOf(keeperId+'_')!==0) return;
+    const h=world.chats[t]; if(!h||!h.length) return;
+    const last=[...h].reverse().find(m=>m.role==='user'); if(!last) return;
+    const label=LABELS[t]||t.slice(keeperId.length+1).replace(/_/g,' ');
+    seen.push(label+' (last: \u201C'+last.content.slice(0,40)+(last.content.length>40?'\u2026':'')+'\u201D)');
+  });
+  return seen.length?(' Recently, in other rooms of this building, he has talked with you about: '+seen.join('; ')+'. You may gently reference these if relevant, but keep those conversations distinct \u2014 do not merge them.'):'';
 }
 
 
@@ -4000,16 +4080,15 @@ const HALL_SCENE={marriage:'b_hall_marriage',lizzie:'b_hall_lizzie',daughters:'b
 const HALL_TOPIC={marriage:'tending your marriage',letters:'writing letters to those you love',days:'time with your daughters',guide:'leading your family spiritually',daughters:'raising your daughters'};
 
 /* Keeper registration for the shared chat engines */
-KEEPERS.tomas={name:'Elder Tomas',art:'npc_hall',sys:(t)=>TOMAS_SYS(t)};
+KEEPERS.tomas={name:'Elder Tomas',art:'npc_hall',sys:(t,th)=>TOMAS_SYS(t,th)};
 VN_KEEPERS.tomas={name:'Elder Tomas',portrait:'art/npc_hall.webp',topic:'your marriage and your children \u2014 the people you love most'};
 
-function TOMAS_SYS(topic){
-  const d=DAUGHTERS.map(g=>g.name+' ('+g.age+')').join(', ');
+function TOMAS_SYS(topic, thread){
   return 'You are Elder Tomas, keeper of the Great Hall in a Pilgrim\u2019s Progress-themed Christian life app. '+
     'Your voice is that of a wise elder counselor \u2014 a seasoned mentor and grandfatherly figure who has lived long, loved one woman his whole life, raised good children, and buried his share of sorrows. You speak with unhurried warmth, gravity, and gentle humor; you tell the truth kindly; you often answer a worry with a question or a short story before the counsel. Never preachy, never clinical. '+
     'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. Keep replies brief (2-5 sentences) and personal, the way a grandfather speaks across a table by the fire. '+
-    'The pilgrim is '+(profile.name||'a father')+', father to '+d+'. He is separated/divorced from his wife Lizzie and longs, prayerfully, for reconciliation \u2014 hold this with great tenderness, never glibly; steer him toward becoming the man God is making him, toward patience, repentance, humility, and hope, never toward manipulation, pressure, or despair. '+
-    'Current focus: '+topic+'. '+keeperState({topic})+' Never invent facts you were not given.';
+    'The pilgrim is '+((profile&&profile.name)||'a father')+', a father raising daughters. He is separated/divorced from his wife Lizzie and longs, prayerfully, for reconciliation \u2014 hold this with great tenderness, never glibly; steer him toward becoming the man God is making him, toward patience, repentance, humility, and hope, never toward manipulation, pressure, or despair. '+
+    'Current focus: '+topic+'. '+keeperContext('tomas', thread)+' Never invent facts you were not given.';
 }
 
 const DAUGHTERS=[
@@ -4208,18 +4287,15 @@ const TREASURY_LBL={ledger:'The Ledger',balance:'The Balance',calendar:'Bill Cal
 const TREASURY_SCENE={ledger:'b_treasury_ledger',balance:'b_treasury_balance',calendar:'b_treasury_calendar',jars:'b_treasury_jars',vault:'b_treasury_vault',giving:'b_treasury_giving'};
 const TREASURY_TOPIC={ledger:'tracking income and spending',balance:'the monthly budget and what is left',calendar:'bills and what is due',jars:'budget categories and envelopes',vault:'saving toward goals',giving:'generosity and giving'};
 
-KEEPERS.mercer={name:'Mercer',art:'npc_treasury',sys:(t)=>MERCER_SYS(t)};
+KEEPERS.mercer={name:'Mercer',art:'npc_treasury',sys:(t,th)=>MERCER_SYS(t,th)};
 VN_KEEPERS.mercer={name:'Mercer',portrait:'art/npc_treasury.webp',topic:'stewarding your money well \u2014 the household accounts'};
 
-function MERCER_SYS(topic){
-  const m=world.money2||{};
-  const inc=(m.income||[]).reduce((a,b)=>a+(+b.amt||0),0);
-  const bills=(m.bills||[]).reduce((a,b)=>a+(+b.amt||0),0);
+function MERCER_SYS(topic, thread){
   return 'You are Mercer, keeper of the Treasury in a Pilgrim\u2019s Progress-themed Christian life app. '+
     'You are a faithful steward \u2014 calm, practical, precise, content, and generous \u2014 a man who has managed others\u2019 money honestly for decades. '+
     'Evangelical Free theology: money is a tool and a trust, not a master; you counsel contentment, wise planning, honest work, getting free of debt, and open-handed giving. You are NOT prosperity-gospel and never feed anxiety or greed. '+
     'Speak plainly and warmly, briefly (2-5 sentences), like a trusted steward going over the books beside the pilgrim. '+
-    'Current focus: '+topic+'. Pilgrim: '+(profile.name||'friend')+'. Monthly income logged: '+inc+'; monthly bills logged: '+bills+'. '+keeperState({topic})+' Never invent figures you were not given; if you lack data, ask plainly.';
+    'Current focus: '+topic+'. '+keeperContext('mercer', thread)+' Never invent figures you were not given; if you lack data, ask plainly.';
 }
 
 function enterTreasury(){
