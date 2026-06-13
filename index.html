@@ -2513,9 +2513,10 @@ const DESK_FALLBACK=HOUSE_SECTIONS.desk;
 
 /* glass region of mirror_base, frame centers of mantle_base, page region of record_base
    (estimated to the commissioned zones; recalibrated when final art arrives) */
-const MIRROR_GLASS={x:28,y:20,w:44,h:50};
-const FRAME_POS=[{x:16,y:40},{x:38.7,y:40},{x:61.3,y:40},{x:84,y:40}]; const FRAME_W=19;
-const RECORD_PAGE={x:19,y:30,w:62,h:46};
+const MIRROR_GLASS={x:31,y:26,w:42,h:42};
+const FRAME_POS=[{x:6,y:48},{x:30,y:48},{x:60,y:48},{x:87,y:48}]; const FRAME_W=19;
+const RECORD_LEFT={x:7,y:28,w:37,h:46};
+const RECORD_RIGHT={x:52,y:26,w:39,h:47};
 
 HOUSE_SECTIONS.mirror=function(el){
   const base=new Image();
@@ -2594,12 +2595,16 @@ HOUSE_SECTIONS.desk=function(el){
     ev.sort((a,b)=>new Date(b.at)-new Date(a.at));
     el.innerHTML='<div class="panel imgpanel"><div class="layerwrap" id="rc-wrap"></div></div><div id="rc-more"></div>';
     const w=$('#rc-wrap'); base.className='base'; w.appendChild(base);
-    const ink=document.createElement('div'); ink.className='ink';
-    ink.style.left=RECORD_PAGE.x+'%'; ink.style.top=RECORD_PAGE.y+'%';
-    ink.style.width=RECORD_PAGE.w+'%'; ink.style.height=RECORD_PAGE.h+'%';
-    ink.style.fontSize='clamp(10px,2.9vw,15px)';
-    ink.innerHTML=ev.slice(0,8).map(e=>'<div class="ie'+(e.cls?' '+e.cls:'')+'"><span class="id8">'+shortDate(e.at)+'</span> \u2014 '+esc(e.w)+'</div>').join('');
-    w.appendChild(ink);
+    const mkInk=(zone,items)=>{
+      const ink=document.createElement('div'); ink.className='ink';
+      ink.style.left=zone.x+'%'; ink.style.top=zone.y+'%';
+      ink.style.width=zone.w+'%'; ink.style.height=zone.h+'%';
+      ink.style.fontSize='clamp(10px,2.9vw,15px)';
+      ink.innerHTML=items.map(e=>'<div class="ie'+(e.cls?' '+e.cls:'')+'"><span class="id8">'+shortDate(e.at)+'</span> \u2014 '+esc(e.w)+'</div>').join('');
+      w.appendChild(ink);
+    };
+    mkInk(RECORD_LEFT, ev.slice(0,4));
+    mkInk(RECORD_RIGHT, ev.slice(4,8));
     if(ev.length>8){
       $('#rc-more').innerHTML=panelHTML('Earlier Pages','<div class="tl">'+ev.slice(8,30).map(e=>'<div class="te '+e.cls+'"><div class="tw">'+esc(e.w)+'</div><div class="tdt">'+shortDate(e.at)+'</div></div>').join('')+'</div>');
     }
