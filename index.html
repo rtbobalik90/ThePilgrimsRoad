@@ -393,6 +393,11 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 .fire-glow{animation:flick 1.6s ease-in-out infinite}
 .wx-chip{position:fixed;right:14px;top:calc(12px + env(safe-area-inset-top));z-index:41;background:rgba(14,11,7,.78);border:1px solid var(--edge);border-radius:8px;padding:7px 12px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.14em;color:var(--parchment-dim)}
 .kchat{display:flex;flex-direction:column;gap:8px}
+.kchat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.kchat-who{font-family:'Cinzel',Georgia,serif;font-size:13px;color:var(--ember-hi)}
+.kchat-new{background:none;border:1px solid var(--edge);color:var(--parchment-dim);font-size:11px;padding:4px 9px;border-radius:10px;cursor:pointer}
+.kchat-new:active{background:rgba(201,138,46,.15)}
+.vn-new{position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;z-index:62;background:rgba(20,16,11,.7);border:1px solid var(--edge);color:var(--parchment-dim);padding:7px 12px;border-radius:10px;font-size:12px}
 .kchat-seeds{display:flex;gap:6px;flex-wrap:wrap}
 .kchat-seed{font-size:12px;padding:6px 10px;border-radius:14px;border:1px solid var(--edge);background:rgba(201,138,46,.08);color:var(--parchment-dim);cursor:pointer}
 .kchat-seed:active{background:rgba(201,138,46,.18)}
@@ -3692,6 +3697,22 @@ WATCH_STATIONS.bell=function(host){ const w=ensureWatch(); w.calls=w.calls||[];
 function chatHistory(threadId){ world.chats=world.chats||{}; world.chats[threadId]=world.chats[threadId]||[]; return world.chats[threadId]; }
 function pushChat(threadId,role,content){ const h=chatHistory(threadId); h.push({role,content,at:nowISO()}); if(h.length>60) h.splice(0,h.length-60); saveWorld(); }
 
+/* one-time: retire pre-thread merged chats so each section starts clean */
+(function migrateChats(){
+  try{
+    if(Store.get('chats_migrated_v2')) return;
+    world.chats=world.chats||{};
+    ['aldous','garrick'].forEach(k=>{
+      if(world.chats[k] && world.chats[k].length){
+        // keep the old conversation available ONLY as the main thread; sections begin empty
+        // (main thread already reads world.chats[k], so just leave it; nothing to merge into sections)
+      }
+    });
+    Store.set('chats_migrated_v2',true); saveWorld();
+  }catch(e){}
+})();
+
+
 /* keeper config: who they are, art, sys-prompt builder */
 const KEEPERS={
   aldous:{name:'Brother Aldous',art:'npc_chapel',sys:(t)=>ALDOUS_SYS(t)},
@@ -3704,7 +3725,8 @@ function mountKeeperChat(opts){
   opts.thread=opts.threadId||opts.keeperId;
   const K=KEEPERS[opts.keeperId];
   el.classList.add('kchat');
-  el.innerHTML='<div class="kchat-seeds" id="'+opts.mountId+'-seeds"></div>'+
+  el.innerHTML='<div class="kchat-head"><span class="kchat-who">'+esc(K.name)+'</span><button class="kchat-new" id="'+opts.mountId+'-new">\u21BA New chat</button></div>'+
+    '<div class="kchat-seeds" id="'+opts.mountId+'-seeds"></div>'+
     '<div class="kchat-log" id="'+opts.mountId+'-log"></div>'+
     '<div class="kchat-bar"><textarea id="'+opts.mountId+'-in" placeholder="Talk to '+esc(K.name)+'\u2026" rows="1"></textarea>'+
     '<button class="btn primary kchat-send" id="'+opts.mountId+'-send">Say</button></div>';
@@ -3720,6 +3742,8 @@ function mountKeeperChat(opts){
   document.getElementById(opts.mountId+'-send').onclick=send;
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } });
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(120,inp.scrollHeight)+'px'; });
+  const nb=document.getElementById(opts.mountId+'-new');
+  if(nb) nb.onclick=()=>{ if(confirm('Start a new chat? This clears this conversation.')){ world.chats[opts.thread]=[]; saveWorld(); mountKeeperChat(opts); } };
   setTimeout(()=>{ log.scrollTop=log.scrollHeight; },30);
 }
 function addBubble(log,cls,html,isHtml){ const d=document.createElement('div'); d.className='kbubble '+cls; d.innerHTML=isHtml?html:esc(html); log.appendChild(d); log.scrollTop=log.scrollHeight; return d; }
@@ -3818,6 +3842,7 @@ function openVNChat(keeperId, topic, seed){
   const o=document.createElement('div'); o.id='vn-full';
   o.innerHTML=
     '<button class="vn-back" id="vn-back">\u2190 Back</button>'+
+    '<button class="vn-new" id="vn-new">\u21BA New chat</button>'+
     '<div class="vn-scroll">'+
       /* TOP ROW: keeper portrait + their bubble */
       '<div class="vn-row vn-row-them">'+
@@ -3852,6 +3877,7 @@ function openVNChat(keeperId, topic, seed){
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); say(); } });
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(110,inp.scrollHeight)+'px'; });
   o.querySelector('#vn-back').onclick=()=>{ o.remove(); (keeperId==='garrick'?enterWatchtower:enterChapel)(); };
+  o.querySelector('#vn-new').onclick=()=>{ if(confirm('Start a new chat with '+K.name+'? This clears this conversation.')){ world.chats[keeperId]=[]; saveWorld(); o.remove(); openVNChat(keeperId,topic); } };
   if(seed) setTimeout(()=>vnSend(keeperId,useTopic,seed),80);
 }
 function setThem(t){ const b=document.getElementById('vn-them-bubble'); if(b) b.innerHTML='<div class="vn-line">'+esc(t)+'</div>'; }
