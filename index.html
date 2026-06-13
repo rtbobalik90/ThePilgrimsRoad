@@ -358,9 +358,10 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 .tl .te.fall::before{background:var(--rust)}
 .tl .te .tw{font-size:15.5px}
 .tl .te .tdt{font-size:12.5px;color:var(--faint)}
-#scene-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
-#scene-full .scene-inner{position:relative;width:100%}
-#scene-full .scene-inner img,#scene-full .scene-inner svg{display:block;width:100%;height:auto}
+#scene-full,#camp-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+#scene-full .scene-inner,#camp-full .scene-inner{position:relative;height:100%;width:max-content;min-width:100%}
+#scene-full .scene-inner img,#scene-full .scene-inner svg,#camp-full .scene-inner img,#camp-full .scene-inner svg{display:block;height:100%;width:auto}
+@keyframes emberup{0%{transform:translateY(0) translateX(0);opacity:0}12%{opacity:.85}100%{transform:translateY(-110px) translateX(8px);opacity:0}}
 .scene-back{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:41;background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.45);border-radius:8px;padding:7px 13px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;letter-spacing:.18em;font-size:12px;color:var(--ember-hi);text-transform:uppercase}
 .layerwrap{position:relative;border-radius:8px;overflow:hidden}
 .layerwrap img.base{width:100%;display:block}
@@ -409,6 +410,7 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
   <div class="sub">Sixteen lands · One gate</div>
   <p class="verse scripture">"I have fought a good fight, I have finished my course, I have kept the faith."<br><span class="ref">2 TIMOTHY 4:7</span></p>
   <button class="btn primary" id="splash-btn">Continue the journey</button>
+  <p style="position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:#4a4438" id="splash-ver"></p>
 </div>
 
 <div id="app">
@@ -566,7 +568,7 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 <section class="view" id="v-set">
   <div style="height:26px"></div>
   <h1 class="display" style="margin:0 0 4px">Provisions</h1>
-  <p class="small">Keys, dates, and the pack you carry.</p>
+  <p class="small">Keys, dates, and the pack you carry. <span id="st-build" style="color:var(--faint)"></span></p>
 
   <div class="panel">
     <h2 class="display">The Pilgrim</h2>
@@ -740,6 +742,7 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
    ===================================================== */
 
 /* ---------- storage: fb40_ scoped, secrets excluded ---------- */
+const APP_VERSION='build 11';
 const NS = 'fb40_';
 const SECRET_KEYS = ['secret_anthropic','secret_gh_token','secret_passphrase']; // NEVER exported or synced
 const DATA_KEYS   = ['profile','state','days','falls','log','world','steward','pins','npcchat'];                  // export allow-list
@@ -1174,6 +1177,7 @@ function show(v){
 $$('#nav button').forEach(b=>b.onclick=()=>show(b.dataset.v));
 
 function fillSettings(){
+  $('#st-build').textContent='\u00B7 '+APP_VERSION;
   $('#st-name').value=profile.name; $('#st-start').value=profile.start; $('#st-end').value=profile.end;
   $('#key-status').textContent = Store.get('secret_anthropic') ? 'A key is stored on this device ('+mask(Store.get('secret_anthropic'))+').' : 'No key stored yet.';
 }
@@ -1253,6 +1257,7 @@ $('#splash-btn').onclick=()=>{
   } else { $('#nav').style.display='flex'; show('camp'); }
 };
 
+document.getElementById('splash-ver').textContent=APP_VERSION;
 /* splash embers */
 (function(){
   const s=$('#splash');
@@ -1915,6 +1920,11 @@ function enterBuilding(id){
   window.scrollTo({top:0});
 }
 
+/* hard-fit scene media to the overlay's real height (standalone-proof) */
+function fitScene(o){ if(!o) return; const h=o.clientHeight; if(!h) return;
+  o.querySelectorAll('.scene-inner>img,.scene-inner>svg,.town-inner>img,.town-inner>svg').forEach(el=>{ el.style.height=h+'px'; el.style.width='auto'; el.style.maxWidth='none'; }); }
+window.addEventListener('resize',()=>['town-full','scene-full','camp-full'].forEach(id=>fitScene(document.getElementById(id))));
+
 /* ---------- the town map (overrides renderKeep when art+pins exist) ---------- */
 let townReady=null; // null unknown, true/false cached
 function renderKeep(){
@@ -2086,8 +2096,9 @@ function renderTown(){
   gate.onclick=openSteward;
   inner.appendChild(gate);
   const img=o.querySelector('img');
-  const center=()=>{ o.scrollLeft=Math.max(0, inner.scrollWidth*(GATE_PIN.x/100) - o.clientWidth/2); };
+  const center=()=>{ fitScene(o); o.scrollLeft=Math.max(0, inner.scrollWidth*(GATE_PIN.x/100) - o.clientWidth/2); };
   if(img.complete) center(); else img.onload=center;
+  fitScene(o);
 }
 
 
@@ -2286,9 +2297,10 @@ function enterHouse(b){
   document.body.appendChild(o);
   const inner=o.querySelector('.scene-inner');
   inner.innerHTML=houseSceneSVG();
-  addSpots();
+  addSpots(); fitScene(o);
   const img=new Image();
-  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); };
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o);
+    requestAnimationFrame(()=>{ fitScene(o); o.scrollLeft=Math.max(0,(o.scrollWidth-o.clientWidth)/2); }); };
   img.src='art/house_scene.webp';
   function addSpots(){
     HOUSE_SPOTS.forEach(h=>{
@@ -2761,21 +2773,32 @@ function renderCampScene(){
   const ts=timeState(wx), wkind=wx?wxKind(wx.code):'clear';
   const lit=Object.keys(day().anchors||{}).length;
   const o=document.createElement('div'); o.id='camp-full';
-  o.style.cssText='position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:var(--night);overflow-y:auto;-webkit-overflow-scrolling:touch';
-  o.innerHTML='<div class="scene-inner" style="position:relative;width:100%"></div>';
+  o.innerHTML='<div class="scene-inner"></div>';
   document.body.appendChild(o);
   const inner=o.querySelector('.scene-inner');
   inner.innerHTML=campSceneSVG(ts,wkind,lit);
+  fitScene(o);
   const img=new Image();
-  img.onload=()=>{ inner.innerHTML=''; img.style.width='100%'; img.style.display='block'; inner.appendChild(img);
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); fitScene(o);
+    requestAnimationFrame(()=>{ fitScene(o); o.scrollLeft=Math.max(0,(o.scrollWidth-o.clientWidth)/2); });
     const fx=document.createElement('div'); fx.style.cssText='position:absolute;inset:0;pointer-events:none';
-    const FXH=538, fcx=430*CAMP_FIRE_POS.x/100, fby=FXH*CAMP_FIRE_POS.y/100+14;
-    const ffs=0.45+lit*0.16;
-    const fireArt= lit===0 ? '' :
-      '<g class="fire-glow"><ellipse cx="'+fcx+'" cy="'+(fby-16)+'" rx="'+(38*ffs)+'" ry="'+(52*ffs)+'" fill="#C9612E" opacity=".28"/>'+
-      '<ellipse cx="'+fcx+'" cy="'+fby+'" rx="'+(95*ffs+30)+'" ry="'+(38*ffs+14)+'" fill="#C9612E" opacity="'+(0.1+lit*0.045)+'"/>'+
-      '<path d="M'+fcx+' '+(fby-60*ffs)+' Q'+(fcx-15*ffs)+' '+(fby-26*ffs)+' '+(fcx-9*ffs)+' '+(fby-4)+' Q'+fcx+' '+(fby-12*ffs)+' '+(fcx+10*ffs)+' '+(fby-4)+' Q'+(fcx+16*ffs)+' '+(fby-28*ffs)+' '+fcx+' '+(fby-60*ffs)+' Z" fill="#E8943A" opacity=".92"/>'+
-      '<path d="M'+fcx+' '+(fby-40*ffs)+' Q'+(fcx-7*ffs)+' '+(fby-17*ffs)+' '+fcx+' '+(fby-5)+' Q'+(fcx+8*ffs)+' '+(fby-19*ffs)+' '+fcx+' '+(fby-40*ffs)+' Z" fill="#F2C868" opacity=".95"/></g>';
+    const FXH=538, fcx=430*CAMP_FIRE_POS.x/100, fby=FXH*CAMP_FIRE_POS.y/100;
+    const ffs=lit/5;
+    let fireArt='';
+    if(lit>0){
+      fireArt='<defs><radialGradient id="fglow" cx=".5" cy=".5" r=".5">'+
+       '<stop offset="0" stop-color="#F2C868" stop-opacity="'+(0.5+ffs*0.3)+'"/>'+
+       '<stop offset=".35" stop-color="#E8943A" stop-opacity="'+(0.3+ffs*0.2)+'"/>'+
+       '<stop offset=".7" stop-color="#C9612E" stop-opacity=".12"/>'+
+       '<stop offset="1" stop-opacity="0"/></radialGradient>'+
+       '<filter id="fsoft"><feGaussianBlur stdDeviation="'+(4+ffs*3)+'"/></filter></defs>'+
+       '<g class="fire-glow"><ellipse cx="'+fcx+'" cy="'+(fby-6-10*ffs)+'" rx="'+(22+34*ffs)+'" ry="'+(16+30*ffs)+'" fill="url(#fglow)" filter="url(#fsoft)"/></g>';
+      const nEmb=lit*3;
+      for(let i=0;i<nEmb;i++){
+        fireArt+='<circle cx="'+(fcx-10+((i*7.3)%20))+'" cy="'+(fby-4)+'" r="'+(0.9+(i%3)*0.5)+'" fill="'+(i%2?'#F2C868':'#E8943A')+'" '+
+         'style="animation:emberup '+(2.6+(i%4)*0.7)+'s ease-out infinite;animation-delay:-'+((i*0.83)%3).toFixed(2)+'s"/>';
+      }
+    }
     fx.innerHTML='<svg viewBox="0 0 430 '+FXH+'" preserveAspectRatio="none" style="width:100%;height:100%">'+fireArt+ (function(){let t='';
       if(wkind==='rain'||wkind==='storm'){let d2='';for(let i=0;i<34;i++)d2+='<line x1="'+((i*53)%430)+'" y1="'+((i*37)%560-60)+'" x2="'+((i*53)%430-5)+'" y2="'+((i*37)%560-42)+'" stroke="#8fa2b8" stroke-width="1.1" opacity=".4"/>';t+='<g class="wx-rain">'+d2+'</g>';}
       if(wkind==='snow'){for(let i=0;i<26;i++)t+='<circle cx="'+((i*67)%430)+'" cy="-20" r="'+(1.4+(i%3)*.7)+'" fill="#e8eef2" opacity=".7" style="animation:snowfall '+(7+(i%5))+'s linear infinite;animation-delay:-'+(i%7)+'s"/>';}
