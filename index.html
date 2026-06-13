@@ -2641,13 +2641,13 @@ HOUSE_SECTIONS.desk=function(el){
    PHASE 9 — BASE CAMP: LIVING SKY, REAL WEATHER, THE FIRE
    ============================================================ */
 const CAMP_SPOTS=[
- {id:'fire',  x:50, y:81, lbl:'The Fire \u00B7 Anchors'},
- {id:'tent',  x:25, y:58, lbl:'The Tent \u00B7 Evening'},
- {id:'book',  x:85, y:77, lbl:'The Book \u00B7 Verse'},
- {id:'standard', x:83, y:42, lbl:'The Standard'},
- {id:'signpost', x:10, y:70, lbl:'The Signpost'}
+ {id:'fire',  x:48, y:75, lbl:'The Fire \u00B7 Anchors'},
+ {id:'tent',  x:26, y:56, lbl:'The Tent \u00B7 Evening'},
+ {id:'book',  x:87, y:73, lbl:'The Book \u00B7 Verse'},
+ {id:'standard', x:86, y:49, lbl:'The Standard'},
+ {id:'signpost', x:10, y:69, lbl:'The Signpost'}
 ];
-const CAMP_FIRE_POS={x:50,y:81};
+const CAMP_FIRE_POS={x:48.5,y:75};
 
 /* ---------- weather (open-meteo, no key) ---------- */
 function wxKind(code){
@@ -2782,7 +2782,7 @@ function renderCampScene(){
   img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); fitScene(o);
     requestAnimationFrame(()=>{ fitScene(o); o.scrollLeft=Math.max(0,(o.scrollWidth-o.clientWidth)/2); });
     const fx=document.createElement('div'); fx.style.cssText='position:absolute;inset:0;pointer-events:none';
-    const FXH=538, fcx=430*CAMP_FIRE_POS.x/100, fby=FXH*CAMP_FIRE_POS.y/100;
+    const FXH=Math.round(430*(img.naturalHeight||2048)/(img.naturalWidth||1024)), fcx=430*CAMP_FIRE_POS.x/100, fby=FXH*CAMP_FIRE_POS.y/100;
     const ffs=lit/5;
     let fireArt='';
     if(lit>0){
