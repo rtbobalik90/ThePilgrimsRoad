@@ -2645,7 +2645,8 @@ const CAMP_SPOTS=[
  {id:'tent',  x:26, y:56, lbl:'The Tent \u00B7 Evening'},
  {id:'book',  x:87, y:73, lbl:'The Book \u00B7 Verse'},
  {id:'standard', x:86, y:49, lbl:'The Standard'},
- {id:'signpost', x:10, y:69, lbl:'The Signpost'}
+ {id:'signpost', x:10, y:69, lbl:'The Signpost'},
+ {id:'weather', x:50, y:33, lbl:'The Sky'}
 ];
 const CAMP_FIRE_POS={x:48.5,y:75};
 
@@ -2766,6 +2767,14 @@ function campSceneSVG(ts, wkind, lit){
 
 /* ---------- camp render + pages ---------- */
 let campWX=null;
+function fireStreak(){
+  let n=0; const d=new Date();
+  for(;;){ const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const day_=days[k];
+    if(day_ && Object.keys(day_.anchors||{}).length>0){ n++; d.setDate(d.getDate()-1); }
+    else { if(k===todayKey()){ d.setDate(d.getDate()-1); continue; } break; } }
+  return n;
+}
 function renderCampScene(){
   if(!profile){ renderCamp(); return; }
   removeTownFull();
@@ -2827,7 +2836,7 @@ function renderCampScene(){
     document.body.appendChild(t2); }
   fetchWeather().then(w2=>{ if(w2 && (!wx || w2.at!==wx.at) && document.getElementById('camp-full')) renderCampScene(); });
 }
-const CAMP_LBL={fire:'The Fire',tent:'The Tent',book:'The Book',standard:'The Standard',signpost:'The Signpost'};
+const CAMP_LBL={fire:'The Fire',tent:'The Tent',book:'The Book',standard:'The Standard',signpost:'The Signpost',weather:'The Sky'};
 function renderAnchorsInto(host){
   host.innerHTML='';
   const d=day();
@@ -2864,9 +2873,12 @@ function openCampSection(id){
       }
       if(id==='book'){
         const seed=parseInt(todayKey().replace(/-/g,''),10)%VERSES.length;
+        const d=day(); const read=!!d.verseRead;
         host.innerHTML='<div class="panel sacred" style="margin-top:10px"><p class="scripture" style="font-size:21px;line-height:1.7">\u201C'+VERSES[seed][0]+'\u201D</p>'+
          '<p class="scripture" style="margin-top:12px"><span class="ref">'+VERSES[seed][1].toUpperCase()+'</span></p></div>'+
-         '<p class="small" style="font-style:italic">Carry it through the day. Brother Aldous keeps more at the Chapel.</p>';
+         '<button class="btn '+(read?'ghost':'primary')+' block" id="bk-read" '+(read?'disabled':'')+'>'+(read?'Read today \u2713':'Mark as read \u00B7 +5')+'</button>'+
+         '<p class="small" style="font-style:italic;margin-top:10px">Sit with it before the day takes you. Brother Aldous keeps more at the Chapel.</p>';
+        if(!read){ const b=host.querySelector('#bk-read'); b.onclick=()=>{ const dd=day(); dd.verseRead=nowISO(); Store.set('days',days); addXP(5,'Sat with the Word at camp','spirit'); openCampSection('book'); }; }
       }
       if(id==='standard'){
         const li=levelInfo(state.xp), j=journey()||{q:1,daysLeft:0};
@@ -2875,11 +2887,21 @@ function openCampSection(id){
          '<div style="flex:1"><div class="between"><span class="display" style="font-size:15px;font-weight:600">'+li.title+'</span><small>'+state.xp+' XP</small></div>'+
          '<div class="xpbar" style="margin-top:7px"><div class="fill" style="width:'+(li.next?Math.round(((state.xp-li.floor)/(li.next[0]-li.floor))*100):100)+'%"></div></div>'+
          '<small style="display:block;margin-top:5px">'+(li.next?(li.next[0]-state.xp)+' XP to '+li.next[1]:'The final title.')+'</small></div></div>'+
-         '<div class="stat-row"><div class="stat"><div class="v">'+standingDays()+'</div><div class="k">Days standing</div></div>'+
-         '<div class="stat"><div class="v">'+(avgReturn()||'\u2014')+'</div><div class="k">Avg return</div></div>'+
+         '<div class="stat-row"><div class="stat"><div class="v">'+fireStreak()+'</div><div class="k">Tending fire</div></div>'+
+         '<div class="stat"><div class="v">'+standingDays()+'</div><div class="k">Days standing</div></div>'+
          '<div class="stat"><div class="v">'+j.daysLeft.toLocaleString()+'</div><div class="k">To the gate</div></div></div></div>'+
          '<button class="btn ghost block" id="std-house">Visit the Pilgrim\u2019s House</button>';
         host.querySelector('#std-house').onclick=()=>enterHouse(BUILDINGS.find(x=>x.id==='house'));
+      }
+      if(id==='weather'){
+        const wx=Store.get('wx'); const loc=Store.get('wx_loc');
+        host.innerHTML=panelHTML('The Sky',
+         (wx? 'Last read: <b>'+wx.temp+'\u00B0</b>, '+wxKind(wx.code)+'.':'No reading yet.')+
+         '<p class="small" style="margin-top:8px">The camp sky mirrors your own. If it\u2019s wrong or blank, refresh below.</p>'+
+         '<button class="btn block" id="wx-refresh" style="margin-top:10px">Refresh the sky</button>'+
+         (loc?'<button class="btn ghost block" id="wx-forget" style="margin-top:8px">Forget my location</button>':''));
+        host.querySelector('#wx-refresh').onclick=async()=>{ Store.del('wx'); const w2=await fetchWeather(); toast(w2?'Sky refreshed':'Could not read the sky', w2?w2.temp+'\u00B0 \u00B7 '+wxKind(w2.code):'Check location permission'); openCampSection('weather'); };
+        const fb=host.querySelector('#wx-forget'); if(fb) fb.onclick=()=>{ Store.del('wx_loc'); Store.del('wx'); toast('Location forgotten','The sky will ask again'); openCampSection('weather'); };
       }
       if(id==='signpost'){
         host.innerHTML=panelHTML('The Road Behind', log.length? log.slice(0,14).map(e=>{
