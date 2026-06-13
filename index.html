@@ -417,6 +417,25 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 .place-ghost{position:absolute;transform:translate(-50%,-50%);z-index:45;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:3px}
 .place-ghost .pg-dot{width:16px;height:16px;border-radius:50%;background:var(--ember-hi);box-shadow:0 0 0 4px rgba(232,178,84,.3),0 0 14px rgba(232,178,84,.6)}
 .place-ghost .pg-lbl{background:rgba(20,16,11,.9);border:1px solid var(--edge);border-radius:6px;padding:2px 8px;font-size:12px;color:var(--parchment);white-space:nowrap}
+#vn-full{position:fixed;inset:0;z-index:60;background:radial-gradient(circle at 50% 30%,#1a140e,#0a0806);display:flex;flex-direction:column}
+.vn-back{position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;z-index:62;background:rgba(20,16,11,.7);border:1px solid var(--edge);color:var(--ember-hi);padding:7px 12px;border-radius:10px;font-size:13px}
+.vn-stage{flex:1;display:flex;align-items:flex-end;justify-content:space-between;padding:0;overflow:hidden;position:relative}
+.vn-side{position:relative;height:78%;display:flex;align-items:flex-end;transition:opacity .25s,filter .25s}
+.vn-side img{height:100%;width:auto;object-fit:contain;object-position:bottom;display:block}
+.vn-me{align-self:flex-end}
+.vn-me img{transform:scaleX(-1)}
+.vn-side:not(.active){opacity:.5;filter:brightness(.6) saturate(.8)}
+.vn-side.active{opacity:1;filter:none}
+.vn-name{position:absolute;bottom:8px;background:rgba(20,16,11,.85);border:1px solid var(--edge);border-radius:8px;padding:3px 10px;font-family:'Cinzel',Georgia,serif;font-size:13px;color:var(--ember-hi)}
+.vn-name-me{left:8px}.vn-name-them{right:8px}
+.vn-box{background:linear-gradient(180deg,rgba(28,22,15,.97),rgba(18,14,9,.99));border-top:2px solid var(--ember);padding:14px 16px calc(16px + env(safe-area-inset-bottom));min-height:34vh;display:flex;flex-direction:column;gap:8px}
+.vn-speaker{font-family:'Cinzel',Georgia,serif;color:var(--ember-hi);font-size:15px;letter-spacing:.04em}
+.vn-text{color:var(--parchment);font-size:16px;line-height:1.6;min-height:3em;flex:1}
+.vn-seeds{display:flex;gap:6px;flex-wrap:wrap}
+.vn-seed{font-size:12px;padding:6px 10px;border-radius:14px;border:1px solid var(--edge);background:rgba(201,138,46,.08);color:var(--parchment-dim);cursor:pointer}
+.vn-bar{display:flex;gap:8px;align-items:flex-end}
+.vn-bar textarea{flex:1;min-height:40px;max-height:110px;resize:none;border-radius:12px}
+.vn-say{border-radius:12px;padding:10px 16px}
 #cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
 #cal-stage img{display:block;width:100%}
 #cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
@@ -2992,7 +3011,7 @@ function enterChapel(){
       const btn=document.createElement('button'); btn.className='pin';
       btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
       btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#C98A2E"></span><span class="lbl">'+h.lbl+'</span>';
-      btn.onclick=()=> h.id==='aldous' ? openAldousChat() : openChapelStation(h.id);
+      btn.onclick=()=> h.id==='aldous' ? openVNChat('aldous') : openChapelStation(h.id);
       inner.appendChild(btn);
     });
   }
@@ -3430,7 +3449,7 @@ function enterWatchtower(){
       const btn=document.createElement('button'); btn.className='pin';
       btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
       btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#C0533A"></span><span class="lbl">'+h.lbl+'</span>';
-      btn.onclick=()=> h.id==='garrick' ? openGarrickChat() : (h.id==='fire' ? openTheWatch() : openWatchStation(h.id));
+      btn.onclick=()=> h.id==='garrick' ? openVNChat('garrick') : (h.id==='fire' ? openTheWatch() : openWatchStation(h.id));
       inner.appendChild(btn);
     });
   }
@@ -3497,8 +3516,8 @@ function openTheWatch(){
        '</div>';
       host.querySelector('#w-saved').onclick=()=>{ watchLog('SAVED'); recomputeWatchStreak(); addXP(10,'Held the line','spirit'); toast('Saved','The line holds. Well fought.'); openTheWatch(); };
       host.querySelector('#w-fell').onclick=()=>{ watchLog('FELL'); recomputeWatchStreak(); toast('The watch continues','Get up. Your longest still stands. Begin again.'); openTheWatch(); };
-      host.querySelector('#w-tmd').onclick=()=>{ watchLog('TMD'); openGarrickChat('I\u2019m being tempted right now. Talk me down.'); };
-      host.querySelector('#w-talk').onclick=()=>openGarrickChat();
+      host.querySelector('#w-tmd').onclick=()=>{ watchLog('TMD'); openVNChat('garrick','being tempted right now \u2014 talk me down','I\u2019m being tempted right now. Talk me down.'); };
+      host.querySelector('#w-talk').onclick=()=>openVNChat('garrick');
     }});
 }
 
@@ -3760,6 +3779,87 @@ function attachPinGear(opts){
       else refresh();
     };
   }
+}
+
+
+/* ============================================================
+   EVOLVING PILGRIM + FULL-SCREEN VN CHAT
+   ============================================================ */
+/* 12 levels \u2192 6 stages (2 levels each). Art: pilgrim_s1..s6.webp */
+function pilgrimStage(){ const n=levelInfo(state.xp).n; return Math.min(6, Math.ceil(n/2)); }
+function pilgrimPortrait(){ return 'art/pilgrim_s'+pilgrimStage()+'.webp'; }
+/* placeholder silhouette if the staged art isn't present yet */
+function pilgrimSilhouette(){
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2018"/><stop offset="1" stop-color="#14100b"/></linearGradient></defs><rect width="400" height="520" fill="url(#g)"/><g fill="#0d0a07" opacity="0.85"><ellipse cx="200" cy="200" rx="78" ry="90"/><path d="M70 520 Q70 330 200 318 Q330 330 330 520 Z"/></g><text x="200" y="500" text-anchor="middle" fill="#5a4a32" font-family="Georgia" font-size="20">Stage '+pilgrimStage()+'</text></svg>');
+}
+
+const VN_KEEPERS={
+  aldous:{name:'Brother Aldous',portrait:'art/portrait_chapel.webp',topic:'walking with you \u2014 whatever is on your heart'},
+  garrick:{name:'Garrick',portrait:'art/portrait_watchtower.webp',topic:'the fight, the watch, standing firm'}
+};
+
+function openVNChat(keeperId, topic, seed){
+  const K=VN_KEEPERS[keeperId]; if(!K) return;
+  const useTopic=topic||K.topic;
+  // teardown any scene
+  document.querySelectorAll('.pin-gear,.place-banner').forEach(e=>e.remove());
+  const o=document.createElement('div'); o.id='vn-full';
+  o.innerHTML=
+    '<button class="vn-back" id="vn-back">\u2190 Back</button>'+
+    '<div class="vn-stage">'+
+      '<div class="vn-side vn-me"><img id="vn-me-img" alt="You"><div class="vn-name vn-name-me">You</div></div>'+
+      '<div class="vn-side vn-them"><img id="vn-them-img" src="'+K.portrait+'" alt="'+esc(K.name)+'"><div class="vn-name vn-name-them">'+esc(K.name)+'</div></div>'+
+    '</div>'+
+    '<div class="vn-box">'+
+      '<div class="vn-speaker" id="vn-speaker">'+esc(K.name)+'</div>'+
+      '<div class="vn-text" id="vn-text">\u2026</div>'+
+      '<div class="vn-seeds" id="vn-seeds"></div>'+
+      '<div class="vn-bar"><textarea id="vn-in" rows="1" placeholder="Speak\u2026"></textarea><button class="btn primary vn-say" id="vn-say">Say</button></div>'+
+    '</div>';
+  document.body.appendChild(o);
+  // pilgrim portrait w/ silhouette fallback
+  const meImg=o.querySelector('#vn-me-img'); meImg.src=pilgrimPortrait(); meImg.onerror=()=>{ meImg.onerror=null; meImg.src=pilgrimSilhouette(); };
+  // load saved history into the box (show last exchange)
+  const hist=chatHistory(keeperId);
+  const lastThem=[...hist].reverse().find(m=>m.role==='assistant');
+  if(lastThem){ setSpeaker(K.name); document.getElementById('vn-text').textContent=lastThem.content; }
+  else { setSpeaker(K.name); document.getElementById('vn-text').textContent=vnGreeting(keeperId,useTopic); }
+  // seeds
+  const sw=o.querySelector('#vn-seeds');
+  keeperSeeds(useTopic).forEach(q=>{ const b=document.createElement('button'); b.className='vn-seed'; b.textContent=q; b.onclick=()=>vnSend(keeperId,useTopic,q); sw.appendChild(b); });
+  const inp=o.querySelector('#vn-in');
+  const say=()=>{ const v=inp.value.trim(); if(v){ inp.value=''; inp.style.height='auto'; vnSend(keeperId,useTopic,v); } };
+  o.querySelector('#vn-say').onclick=say;
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); say(); } });
+  inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(110,inp.scrollHeight)+'px'; });
+  o.querySelector('#vn-back').onclick=()=>{ o.remove(); (keeperId==='garrick'?enterWatchtower:enterChapel)(); };
+  if(seed) setTimeout(()=>vnSend(keeperId,useTopic,seed),80);
+}
+function setSpeaker(name){ const el=document.getElementById('vn-speaker'); if(el) el.textContent=name;
+  document.querySelector('.vn-me')&&document.querySelector('.vn-me').classList.toggle('active',name==='You');
+  document.querySelector('.vn-them')&&document.querySelector('.vn-them').classList.toggle('active',name!=='You'); }
+function vnGreeting(keeperId,topic){ const seeds=keeperSeeds(topic); return keeperId==='garrick'?'Report in, brother. How goes the watch?':'Peace, pilgrim. What\u2019s on your heart today?'; }
+
+async function vnSend(keeperId, topic, text){
+  const K=VN_KEEPERS[keeperId];
+  const box=document.getElementById('vn-text'); if(!box) return;
+  const sw=document.getElementById('vn-seeds'); if(sw) sw.innerHTML='';
+  // show YOUR words on your side
+  setSpeaker('You'); box.textContent=text;
+  pushChat(keeperId,'user',text);
+  const key=Store.get('secret_anthropic');
+  if(!key){ setTimeout(()=>{ setSpeaker(K.name); box.textContent='Add your Anthropic API key under Pack \u2192 Mentor Key so I can answer.'; },500); return; }
+  setTimeout(()=>{ setSpeaker(K.name); box.textContent=K.name+' is with you\u2026'; },350);
+  try{
+    const hist=chatHistory(keeperId).slice(-16).map(m=>({role:m.role,content:m.content}));
+    const sys=(keeperId==='garrick'?GARRICK_SYS:ALDOUS_SYS)(topic);
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,system:sys,messages:hist})});
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json(); const say=(data.content||[]).map(b=>b.text||'').join('').trim();
+    setSpeaker(K.name); box.textContent=say; pushChat(keeperId,'assistant',say);
+    // refresh seeds for the next turn
+    const sw2=document.getElementById('vn-seeds'); if(sw2){ sw2.innerHTML=''; keeperSeeds(topic).forEach(q=>{ const b=document.createElement('button'); b.className='vn-seed'; b.textContent=q; b.onclick=()=>vnSend(keeperId,topic,q); sw2.appendChild(b); }); }
+  }catch(err){ setSpeaker(K.name); box.textContent='(signal\u2019s down \u2014 '+err.message+'. Check your key in the Pack.)'; }
 }
 
 </script>
