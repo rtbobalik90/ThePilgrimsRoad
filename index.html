@@ -3071,7 +3071,7 @@ CHAPEL_STATIONS.bible=function(host){
    '<div class="panel"><div class="eyebrow">Reading log</div><div id="read-log">'+
    (world.reading.log.length?world.reading.log.slice(0,10).map(r=>'<div class="between" style="padding:5px 0"><span>'+esc(r.what)+'</span><small>'+shortDate(r.at)+'</small></div>').join(''):'<small>No readings logged yet.</small>')+
    '</div>'+addRowUI('What did you read?','Log it')+'</div>';
-  mountKeeperChat({mountId:'bible-ai',keeperId:'aldous',topic:'the daily Word and Scripture reading'});
+  mountKeeperChat({mountId:'bible-ai',keeperId:'aldous',threadId:'aldous_bible',topic:'the daily Word and Scripture reading'});
   if(!readToday){ host.querySelector('#word-read').onclick=()=>{ const dd=day(); dd.wordRead=nowISO(); Store.set('days',days); addXP(5,'Read the Word','spirit'); openChapelStation('bible'); }; }
   wireAdd(host.querySelector('.panel:last-child'),v=>{ world.reading.log.unshift({what:v,at:nowISO()}); saveWorld(); openChapelStation('bible'); });
 };
@@ -3086,7 +3086,7 @@ CHAPEL_STATIONS.candles=function(host){
    (active.length?active.map((p,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+esc(p.who||"")+'</b> \u2014 '+esc(p.text)+'</span><button class="mini-btn" data-ans="'+world.prayers.indexOf(p)+'">\u2713</button></div>').join(''):'<small>No active prayers.</small>')+
    '</div><div style="margin-top:10px"><input id="pray-who" placeholder="For whom?" style="margin-bottom:6px"><div class="flex"><input id="pray-what" placeholder="Your prayer\u2026" style="flex:1"><button class="btn primary" id="pray-add">Add</button></div></div></div>'+
    (answered.length?'<div class="panel"><div class="eyebrow">Answered ('+answered.length+')</div>'+answered.slice(0,8).map(p=>'<div style="padding:5px 0"><b style="color:var(--moss)">'+esc(p.who||"")+'</b> \u2014 '+esc(p.text)+' <small>'+shortDate(p.answered)+'</small></div>').join('')+'</div>':'');
-  mountKeeperChat({mountId:'cand-ai',keeperId:'aldous',topic:'prayer and intercession for the people you love'});
+  mountKeeperChat({mountId:'cand-ai',keeperId:'aldous',threadId:'aldous_prayer',topic:'prayer and intercession for the people you love'});
   host.querySelector('#pray-add').onclick=()=>{ const who=host.querySelector('#pray-who').value.trim(), what=host.querySelector('#pray-what').value.trim(); if(!what)return; world.prayers.unshift({who,text:what,at:nowISO()}); addXP(5,'Lifted a prayer','spirit'); saveWorld(); openChapelStation('candles'); };
   host.querySelectorAll('[data-ans]').forEach(b=>b.onclick=()=>{ world.prayers[+b.dataset.ans].answered=nowISO(); addXP(5,'A prayer answered','spirit'); saveWorld(); openChapelStation('candles'); });
 };
@@ -3102,7 +3102,7 @@ CHAPEL_STATIONS.confession=function(host){
    (world.confessions.length?'<div class="panel"><div class="eyebrow">The record ('+world.confessions.length+')</div>'+
      world.confessions.slice(0,12).map(c=>'<div style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><div>'+esc(c.text)+'</div><small>'+shortDate(c.at)+'</small></div>').join('')+
      '</div>':'');
-  mountKeeperChat({mountId:'conf-ai',keeperId:'aldous',topic:'confession, repentance, and the grace that follows'});
+  mountKeeperChat({mountId:'conf-ai',keeperId:'aldous',threadId:'aldous_confession',topic:'confession, repentance, and the grace that follows'});
   host.querySelector('#conf-save').onclick=()=>{ const t=host.querySelector('#conf-text').value.trim(); if(!t)return; world.confessions.unshift({text:t,at:nowISO()}); saveWorld(); toast('Confessed','It is set down, and forgiven.'); openChapelStation('confession'); };
 };
 
@@ -3117,7 +3117,7 @@ CHAPEL_STATIONS.memory=function(host){
    (world.verses.length?'<div class="panel"><div class="eyebrow">Practice</div><div class="grid2">'+
      '<button class="btn" data-game="type">Type It Out</button><button class="btn" data-game="blanks">Fill the Blanks</button>'+
      '<button class="btn" data-game="first">First Letters</button><button class="btn" data-game="scramble">Word Scramble</button></div></div>':'');
-  mountKeeperChat({mountId:'mem-ai',keeperId:'aldous',topic:'hiding Scripture in your heart'});
+  mountKeeperChat({mountId:'mem-ai',keeperId:'aldous',threadId:'aldous_memory',topic:'hiding Scripture in your heart'});
   host.querySelector('#mv-add').onclick=()=>{ const ref=host.querySelector('#mv-ref').value.trim(), text=host.querySelector('#mv-text').value.trim(); if(!ref||!text)return; world.verses.unshift({ref,text,drills:0}); addXP(5,'Added a memory verse','spirit'); saveWorld(); openChapelStation('memory'); };
   host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ world.verses.splice(+b.dataset.del,1); saveWorld(); openChapelStation('memory'); });
   host.querySelectorAll('[data-game]').forEach(b=>b.onclick=()=>memoryGame(b.dataset.game));
@@ -3134,7 +3134,7 @@ CHAPEL_STATIONS.worship=function(host){
    '<div class="panel"><div class="eyebrow">Worship moments</div>'+
    (world.worship.moments.length?world.worship.moments.slice(0,8).map(m=>'<div style="padding:5px 0"><b>'+esc(m.song)+'</b> <small>'+shortDate(m.at)+'</small></div>').join(''):'<small>Log a moment of worship.</small>')+
    addRowUI('A song that moved you','Log')+'</div>';
-  mountKeeperChat({mountId:'wor-ai',keeperId:'aldous',topic:'worship and singing to God'});
+  mountKeeperChat({mountId:'wor-ai',keeperId:'aldous',threadId:'aldous_worship',topic:'worship and singing to God'});
   host.querySelector('#song-go').onclick=()=>worshipStudy(host.querySelector('#song-text').value.trim());
   wireAdd(host.querySelector('.panel:last-child'),v=>{ world.worship.moments.unshift({song:v,at:nowISO()}); addXP(5,'A moment of worship','spirit'); saveWorld(); openChapelStation('worship'); });
 };
@@ -3145,7 +3145,7 @@ CHAPEL_STATIONS.discipleship=function(host){
   const PATHS=[['identity','Identity in Christ'],['purity','The Purity Fight'],['father','The Father You Want to Be']];
   host.innerHTML='<div id="disc-ai"></div><div class="panel"><div class="eyebrow">30-day paths</div>'+
    PATHS.map(([k,nm])=>{ const p=world.paths[k]||{day:0}; return '<div class="between" style="padding:8px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+nm+'</b><br><small>Day '+p.day+' of 30</small></span><button class="btn" data-path="'+k+'" data-nm="'+nm+'">'+(p.day>0?'Continue':'Begin')+'</button></div>'; }).join('')+'</div>';
-  mountKeeperChat({mountId:'disc-ai',keeperId:'aldous',topic:'walking a discipleship path day by day'});
+  mountKeeperChat({mountId:'disc-ai',keeperId:'aldous',threadId:'aldous_discipleship',topic:'walking a discipleship path day by day'});
   host.querySelectorAll('[data-path]').forEach(b=>b.onclick=()=>discipleshipDay(b.dataset.path,b.dataset.nm));
 };
 
@@ -3155,7 +3155,7 @@ CHAPEL_STATIONS.curriculum=function(host){
    '<div class="panel"><div class="eyebrow">The Family Altar</div>'+
    '<p class="small">Weekly Bible lessons for Naomi, Zipporah, and Gracelyn \u2014 Scripture, a craft, a game, questions, and a prayer. Ask Brother Aldous to prepare this week\u2019s lesson.</p>'+
    '<button class="btn primary block" id="cur-gen">Prepare this week\u2019s lesson</button><div id="cur-result"></div></div>';
-  mountKeeperChat({mountId:'cur-ai',keeperId:'aldous',topic:'leading your daughters in family worship'});
+  mountKeeperChat({mountId:'cur-ai',keeperId:'aldous',threadId:'aldous_family',topic:'leading your daughters in family worship'});
   host.querySelector('#cur-gen').onclick=()=>familyLesson(host.querySelector('#cur-result'));
 };
 
@@ -3287,7 +3287,8 @@ async function familyLesson(out){
 
 
 function ALDOUS_SYS(topic){
-  return 'You are Brother Aldous, the chaplain and discipler in a Pilgrim\u2019s Progress-themed Christian life app. '+
+  const _digest=(/heart|walking with you/i.test(topic))?sectionThreadDigest('aldous'):'';
+  return _digest+'You are Brother Aldous, the chaplain and discipler in a Pilgrim\u2019s Progress-themed Christian life app. '+
     'Your voice is that of a seasoned pastor, discipler, and mentor in the Evangelical Free tradition (EFCA): gospel-centered, Scripture-first, grace-driven, warm and personal. '+
     'You are NOT sacramental or liturgical \u2014 confession means honest repentance before God and brotherly accountability, not a priestly sacrament; you point men to Christ directly, not through ritual. '+
     'Speak briefly (2-4 sentences), like a trusted older brother who has walked with the Lord a long time. Ground everything in Scripture naturally, never preachy. '+
@@ -3532,7 +3533,8 @@ function openTheWatch(){
 
 /* ---------- Garrick chat (crisis-aware, people first then 988) ---------- */
 function GARRICK_SYS(topic){
-  return 'You are Garrick, the watchman of the Watchtower in a Pilgrim\u2019s Progress-themed Christian life app. '+
+  const _digest=(/the watch, standing firm|whatever is on/i.test(topic)||/the fight, the watch/i.test(topic))?sectionThreadDigest('garrick'):'';
+  return _digest+'You are Garrick, the watchman of the Watchtower in a Pilgrim\u2019s Progress-themed Christian life app. '+
     'You are a weathered old soldier who fought his own war with besetting sin and addiction and came through by grace. '+
     'You disciple the pilgrim in the fight for purity and freedom. Voice: a hard-bitten but deeply loving older brother / mentor / sergeant who has been to the bottom and back. Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental, never shaming. '+
     'Coach HARD but with LOVE \u2014 you call him up, never tear him down; the gospel means his standing is secure even when he falls. Speak briefly (2-5 sentences), plainly, like a man who means it. '+
@@ -3583,7 +3585,7 @@ function openWatchStation(id){
       '<img src="art/npc_watchtower.webp" style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
       '<div><div class="display" style="font-size:15px;color:var(--ember-hi)">Garrick</div><div class="eyebrow">The Watchman</div></div></div>'+
       '<div id="ws-chat"></div><div id="ws-body" style="margin-top:12px"></div>';
-      if(id!=='bell') mountKeeperChat({mountId:'ws-chat',keeperId:'garrick',topic:WATCH_TOPIC[id]||'the fight'});
+      if(id!=='bell') mountKeeperChat({mountId:'ws-chat',keeperId:'garrick',threadId:'garrick_'+id,topic:WATCH_TOPIC[id]||'the fight'});
       WATCH_STATIONS[id]($('#ws-body')); }});
 }
 
@@ -3674,7 +3676,7 @@ WATCH_STATIONS.bell=function(host){ const w=ensureWatch(); w.calls=w.calls||[];
    '<div class="flex" style="gap:8px;align-items:center"><label class="btn" style="cursor:pointer;flex:1;text-align:center">Add photo<input type="file" id="aid-photo" accept="image/*" style="display:none"></label>'+
    '<button class="btn primary" id="aid-add">Add person</button></div>'+
    '<div id="aid-preview" class="small" style="margin-top:6px"></div></div></div>';
-  mountKeeperChat({mountId:'bell-keeper',keeperId:'garrick',topic:'reaching out to your people, not fighting alone'});
+  mountKeeperChat({mountId:'bell-keeper',keeperId:'garrick',threadId:'garrick_bell',topic:'reaching out to your people, not fighting alone'});
   let photoData='';
   host.querySelector('#aid-photo').onchange=(e)=>{ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{ // downscale to keep storage small
     const im=new Image(); im.onload=()=>{ const cv=document.createElement('canvas'); const sz=160; const sc=Math.min(sz/im.width,sz/im.height); cv.width=im.width*sc; cv.height=im.height*sc; cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); photoData=cv.toDataURL('image/jpeg',0.8); host.querySelector('#aid-preview').innerHTML='Photo ready \u2713'; }; im.src=r.result; }; r.readAsDataURL(f); };
@@ -3687,8 +3689,8 @@ WATCH_STATIONS.bell=function(host){ const w=ensureWatch(); w.calls=w.calls||[];
    UNIFIED KEEPER CHAT \u2014 themed bubbles + saved memory
    world.chats[keeperId] = [{role:'user'|'assistant', content, at}]
    ============================================================ */
-function chatHistory(keeperId){ world.chats=world.chats||{}; world.chats[keeperId]=world.chats[keeperId]||[]; return world.chats[keeperId]; }
-function pushChat(keeperId,role,content){ const h=chatHistory(keeperId); h.push({role,content,at:nowISO()}); if(h.length>60) h.splice(0,h.length-60); saveWorld(); }
+function chatHistory(threadId){ world.chats=world.chats||{}; world.chats[threadId]=world.chats[threadId]||[]; return world.chats[threadId]; }
+function pushChat(threadId,role,content){ const h=chatHistory(threadId); h.push({role,content,at:nowISO()}); if(h.length>60) h.splice(0,h.length-60); saveWorld(); }
 
 /* keeper config: who they are, art, sys-prompt builder */
 const KEEPERS={
@@ -3697,8 +3699,9 @@ const KEEPERS={
 };
 
 function mountKeeperChat(opts){
-  // opts: {mountId, keeperId, topic}
+  // opts: {mountId, keeperId, topic, threadId?}  threadId defaults to keeperId (main thread)
   const el=document.getElementById(opts.mountId); if(!el) return;
+  opts.thread=opts.threadId||opts.keeperId;
   const K=KEEPERS[opts.keeperId];
   el.classList.add('kchat');
   el.innerHTML='<div class="kchat-seeds" id="'+opts.mountId+'-seeds"></div>'+
@@ -3707,7 +3710,7 @@ function mountKeeperChat(opts){
     '<button class="btn primary kchat-send" id="'+opts.mountId+'-send">Say</button></div>';
   // render saved history
   const log=document.getElementById(opts.mountId+'-log');
-  const hist=chatHistory(opts.keeperId);
+  const hist=chatHistory(opts.thread);
   hist.forEach(m=>addBubble(log,m.role==='user'?'me':'them',m.role==='user'?m.content:'<b>'+esc(K.name)+':</b> '+esc(m.content),m.role!=='user'));
   // seeds (hide once a conversation exists, to reduce clutter)
   const sw=document.getElementById(opts.mountId+'-seeds');
@@ -3723,15 +3726,16 @@ function addBubble(log,cls,html,isHtml){ const d=document.createElement('div'); 
 
 async function sendKeeper(opts,text){
   const K=KEEPERS[opts.keeperId];
+  const thread=opts.thread||opts.threadId||opts.keeperId;
   const log=document.getElementById(opts.mountId+'-log'); if(!log) return;
   const key=Store.get('secret_anthropic');
   addBubble(log,'me',text,false);
-  pushChat(opts.keeperId,'user',text);
+  pushChat(thread,'user',text);
   if(!key){ addBubble(log,'them','<b>'+esc(K.name)+':</b> I can\u2019t speak without the key \u2014 add your Anthropic API key under Pack \u2192 Mentor Key.',true); return; }
   const typing=addBubble(log,'them typing',esc(K.name)+' is with you\u2026',false);
   try{
     // build message list from saved history (last 16 turns) for real continuity
-    const hist=chatHistory(opts.keeperId).slice(-16).map(m=>({role:m.role,content:m.content}));
+    const hist=chatHistory(thread).slice(-16).map(m=>({role:m.role,content:m.content}));
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,system:K.sys(opts.topic),messages:hist})});
@@ -3739,7 +3743,7 @@ async function sendKeeper(opts,text){
     const data=await res.json(); const say=(data.content||[]).map(b=>b.text||'').join('').trim();
     typing.remove();
     addBubble(log,'them','<b>'+esc(K.name)+':</b> '+esc(say),true);
-    pushChat(opts.keeperId,'assistant',say);
+    pushChat(thread,'assistant',say);
   }catch(err){ typing.className='kbubble them'; typing.innerHTML='<b>'+esc(K.name)+':</b> signal\u2019s down ('+err.message+'). Check your key in the Pack.'; }
 }
 
@@ -3877,6 +3881,18 @@ async function vnSend(keeperId, topic, text){
     setThem(say); setActive('them'); pushChat(keeperId,'assistant',say);
     const sw2=document.getElementById('vn-seeds'); if(sw2){ sw2.innerHTML=''; keeperSeeds(topic).forEach(q=>{ const b=document.createElement('button'); b.className='vn-seed'; b.textContent=q; b.onclick=()=>vnSend(keeperId,topic,q); sw2.appendChild(b); }); }
   }catch(err){ setThem('(signal\u2019s down \u2014 '+err.message+'. Check your key in the Pack.)'); setActive('them'); }
+}
+
+
+/* main keeper can reference (not replay) what was discussed in section threads */
+function sectionThreadDigest(keeperId){
+  world.chats=world.chats||{};
+  const labels=keeperId==='aldous'
+    ? {aldous_bible:'the Word',aldous_prayer:'prayer',aldous_confession:'confession',aldous_memory:'memory verses',aldous_worship:'worship',aldous_discipleship:'a discipleship path',aldous_family:'the family altar'}
+    : {garrick_why:'his why & mission',garrick_oath:'identity & the vow',garrick_arsenal:'the Scripture arsenal',garrick_plan:'his battle plan',garrick_bell:'reaching his people'};
+  const seen=[];
+  Object.keys(labels).forEach(t=>{ const h=world.chats[t]; if(h&&h.length){ const last=[...h].reverse().find(m=>m.role==='user'); if(last) seen.push(labels[t]+' (last: \u201C'+last.content.slice(0,40)+(last.content.length>40?'\u2026':'')+'\u201D)'); } });
+  return seen.length?(' Recently in other rooms he has talked with you about: '+seen.join('; ')+'. You may gently reference these if relevant.'):'';
 }
 
 </script>
