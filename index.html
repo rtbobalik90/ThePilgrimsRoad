@@ -3392,15 +3392,25 @@ function keeperState(opts){
 
 /* Shared adaptive seed generator — references the pilgrim's real, recent data.
    Returns up to 3 short, specific suggested questions that change as data changes. */
-function keeperSeeds(topic){
+function keeperSeeds(topic,thread){
   let s=[]; const d=day();
+  // if this thread is already going, lead with follow-ups shaped by the last exchange
+  if(thread && world.chats && world.chats[thread] && world.chats[thread].length){
+    const h=world.chats[thread];
+    const lastThem=[...h].reverse().find(m=>m.role==='assistant');
+    const fu=['Tell me more.','Why does that matter?','What\u2019s my next step?','Help me actually do that.','What would you do?'];
+    s.push(fu[h.length%fu.length]); s.push(fu[(h.length+2)%fu.length]);
+  }
+  // --- HALL topics first (distinct), so they don't collide with chapel keywords ---
+  const hallHit=keeperSeedsHall(topic,s);
+  if(hallHit){ return [...new Set(s)].slice(0,3); }
   const apr=(world.prayers||[]).filter(p=>!p.answered);
   if(/Word|reading|Scripture/i.test(topic)){
     if(d.wordRead && world.reading&&world.reading.log&&world.reading.log[0]) s.push('What should I carry from '+world.reading.log[0].what+'?');
     else s.push('What should I read today?');
     s.push('I only have five minutes \u2014 where do I start?'); s.push('Open the Word with me.');
   } else if(/prayer/i.test(topic)){
-    if(apr[0]) s.push('How do I keep praying for '+(apr[0].who||'them')+'?');
+    s.push(apr[0]?('How do I keep praying for '+(apr[0].who||'them')+'?'):'Who should I be praying for?');
     s.push('I\u2019m discouraged in prayer.'); s.push('Teach me to pray.');
   } else if(/confession|repent/i.test(topic)){
     s.push('I keep falling in the same place.'); s.push('Is God tired of me?'); s.push('Help me repent honestly.');
@@ -3408,6 +3418,8 @@ function keeperSeeds(topic){
     const weak=(world.verses||[]).slice().sort((a,b)=>(a.drills||0)-(b.drills||0))[0];
     if(weak) s.push('Help me with '+weak.ref+'.');
     s.push('Which verse should I hide in my heart?'); s.push('Quiz my heart.');
+  } else if(/family worship|daughters in family|family altar|family bible lesson/i.test(topic)){
+    s.push('Prepare this week\u2019s lesson.'); s.push('How do I lead my girls spiritually?'); s.push('Make it simple for little ones.');
   } else if(/worship/i.test(topic)){
     s.push('Is this song good to sing?'); s.push('Teach me to worship in a hard season.'); s.push('Why does worship matter?');
   } else if(/discipleship|path/i.test(topic)){
@@ -3422,9 +3434,44 @@ function keeperSeeds(topic){
     else { s.push('Stand watch with me.'); }
     if(s.length<3){ s.push('I\u2019m being tempted right now.'); s.push('Remind me why I fight.'); }
   } else {
-    s.push('What should I do here today?'); s.push('Speak to me, brother.'); s.push('I\u2019m not sure where to begin.');
+    s.push('What should I do here today?'); s.push('Speak with me a while.'); s.push('I\u2019m not sure where to begin.');
   }
-  return s.slice(0,3);
+  return [...new Set(s)].slice(0,3);
+}
+/* Hall-specific seeds, matched on distinctive phrases so they never collide with chapel keywords. */
+function keeperSeedsHall(topic,s){
+  if(/raising your daughter/i.test(topic)){
+    const m=topic.match(/daughter ([A-Za-z]+)/); const nm=m?m[1]:'her';
+    const gid=(DAUGHTERS.find(g=>g.name===nm)||{}).id;
+    const K=gid&&world.kids&&world.kids[gid];
+    s.push((K&&K.guide&&K.guide.length)?'How do I love '+nm+' well this week?':'Help me really see '+nm+'.');
+    s.push((K&&K.prayers&&K.prayers.length)?'Keep praying with me for '+nm+'.':'What should I pray for '+nm+'?');
+    s.push('What does '+nm+' need most from me right now?'); return true;
+  }
+  if(/to lizzie|reconciliation/i.test(topic)){
+    const L=world.lizzie||{};
+    s.push((L.growth&&L.growth.length)?'Am I becoming the man she needs?':'Where do I even begin to change?');
+    s.push('How do I hope without forcing it?'); s.push('Help me pray for Lizzie tonight.'); return true;
+  }
+  if(/tending your marriage/i.test(topic)){
+    s.push('How do I love her well from here?'); s.push('What does patient love look like?'); s.push('Help me guard my own heart.'); return true;
+  }
+  if(/writing letters/i.test(topic)){
+    s.push('Help me find the words.'); s.push('What should I say, and what should I hold back?'); s.push('Is this letter ready, or not yet?'); return true;
+  }
+  if(/time with your daughters|daddy/i.test(topic)){
+    s.push('Give me a simple idea for one of the girls.'); s.push('How do I be present, not just there?'); s.push('What will they remember?'); return true;
+  }
+  if(/leading your family spiritually/i.test(topic)){
+    s.push('Make tonight\u2019s devotion simple.'); s.push('How do I lead without preaching?'); s.push('What can little hearts hold?'); return true;
+  }
+  if(/people you love most|marriage and your children/i.test(topic)){
+    const L=world.lizzie||{};
+    if(L.growth&&L.growth.length) s.push('How is my growth toward Lizzie going?');
+    s.push('How are my girls, really?'); s.push('What should I tend first at home?');
+    if(s.length<3) s.push('Sit with me a moment, Tomas.'); return true;
+  }
+  return false;
 }
 
 
@@ -3735,9 +3782,9 @@ function mountKeeperChat(opts){
   const log=document.getElementById(opts.mountId+'-log');
   const hist=chatHistory(opts.thread);
   hist.forEach(m=>addBubble(log,m.role==='user'?'me':'them',m.role==='user'?m.content:'<b>'+esc(K.name)+':</b> '+esc(m.content),m.role!=='user'));
-  // seeds (hide once a conversation exists, to reduce clutter)
+  // seeds: always shown, and regenerated from current data + this thread each time
   const sw=document.getElementById(opts.mountId+'-seeds');
-  if(hist.length===0){ keeperSeeds(opts.topic).forEach(q=>{ const b=document.createElement('button'); b.className='kchat-seed'; b.textContent=q; b.onclick=()=>sendKeeper(opts,q); sw.appendChild(b); }); }
+  renderKeeperSeeds(sw,opts);
   const inp=document.getElementById(opts.mountId+'-in');
   const send=()=>{ const v=inp.value.trim(); if(v){ inp.value=''; inp.style.height='auto'; sw.innerHTML=''; sendKeeper(opts,v); } };
   document.getElementById(opts.mountId+'-send').onclick=send;
@@ -3746,6 +3793,9 @@ function mountKeeperChat(opts){
   const nb=document.getElementById(opts.mountId+'-new');
   if(nb) nb.onclick=()=>{ if(confirm('Start a new chat? This clears this conversation.')){ world.chats[opts.thread]=[]; saveWorld(); mountKeeperChat(opts); } };
   setTimeout(()=>{ log.scrollTop=log.scrollHeight; },30);
+}
+function renderKeeperSeeds(sw,opts){ if(!sw) return; sw.innerHTML='';
+  keeperSeeds(opts.topic,opts.thread).forEach(q=>{ const b=document.createElement('button'); b.className='kchat-seed'; b.textContent=q; b.onclick=()=>{ sw.innerHTML=''; sendKeeper(opts,q); }; sw.appendChild(b); });
 }
 function addBubble(log,cls,html,isHtml){ const d=document.createElement('div'); d.className='kbubble '+cls; d.innerHTML=isHtml?html:esc(html); log.appendChild(d); log.scrollTop=log.scrollHeight; return d; }
 
@@ -3769,6 +3819,7 @@ async function sendKeeper(opts,text){
     typing.remove();
     addBubble(log,'them','<b>'+esc(K.name)+':</b> '+esc(say),true);
     pushChat(thread,'assistant',say);
+    const sw=document.getElementById(opts.mountId+'-seeds'); if(sw) renderKeeperSeeds(sw,opts);
   }catch(err){ typing.className='kbubble them'; typing.innerHTML='<b>'+esc(K.name)+':</b> signal\u2019s down ('+err.message+'). Check your key in the Pack.'; }
 }
 
@@ -3871,13 +3922,13 @@ function openVNChat(keeperId, topic, seed){
   if(lastMe) setMe(lastMe.content);
   setActive('them');
   const sw=o.querySelector('#vn-seeds');
-  keeperSeeds(useTopic).forEach(q=>{ const b=document.createElement('button'); b.className='vn-seed'; b.textContent=q; b.onclick=()=>vnSend(keeperId,useTopic,q); sw.appendChild(b); });
+  keeperSeeds(useTopic,keeperId).forEach(q=>{ const b=document.createElement('button'); b.className='vn-seed'; b.textContent=q; b.onclick=()=>vnSend(keeperId,useTopic,q); sw.appendChild(b); });
   const inp=o.querySelector('#vn-in');
   const say=()=>{ const v=inp.value.trim(); if(v){ inp.value=''; inp.style.height='auto'; vnSend(keeperId,useTopic,v); } };
   o.querySelector('#vn-say').onclick=say;
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); say(); } });
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(110,inp.scrollHeight)+'px'; });
-  o.querySelector('#vn-back').onclick=()=>{ o.remove(); (keeperId==='garrick'?enterWatchtower:enterChapel)(); };
+  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall}[keeperId]||enterChapel; home(); };
   o.querySelector('#vn-new').onclick=()=>{ if(confirm('Start a new chat with '+K.name+'? This clears this conversation.')){ world.chats[keeperId]=[]; saveWorld(); o.remove(); openVNChat(keeperId,topic); } };
   if(seed) setTimeout(()=>vnSend(keeperId,useTopic,seed),80);
 }
@@ -3906,7 +3957,7 @@ async function vnSend(keeperId, topic, text){
     if(!res.ok) throw new Error('API '+res.status);
     const data=await res.json(); const say=(data.content||[]).map(b=>b.text||'').join('').trim();
     setThem(say); setActive('them'); pushChat(keeperId,'assistant',say);
-    const sw2=document.getElementById('vn-seeds'); if(sw2){ sw2.innerHTML=''; keeperSeeds(topic).forEach(q=>{ const b=document.createElement('button'); b.className='vn-seed'; b.textContent=q; b.onclick=()=>vnSend(keeperId,topic,q); sw2.appendChild(b); }); }
+    const sw2=document.getElementById('vn-seeds'); if(sw2){ sw2.innerHTML=''; keeperSeeds(topic,keeperId).forEach(q=>{ const b=document.createElement('button'); b.className='vn-seed'; b.textContent=q; b.onclick=()=>vnSend(keeperId,topic,q); sw2.appendChild(b); }); }
   }catch(err){ setThem('(signal\u2019s down \u2014 '+err.message+'. Check your key in the Pack.)'); setActive('them'); }
 }
 
@@ -3946,10 +3997,10 @@ VN_KEEPERS.tomas={name:'Elder Tomas',portrait:'art/npc_hall.webp',topic:'your ma
 
 function TOMAS_SYS(topic){
   const d=DAUGHTERS.map(g=>g.name+' ('+g.age+')').join(', ');
-  return 'You are Elder Tomas, the keeper of the Great Hall in a Pilgrim\u2019s Progress-themed Christian life app. '+
-    'You are a warm, wise grandfatherly mentor who loved one woman his whole life and raised good children. You disciple the pilgrim in marriage and fatherhood. '+
-    'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. Speak warmly, briefly (2-5 sentences), like a seasoned elder who has walked this road. '+
-    'The pilgrim is '+(profile.name||'a father')+', father to '+d+'. He is separated/divorced from his wife Lizzie and longs, prayerfully, for reconciliation \u2014 hold this tenderly, never glibly; point him to becoming the man God calls him to be, to patience, repentance, and hope, never to manipulation or despair. '+
+  return 'You are Elder Tomas, keeper of the Great Hall in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'Your voice is that of a wise elder counselor \u2014 a seasoned mentor and grandfatherly figure who has lived long, loved one woman his whole life, raised good children, and buried his share of sorrows. You speak with unhurried warmth, gravity, and gentle humor; you tell the truth kindly; you often answer a worry with a question or a short story before the counsel. Never preachy, never clinical. '+
+    'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. Keep replies brief (2-5 sentences) and personal, the way a grandfather speaks across a table by the fire. '+
+    'The pilgrim is '+(profile.name||'a father')+', father to '+d+'. He is separated/divorced from his wife Lizzie and longs, prayerfully, for reconciliation \u2014 hold this with great tenderness, never glibly; steer him toward becoming the man God is making him, toward patience, repentance, humility, and hope, never toward manipulation, pressure, or despair. '+
     'Current focus: '+topic+'. '+keeperState({topic})+' Never invent facts you were not given.';
 }
 
