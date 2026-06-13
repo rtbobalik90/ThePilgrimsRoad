@@ -1890,6 +1890,7 @@ async function askNPC(id,text){
 function enterBuilding(id){
   removeTownFull();
   if(id==='chapel'){ enterChapel(); return; }
+  if(id==='watchtower'){ enterWatchtower(); return; }
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
   if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
@@ -2928,13 +2929,14 @@ function coverSlice(o,svg){
    PHASE 11 — THE CHAPEL (full building: room + 7 stations)
    ============================================================ */
 const CHAPEL_PINS=[
- {id:'worship',     x:20, y:27, lbl:'Worship'},
- {id:'curriculum',  x:50, y:21, lbl:'Family Altar'},
- {id:'discipleship',x:80, y:27, lbl:'Discipleship'},
- {id:'bible',       x:16, y:38, lbl:'The Word'},
- {id:'candles',     x:83, y:43, lbl:'Prayer Candles'},
- {id:'confession',  x:17, y:58, lbl:'Confession'},
- {id:'memory',      x:82, y:58, lbl:'Memory Verses'}
+ {id:'curriculum',  x:50, y:20, lbl:'Family Altar'},
+ {id:'worship',     x:17, y:30, lbl:'Worship'},
+ {id:'discipleship',x:82, y:28, lbl:'Discipleship'},
+ {id:'bible',       x:14, y:42, lbl:'The Word'},
+ {id:'candles',     x:85, y:45, lbl:'Prayer Candles'},
+ {id:'confession',  x:15, y:62, lbl:'Confession'},
+ {id:'memory',      x:85, y:62, lbl:'Memory Verses'},
+ {id:'aldous',      x:50, y:50, lbl:'Brother Aldous'}
 ];
 const CHAPEL_LBL={bible:'The Word',candles:'Prayer Candles',confession:'Confession',
  memory:'Memory Verses',worship:'Worship',discipleship:'Discipleship Paths',curriculum:'Family Altar'};
@@ -2960,7 +2962,7 @@ function enterChapel(){
       const btn=document.createElement('button'); btn.className='pin';
       btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
       btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#C98A2E"></span><span class="lbl">'+h.lbl+'</span>';
-      btn.onclick=()=>openChapelStation(h.id);
+      btn.onclick=()=> h.id==='aldous' ? openAldousChat() : openChapelStation(h.id);
       inner.appendChild(btn);
     });
   }
@@ -3112,7 +3114,7 @@ function aldousChat(mountId, topic){
     '<div class="flex" style="margin-top:8px"><input id="'+mountId+'-in" placeholder="Ask Brother Aldous\u2026" style="flex:1"><button class="btn" id="'+mountId+'-send">Ask</button></div>';
   const key=Store.get('secret_anthropic');
   // seed 3 suggested questions (no API cost — static seeds tuned per topic)
-  const seeds=['What should I do here today?','Help me begin.','Speak to me about '+topic+'.'];
+  const seeds=aldousSeeds(topic);
   const qwrap=document.getElementById(mountId+'-q');
   seeds.forEach(q=>{ const b=document.createElement('button'); b.className='btn ghost'; b.style.fontSize='12px'; b.textContent=q; b.onclick=()=>askAldous(mountId,topic,q); qwrap.appendChild(b); });
   document.getElementById(mountId+'-send').onclick=()=>{ const v=document.getElementById(mountId+'-in').value.trim(); if(v){document.getElementById(mountId+'-in').value='';askAldous(mountId,topic,v);} };
@@ -3125,7 +3127,7 @@ async function askAldous(mountId, topic, text){
   if(!key){ const a=document.createElement('div'); a.className='small'; a.style.margin='6px 0'; a.textContent='Brother Aldous: I cannot speak without the key, pilgrim \u2014 add your Anthropic API key under Pack \u2192 Mentor Key.'; log.appendChild(a); return; }
   const typing=document.createElement('div'); typing.className='small'; typing.style.opacity='.6'; typing.textContent='Brother Aldous is considering\u2026'; log.appendChild(typing);
   try{
-    const sys='You are Brother Aldous, a gentle, gray-bearded chaplain in a Pilgrim\u2019s Progress-themed life app. You tend the Chapel. Speak warmly, briefly (2-4 sentences), like a wise older brother in the faith. Ground encouragement in Scripture naturally. Current focus: '+topic+'. '+aldousData()+' Never invent facts about the pilgrim you were not given.';
+    const sys=ALDOUS_SYS(topic);
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,system:sys,messages:[{role:'user',content:text}]})});
@@ -3220,6 +3222,378 @@ async function familyLesson(out){
     addXP(5,'Prepared a family lesson','family');
   }catch(err){ out.innerHTML='<p class="small" style="margin-top:8px">Could not prepare it ('+err.message+').</p>'; }
 }
+
+
+function ALDOUS_SYS(topic){
+  return 'You are Brother Aldous, the chaplain and discipler in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'Your voice is that of a seasoned pastor, discipler, and mentor in the Evangelical Free tradition (EFCA): gospel-centered, Scripture-first, grace-driven, warm and personal. '+
+    'You are NOT sacramental or liturgical \u2014 confession means honest repentance before God and brotherly accountability, not a priestly sacrament; you point men to Christ directly, not through ritual. '+
+    'Speak briefly (2-4 sentences), like a trusted older brother who has walked with the Lord a long time. Ground everything in Scripture naturally, never preachy. '+
+    'Disciple the pilgrim: meet him where he is, call him gently forward, never shame him. Current focus: '+topic+'. '+
+    aldousContext(topic)+
+    ' Never invent facts about the pilgrim you were not given. If he is in real crisis or despair, urge him toward the living people who love him and toward immediate help, not just words.';
+}
+/* per-station awareness: what has he done here, what's next */
+function aldousContext(topic){
+  let c=keeperState({topic})+' ';
+  const d=day();
+  if(/Word|reading|Scripture/i.test(topic)){
+    const log=(world.reading&&world.reading.log)||[];
+    c+= d.wordRead?'He has read the Word today. ':'He has not yet read the Word today. ';
+    if(log.length) c+='Recent readings: '+log.slice(0,3).map(r=>r.what).join('; ')+'. ';
+  }
+  if(/prayer|interces/i.test(topic)){
+    const pr=(world.prayers||[]).filter(p=>!p.answered);
+    if(pr.length) c+='He is praying for: '+pr.slice(0,6).map(p=>(p.who?p.who:'')+' '+p.text).join('; ')+'. ';
+    const ans=(world.prayers||[]).filter(p=>p.answered).slice(0,3);
+    if(ans.length) c+='Recently answered: '+ans.map(p=>p.text).join('; ')+'. ';
+  }
+  if(/confession|repent/i.test(topic)){
+    const cf=(world.confessions||[]);
+    if(cf.length>=2){ c+='He has confessed '+cf.length+' times. Without quoting them back, you may gently notice recurring struggles and point to grace and growth. '; }
+    else c+='Hold this tenderly; confession is hard. ';
+  }
+  if(/memory|heart/i.test(topic)){
+    const vs=(world.verses||[]);
+    if(vs.length){ const weak=vs.slice().sort((a,b)=>(a.drills||0)-(b.drills||0))[0]; c+='He is memorizing '+vs.length+' verses; weakest is '+weak.ref+' ('+(weak.drills||0)+' drills). Encourage that one. '; }
+    else c+='He has no memory verses yet; suggest starting with one. ';
+  }
+  if(/worship/i.test(topic)){
+    const m=(world.worship&&world.worship.moments)||[];
+    if(m.length) c+='Recent worship: '+m.slice(0,3).map(x=>x.song).join(', ')+'. ';
+  }
+  if(/discipleship|path/i.test(topic)){
+    const p=world.paths||{}; const active=Object.entries(p).filter(([k,v])=>v.day>0&&v.day<30);
+    if(active.length) c+='Active paths: '+active.map(([k,v])=>k+' day '+v.day).join(', ')+'. ';
+  }
+  return c;
+}
+/* room-level chat with Aldous (tap the priest) */
+function openAldousChat(){
+  openFullPage({title:'Brother Aldous',sub:'The Chapel',backLabel:'The Chapel',onBack:()=>enterChapel(),
+    render:host=>{ host.innerHTML='<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:12px">'+
+      '<img src="art/npc_chapel.webp" style="width:64px;height:64px;border-radius:12px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+      '<div><div class="display" style="font-size:16px;color:var(--ember-hi)">Brother Aldous</div><div class="eyebrow">The Chaplain \u00B7 your discipler</div></div></div>'+
+      '<div class="aichat" id="aldous-room"></div>';
+      aldousChat('aldous-room','walking with you today \u2014 whatever is on your heart'); }});
+}
+
+
+function aldousSeeds(topic){ return keeperSeeds(topic); }
+
+
+/* ============================================================
+   APP-WIDE KEEPER ENGINE — data-aware, references recent entries
+   Every keeper (Aldous, Garrick, future) feeds Claude the
+   pilgrim's CURRENT state + specific recent entries each visit,
+   so opening lines and suggested questions are never generic.
+   ============================================================ */
+function recent(arr,n,fmt){ return (arr||[]).slice(0,n).map(fmt).filter(Boolean); }
+function daysAgo(iso){ if(!iso) return ''; const d=Math.floor((Date.now()-new Date(iso))/86400000); return d===0?'today':d===1?'yesterday':d+'d ago'; }
+
+/* Master state summary handed to any keeper. Pulls specifics, not just counts. */
+function keeperState(opts){
+  opts=opts||{};
+  const P=[]; const nm=(profile.name||'friend').split(' ')[0];
+  P.push('Pilgrim: '+nm+'.');
+  if(typeof fireStreak==='function') P.push('Daily-anchor streak: '+fireStreak()+' days.');
+  // the Fight / Watch
+  if(world.watch){
+    P.push('THE WATCH \u2014 current clean streak: '+(world.watch.current||0)+' days; longest ever: '+(world.watch.longest||0)+' days.');
+    const f=recent(world.watch.log,3,e=>e.type+' '+daysAgo(e.at));
+    if(f.length) P.push('Recent watch entries: '+f.join(', ')+'.');
+  }
+  // prayers
+  const apr=(world.prayers||[]).filter(p=>!p.answered);
+  if(apr.length) P.push('Praying for: '+recent(apr,5,p=>(p.who?p.who+' ':'')+'('+p.text.slice(0,30)+')').join('; ')+'.');
+  const ans=(world.prayers||[]).filter(p=>p.answered);
+  if(ans.length) P.push('Recently answered prayer: '+recent(ans,2,p=>p.text.slice(0,40)).join('; ')+'.');
+  // reading
+  if(world.reading&&world.reading.log&&world.reading.log.length) P.push('Recent reading: '+recent(world.reading.log,3,r=>r.what+' ('+daysAgo(r.at)+')').join('; ')+'.');
+  // confession (themes, never quote verbatim back hard)
+  if((world.confessions||[]).length>=2) P.push('He has confessed '+world.confessions.length+' times; most recent '+daysAgo(world.confessions[0].at)+'. You may gently notice recurring themes and point to grace.');
+  // memory verses
+  if((world.verses||[]).length){ const weak=world.verses.slice().sort((a,b)=>(a.drills||0)-(b.drills||0))[0]; P.push('Memorizing '+world.verses.length+' verses; weakest: '+weak.ref+'.'); }
+  // discipleship
+  const paths=Object.entries(world.paths||{}).filter(([k,v])=>v.day>0);
+  if(paths.length) P.push('Discipleship paths: '+paths.map(([k,v])=>k+' (day '+v.day+'/30)').join(', ')+'.');
+  return P.join(' ');
+}
+
+
+/* Shared adaptive seed generator — references the pilgrim's real, recent data.
+   Returns up to 3 short, specific suggested questions that change as data changes. */
+function keeperSeeds(topic){
+  const s=[]; const d=day();
+  const apr=(world.prayers||[]).filter(p=>!p.answered);
+  if(/Word|reading|Scripture/i.test(topic)){
+    if(d.wordRead && world.reading&&world.reading.log&&world.reading.log[0]) s.push('What should I carry from '+world.reading.log[0].what+'?');
+    else s.push('What should I read today?');
+    s.push('I only have five minutes \u2014 where do I start?'); s.push('Open the Word with me.');
+  } else if(/prayer/i.test(topic)){
+    if(apr[0]) s.push('How do I keep praying for '+(apr[0].who||'them')+'?');
+    s.push('I\u2019m discouraged in prayer.'); s.push('Teach me to pray.');
+  } else if(/confession|repent/i.test(topic)){
+    s.push('I keep falling in the same place.'); s.push('Is God tired of me?'); s.push('Help me repent honestly.');
+  } else if(/memory/i.test(topic)){
+    const weak=(world.verses||[]).slice().sort((a,b)=>(a.drills||0)-(b.drills||0))[0];
+    if(weak) s.push('Help me with '+weak.ref+'.');
+    s.push('Which verse should I hide in my heart?'); s.push('Quiz my heart.');
+  } else if(/worship/i.test(topic)){
+    s.push('Is this song good to sing?'); s.push('Teach me to worship in a hard season.'); s.push('Why does worship matter?');
+  } else if(/discipleship|path/i.test(topic)){
+    const p=Object.entries(world.paths||{}).find(([k,v])=>v.day>0&&v.day<30);
+    if(p) s.push('I\u2019m on day '+p[1].day+' \u2014 keep me going.');
+    s.push('Which path do I need most?'); s.push('Walk with me today.');
+  } else if(/family/i.test(topic)){
+    s.push('Prepare this week\u2019s lesson.'); s.push('How do I lead my girls spiritually?'); s.push('Make it simple for little ones.');
+  } else if(/fight|watch|addiction|tempt/i.test(topic)){
+    if(world.watch){ s.push('I\u2019m '+(world.watch.current||0)+' days in \u2014 help me hold the line.');
+      if((world.watch.current||0)===0) s=['I just fell. Help me get up.','Why do I keep coming back here?','Stand watch with me tonight.']; }
+    else { s.push('Stand watch with me.'); }
+    if(s.length<3){ s.push('I\u2019m being tempted right now.'); s.push('Remind me why I fight.'); }
+  } else {
+    s.push('What should I do here today?'); s.push('Speak to me, brother.'); s.push('I\u2019m not sure where to begin.');
+  }
+  return s.slice(0,3);
+}
+
+
+
+/* ============================================================
+   THE WATCHTOWER (Garrick / The Fight) — room + pins + The Watch
+   ============================================================ */
+const WATCH_PINS=[
+ {id:'why',         x:62, y:24, lbl:'The Why Wall'},
+ {id:'oath',        x:89, y:30, lbl:'Identity & Vow'},
+ {id:'garrick',     x:42, y:43, lbl:'Garrick'},
+ {id:'arsenal',     x:13, y:52, lbl:'Scripture Arsenal'},
+ {id:'bell',        x:62, y:49, lbl:'Call for Aid'},
+ {id:'plan',        x:86, y:62, lbl:'The Plan'},
+ {id:'fire',        x:43, y:82, lbl:'The Watch'}
+];
+const WATCH_LBL={fire:'The Watch',why:'The Why Wall',oath:'Identity & The Vow',
+ arsenal:'Scripture Arsenal',bell:'Call for Aid',plan:'The Plan',garrick:'Garrick'};
+const WATCH_SCENE={fire:'b_watch_fire',why:'b_watch_why',oath:'b_watch_oath',
+ arsenal:'b_watch_arsenal',bell:'b_watch_bell',plan:'b_watch_plan'};
+
+function enterWatchtower(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML='<div style="height:100%;width:100%;background:linear-gradient(#14110c,#0a0806);display:flex;align-items:center;justify-content:center;color:var(--parchment-dim)">The Watchtower</div>';
+  fitScene(o);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
+  img.onerror=()=>{ addSpots(); };
+  img.src='art/b_watch_room.webp';
+  function addSpots(){
+    o.querySelectorAll('.pin').forEach(p=>p.remove());
+    WATCH_PINS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#C0533A"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=> h.id==='garrick' ? openGarrickChat() : (h.id==='fire' ? openTheWatch() : openWatchStation(h.id));
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=()=>{ o.remove(); back.remove(); document.querySelector('#nav button[data-v=keep]').click(); };
+  document.body.appendChild(back);
+  const t=document.createElement('div'); t.className='town-title'; t.textContent='The Watchtower';
+  document.body.appendChild(t);
+}
+
+/* ---------- The Watch (the heartbeat: streak + buttons + Garrick one tap away) ---------- */
+function ensureWatch(){
+  world.watch=world.watch||{current:0,longest:0,log:[],lastAction:null,mission:'',
+    why:[],identity:["I am loved before I produce.","I am a son before I am a soldier.","I am bought with a price; I am not my own.","I am a new creation; the old has gone.","I am free, not a slave to sin.","I am chosen, holy, dearly loved.","I am hidden with Christ in God.","I am being remade into His image.","I am not what I did; I am whose I am."],
+    anchorIdentity:0,arsenal:["No temptation has overtaken you that is not common to man. (1 Cor 10:13)","Walk by the Spirit, and you will not gratify the flesh. (Gal 5:16)","I can do all things through him who strengthens me. (Phil 4:13)","Submit to God. Resist the devil, and he will flee. (James 4:7)","Flee youthful passions; pursue righteousness. (2 Tim 2:22)","Sin shall not have dominion over you. (Rom 6:14)","Take every thought captive to obey Christ. (2 Cor 10:5)","Create in me a clean heart, O God. (Ps 51:10)","The Lord is my refuge and strength. (Ps 46:1)","If we confess our sins, He is faithful to forgive. (1 John 1:9)"],
+    escape:["Stand up. Move your body out of the room.","Get into the light \u2014 open a window, step outside.","Speak one verse aloud from the Arsenal.","Call one man on the list. Don\u2019t text \u2014 call.","Drink water. Breathe slow, ten counts.","Name the lie. Name the truth over it.","Do the next ordinary thing \u2014 a chore, a walk."],
+    calls:[],vow:'',milestones:[7,14,30,60,90,180,365]};
+  return world.watch;
+}
+function watchLog(type){
+  const w=ensureWatch();
+  const today=todayKey();
+  w.log.unshift({type,at:nowISO()});
+  if(type==='FELL'){ w.current=0; }
+  else if(type==='SAVED'||type==='TMD'){ /* streak holds */ }
+  w.lastAction={type,day:today};
+  if(w.current>w.longest) w.longest=w.current;
+  saveWorld();
+}
+function recomputeWatchStreak(){
+  // current streak = days since last FELL (or since first ever entry)
+  const w=ensureWatch();
+  const fell=w.log.find(e=>e.type==='FELL');
+  const start=fell?new Date(fell.at):(w.log.length?new Date(w.log[w.log.length-1].at):new Date());
+  const days=Math.max(0,Math.floor((Date.now()-start)/86400000));
+  w.current=fell?days:days;
+  if(w.current>w.longest) w.longest=w.current;
+  saveWorld(); return w.current;
+}
+function openTheWatch(){
+  const w=ensureWatch(); recomputeWatchStreak();
+  openFullPage({title:'The Watch',sub:'The Watchtower',backLabel:'The Watchtower',onBack:()=>enterWatchtower(),
+    render:host=>{
+      host.innerHTML=
+       '<div class="panel" style="text-align:center;padding:22px 14px">'+
+        '<div class="eyebrow">Days standing</div>'+
+        '<div class="display" style="font-size:54px;color:var(--ember-hi);line-height:1">'+w.current+'</div>'+
+        '<div class="small" style="margin-top:6px">Longest you\u2019ve ever stood: <b>'+w.longest+'</b> days</div>'+
+       '</div>'+
+       '<div class="grid3" style="margin:10px 0">'+
+        '<button class="btn" id="w-tmd" style="border-color:var(--ember)">Talk Me Down</button>'+
+        '<button class="btn primary" id="w-saved">Saved</button>'+
+        '<button class="btn" id="w-fell" style="border-color:var(--rust)">Fell</button>'+
+       '</div>'+
+       '<button class="btn ghost block" id="w-talk">Talk with Garrick</button>'+
+       '<div class="panel" style="margin-top:12px"><div class="eyebrow">Recent watch</div>'+
+        (w.log.length?w.log.slice(0,8).map(e=>'<div class="between" style="padding:5px 0"><span>'+e.type+'</span><small>'+shortDate(e.at)+'</small></div>').join==undefined?'':w.log.slice(0,8).map(e=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span style="color:'+(e.type==='FELL'?'var(--rust)':e.type==='SAVED'?'var(--moss)':'var(--ember)')+'">'+e.type+'</span><small>'+shortDate(e.at)+'</small></div>').join(''):'<small>The watch begins now.</small>')+
+       '</div>';
+      host.querySelector('#w-saved').onclick=()=>{ watchLog('SAVED'); recomputeWatchStreak(); addXP(10,'Held the line','spirit'); toast('Saved','The line holds. Well fought.'); openTheWatch(); };
+      host.querySelector('#w-fell').onclick=()=>{ watchLog('FELL'); recomputeWatchStreak(); toast('The watch continues','Get up. Your longest still stands. Begin again.'); openTheWatch(); };
+      host.querySelector('#w-tmd').onclick=()=>{ watchLog('TMD'); openGarrickChat('I\u2019m being tempted right now. Talk me down.'); };
+      host.querySelector('#w-talk').onclick=()=>openGarrickChat();
+    }});
+}
+
+/* ---------- Garrick chat (crisis-aware, people first then 988) ---------- */
+function GARRICK_SYS(topic){
+  return 'You are Garrick, the watchman of the Watchtower in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'You are a weathered old soldier who fought his own war with besetting sin and addiction and came through by grace. '+
+    'You disciple the pilgrim in the fight for purity and freedom. Voice: a hard-bitten but deeply loving older brother / mentor / sergeant who has been to the bottom and back. Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental, never shaming. '+
+    'Coach HARD but with LOVE \u2014 you call him up, never tear him down; the gospel means his standing is secure even when he falls. Speak briefly (2-5 sentences), plainly, like a man who means it. '+
+    'Current focus: '+topic+'. '+keeperState({topic})+
+    ' CRISIS RULE: If he expresses despair, hopelessness, or any thought of harming himself, do NOT try to be his only help. Urge him \u2014 warmly and directly \u2014 to reach a real person who loves him right now (point him to his accountability call list in this very room), and if he may be in danger, tell him to call or text 988 (the Suicide & Crisis Lifeline) immediately. People first, then 988. Never minimize, never lecture.';
+}
+function openGarrickChat(seed){
+  openFullPage({title:'Garrick',sub:'The Watchtower',backLabel:'The Watchtower',onBack:()=>enterWatchtower(),
+    render:host=>{ host.innerHTML='<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:12px">'+
+      '<img src="art/npc_watchtower.webp" style="width:64px;height:64px;border-radius:12px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+      '<div><div class="display" style="font-size:16px;color:var(--ember-hi)">Garrick</div><div class="eyebrow">The Watchman \u00B7 your brother in the fight</div></div></div>'+
+      '<div class="aichat" id="garrick-chat"></div>';
+      garrickChat('garrick-chat','the fight against addiction, the watch'); 
+      if(seed){ setTimeout(()=>{ const inp=document.getElementById('garrick-chat-in'); if(inp){ askGarrick('garrick-chat','the fight against addiction, the watch',seed); } },100); }
+    }});
+}
+function garrickChat(mountId,topic){
+  const el=document.getElementById(mountId); if(!el) return;
+  el.innerHTML='<div class="flex" style="gap:6px;flex-wrap:wrap" id="'+mountId+'-q"></div>'+
+    '<div id="'+mountId+'-log" style="margin-top:8px"></div>'+
+    '<div class="flex" style="margin-top:8px"><input id="'+mountId+'-in" placeholder="Talk to Garrick\u2026" style="flex:1"><button class="btn" id="'+mountId+'-send">Say</button></div>';
+  keeperSeeds(topic).forEach(q=>{ const b=document.createElement('button'); b.className='btn ghost'; b.style.fontSize='12px'; b.textContent=q; b.onclick=()=>askGarrick(mountId,topic,q); document.getElementById(mountId+'-q').appendChild(b); });
+  document.getElementById(mountId+'-send').onclick=()=>{ const v=document.getElementById(mountId+'-in').value.trim(); if(v){document.getElementById(mountId+'-in').value='';askGarrick(mountId,topic,v);} };
+  document.getElementById(mountId+'-in').addEventListener('keydown',e=>{if(e.key==='Enter'){const v=e.target.value.trim();if(v){e.target.value='';askGarrick(mountId,topic,v);}}});
+}
+async function askGarrick(mountId,topic,text){
+  const log=document.getElementById(mountId+'-log'); if(!log) return;
+  const key=Store.get('secret_anthropic');
+  const me=document.createElement('div'); me.style.cssText='text-align:right;margin:6px 0'; me.innerHTML='<span style="background:rgba(192,83,58,.18);padding:6px 10px;border-radius:10px;display:inline-block">'+esc(text)+'</span>'; log.appendChild(me);
+  if(!key){ const a=document.createElement('div'); a.className='small'; a.style.margin='6px 0'; a.textContent='Garrick: I can\u2019t speak without the key, brother \u2014 set your Anthropic API key under Pack \u2192 Mentor Key. But hear me: if you\u2019re in the fire right now, call one of your men. Don\u2019t stand the watch alone.'; log.appendChild(a); return; }
+  const typing=document.createElement('div'); typing.className='small'; typing.style.opacity='.6'; typing.textContent='Garrick is with you\u2026'; log.appendChild(typing);
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,system:GARRICK_SYS(topic),messages:[{role:'user',content:text}]})});
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json(); const say=(data.content||[]).map(b=>b.text||'').join('').trim();
+    typing.remove();
+    const a=document.createElement('div'); a.style.cssText='margin:6px 0'; a.innerHTML='<b style="color:var(--ember-hi)">Garrick:</b> '+esc(say); log.appendChild(a);
+  }catch(err){ typing.textContent='Garrick: signal\u2019s down ('+err.message+'). Check your key \u2014 and if it\u2019s dark right now, call your man on the list, don\u2019t wait on me.'; }
+}
+
+const WATCH_STATIONS={};
+function openWatchStation(id){
+  ensureWatch();
+  openFullPage({title:WATCH_LBL[id],sub:'The Watchtower',backLabel:'The Watchtower',onBack:()=>enterWatchtower(),
+    render:host=>{ host.innerHTML='<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/'+WATCH_SCENE[id]+'.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div><div id="ws-body"></div>';
+      WATCH_STATIONS[id]($('#ws-body')); }});
+}
+
+
+/* ---- Why Wall + Mission ---- */
+WATCH_STATIONS.why=function(host){ const w=ensureWatch();
+  host.innerHTML='<div class="panel"><div class="eyebrow">Your mission</div>'+
+   '<textarea id="w-mission" placeholder="One sentence \u2014 why you fight\u2026" style="min-height:54px;margin:6px 0">'+esc(w.mission||'')+'</textarea>'+
+   '<button class="btn block" id="w-mission-save">Set it</button></div>'+
+   '<div class="panel"><div class="eyebrow">The Why Wall ('+w.why.length+')</div><div id="why-list">'+
+   (w.why.length?w.why.map((r,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(r)+'</span><button class="mini-btn" data-x="'+i+'">\u00D7</button></div>').join(''):'<small>Add the faces and reasons you fight.</small>')+
+   '</div>'+addRowUI('A reason you fight\u2026','Pin it')+'</div>';
+  host.querySelector('#w-mission-save').onclick=()=>{ w.mission=host.querySelector('#w-mission').value.trim(); saveWorld(); toast('Mission set',''); };
+  host.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ w.why.splice(+b.dataset.x,1); saveWorld(); openWatchStation('why'); });
+  wireAdd(host.querySelector('.panel:last-child'),v=>{ w.why.push(v); saveWorld(); openWatchStation('why'); });
+};
+
+/* ---- Identity Declarations + The Vow ---- */
+WATCH_STATIONS.oath=function(host){ const w=ensureWatch();
+  host.innerHTML='<div class="panel"><div class="eyebrow">Identity in Christ</div><div id="id-list">'+
+   w.identity.map((d,i)=>'<div class="between" style="padding:7px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span style="'+(i===w.anchorIdentity?'color:var(--ember-hi);font-weight:600':'')+'">'+esc(d)+'</span><button class="mini-btn" data-anchor="'+i+'">'+(i===w.anchorIdentity?'\u2605':'\u2606')+'</button></div>').join('')+
+   '</div>'+addRowUI('I am\u2026','Declare')+'</div>'+
+   '<div class="panel sacred"><div class="eyebrow">The Vow</div>'+
+   '<textarea id="w-vow" placeholder="Your signed commitment before God\u2026" style="min-height:80px;margin:6px 0">'+esc(w.vow||'')+'</textarea>'+
+   '<button class="btn primary block" id="w-vow-save">Sign it</button></div>';
+  host.querySelectorAll('[data-anchor]').forEach(b=>b.onclick=()=>{ w.anchorIdentity=+b.dataset.anchor; saveWorld(); openWatchStation('oath'); });
+  wireAdd(host.querySelector('.panel'),v=>{ w.identity.push(v); saveWorld(); openWatchStation('oath'); });
+  host.querySelector('#w-vow-save').onclick=()=>{ w.vow=host.querySelector('#w-vow').value.trim(); saveWorld(); toast('Vow sealed','Before God and these witnesses.'); };
+};
+
+/* ---- Scripture Arsenal (Speak Mode) ---- */
+WATCH_STATIONS.arsenal=function(host){ const w=ensureWatch();
+  host.innerHTML='<div class="panel"><div class="eyebrow">Battle verses ('+w.arsenal.length+')</div>'+
+   '<button class="btn primary block" id="speak-mode">Enter Speak Mode</button>'+
+   '<div id="ars-list" style="margin-top:10px">'+w.arsenal.map((v,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(v)+'</span><button class="mini-btn" data-x="'+i+'">\u00D7</button></div>').join('')+'</div>'+
+   addRowUI('Add a verse for the fight\u2026','Arm')+'</div>';
+  host.querySelector('#speak-mode').onclick=()=>speakMode(w.arsenal);
+  host.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ w.arsenal.splice(+b.dataset.x,1); saveWorld(); openWatchStation('arsenal'); });
+  wireAdd(host.querySelector('.panel'),v=>{ w.arsenal.push(v); saveWorld(); openWatchStation('arsenal'); });
+};
+function speakMode(verses){ if(!verses.length) return; let i=0;
+  openFullPage({title:'Speak Mode',sub:'Scripture Arsenal',backLabel:'Arsenal',onBack:()=>openWatchStation('arsenal'),
+    render:host=>{ const render=()=>{ host.innerHTML='<div class="panel sacred" style="text-align:center;padding:30px 18px;min-height:240px;display:flex;flex-direction:column;justify-content:center">'+
+      '<p class="scripture" style="font-size:24px;line-height:1.6">'+esc(verses[i])+'</p></div>'+
+      '<div class="grid2" style="margin-top:10px"><button class="btn" id="sm-prev">Back</button><button class="btn primary" id="sm-next">Next \u00B7 '+(i+1)+'/'+verses.length+'</button></div>'+
+      '<p class="small" style="text-align:center;margin-top:10px;font-style:italic">Speak it aloud. Out loud. The enemy hears it too.</p>';
+      host.querySelector('#sm-next').onclick=()=>{ i=(i+1)%verses.length; render(); };
+      host.querySelector('#sm-prev').onclick=()=>{ i=(i-1+verses.length)%verses.length; render(); }; }; render(); }});
+}
+
+/* ---- The Plan: Escape Plan + Accountability + Pattern Insights + Long View ---- */
+WATCH_STATIONS.plan=function(host){ const w=ensureWatch();
+  // pattern insight from log
+  const falls=w.log.filter(e=>e.type==='FELL');
+  let insight='Not enough data yet \u2014 keep standing the watch.';
+  if(falls.length>=3){ const hrs=falls.map(f=>new Date(f.at).getHours()); const night=hrs.filter(h=>h>=22||h<3).length; const pct=Math.round(night/hrs.length*100); if(pct>=50) insight=pct+'% of your falls happen between 10pm and 3am. Guard the night.'; else insight='Your falls are scattered across the day \u2014 stay alert, not just at night.'; }
+  host.innerHTML=
+   '<div class="panel"><div class="eyebrow">Pattern insight</div><p class="small" style="margin-top:6px">'+insight+'</p>'+
+    '<div class="stat-row" style="margin-top:10px"><div class="stat"><div class="v">'+w.current+'</div><div class="k">Current</div></div>'+
+    '<div class="stat"><div class="v">'+w.longest+'</div><div class="k">Longest</div></div>'+
+    '<div class="stat"><div class="v">'+w.log.filter(e=>e.type==='SAVED').length+'</div><div class="k">Saves</div></div></div></div>'+
+   '<div class="panel"><div class="eyebrow">Escape Plan</div><div id="esc-list">'+
+    w.escape.map((st,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+(i+1)+'.</b> '+esc(st)+'</span><button class="mini-btn" data-x="'+i+'">\u00D7</button></div>').join('')+
+    '</div>'+addRowUI('Add a step\u2026','Add')+'</div>'+
+   '<div class="panel"><div class="eyebrow">Accountability \u2014 call, don\u2019t text</div><div id="call-list">'+
+    (w.calls.length?w.calls.map((c,i)=>'<div class="between" style="padding:7px 0;border-bottom:1px solid rgba(58,47,32,.4)"><a href="tel:'+esc(c.phone)+'" style="color:var(--ember-hi)">'+esc(c.name)+' \u2014 '+esc(c.phone)+'</a><button class="mini-btn" data-call="'+i+'">\u00D7</button></div>').join(''):'<small>Add your men. The ones you can call at 1am.</small>')+
+    '</div><div style="margin-top:8px"><input id="call-name" placeholder="Name" style="margin-bottom:6px"><div class="flex"><input id="call-phone" placeholder="Phone" style="flex:1"><button class="btn primary" id="call-add">Add</button></div></div></div>';
+  host.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ w.escape.splice(+b.dataset.x,1); saveWorld(); openWatchStation('plan'); });
+  wireAdd(host.querySelector('.panel:nth-child(2)'),v=>{ w.escape.push(v); saveWorld(); openWatchStation('plan'); });
+  host.querySelector('#call-add').onclick=()=>{ const name=host.querySelector('#call-name').value.trim(), phone=host.querySelector('#call-phone').value.trim(); if(!name||!phone)return; w.calls.push({name,phone}); saveWorld(); openWatchStation('plan'); };
+  host.querySelectorAll('[data-call]').forEach(b=>b.onclick=()=>{ w.calls.splice(+b.dataset.call,1); saveWorld(); openWatchStation('plan'); });
+};
+
+/* ---- Call for Aid (bell): the AI Coach + people first ---- */
+WATCH_STATIONS.bell=function(host){ const w=ensureWatch();
+  host.innerHTML='<div class="panel"><div class="eyebrow">When you need help, now</div>'+
+   '<p class="small" style="margin:6px 0">Don\u2019t stand the watch alone. Call one of your men first \u2014 then, if it\u2019s dark, reach the lifeline.</p>'+
+   (w.calls.length?w.calls.map(c=>'<a class="btn block" style="margin-bottom:6px" href="tel:'+esc(c.phone)+'">Call '+esc(c.name)+'</a>').join(''):'<p class="small"><i>Add your accountability men under The Plan.</i></p>')+
+   '<a class="btn block" style="margin-top:6px;border-color:var(--rust)" href="tel:988">988 \u00B7 Suicide &amp; Crisis Lifeline (call or text)</a>'+
+   '<button class="btn primary block" id="bell-coach" style="margin-top:10px">Talk it through with Garrick</button></div>';
+  host.querySelector('#bell-coach').onclick=()=>openGarrickChat();
+};
 
 </script>
 </body>
