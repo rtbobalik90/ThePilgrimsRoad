@@ -3940,7 +3940,14 @@ function setActive(who){
   if(them) them.classList.toggle('active',who==='them');
   if(me) me.classList.toggle('active',who==='me');
 }
-function vnGreeting(keeperId,topic){ return keeperId==='garrick'?'Report in, brother. How goes the watch?':'Peace, pilgrim. What\u2019s on your heart today?'; }
+function vnGreeting(keeperId,topic){
+  const g={
+    garrick:'Report in, brother. How goes the watch?',
+    tomas:'Sit with me a while, son. How is the road \u2014 your girls, your marriage, your own heart in all of it?',
+    mercer:'Welcome, pilgrim. Shall we look over the household accounts together?'
+  };
+  return g[keeperId]||'Peace, pilgrim. What\u2019s on your heart today?';
+}
 
 async function vnSend(keeperId, topic, text){
   const K=VN_KEEPERS[keeperId];
@@ -3953,7 +3960,7 @@ async function vnSend(keeperId, topic, text){
   setTimeout(()=>{ const b=document.getElementById('vn-them-bubble'); if(b) b.innerHTML='<div class="vn-think">'+esc(K.name)+' is with you\u2026</div>'; setActive('them'); },300);
   try{
     const hist=chatHistory(keeperId).slice(-16).map(m=>({role:m.role,content:m.content}));
-    const sys=(keeperId==='garrick'?GARRICK_SYS:ALDOUS_SYS)(topic);
+    const sys=(KEEPERS[keeperId]?KEEPERS[keeperId].sys:ALDOUS_SYS)(topic);
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:450,system:sys,messages:hist})});
     if(!res.ok) throw new Error('API '+res.status);
     const data=await res.json(); const say=(data.content||[]).map(b=>b.text||'').join('').trim();
