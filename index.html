@@ -2629,12 +2629,13 @@ HOUSE_SECTIONS.desk=function(el){
    PHASE 9 — BASE CAMP: LIVING SKY, REAL WEATHER, THE FIRE
    ============================================================ */
 const CAMP_SPOTS=[
- {id:'fire',  x:50, y:72, lbl:'The Fire \u00B7 Anchors'},
- {id:'tent',  x:17, y:55, lbl:'The Tent \u00B7 Evening'},
- {id:'book',  x:76, y:78, lbl:'The Book \u00B7 Verse'},
- {id:'standard', x:86, y:46, lbl:'The Standard'},
- {id:'signpost', x:12, y:80, lbl:'The Signpost'}
+ {id:'fire',  x:50, y:81, lbl:'The Fire \u00B7 Anchors'},
+ {id:'tent',  x:25, y:58, lbl:'The Tent \u00B7 Evening'},
+ {id:'book',  x:85, y:77, lbl:'The Book \u00B7 Verse'},
+ {id:'standard', x:83, y:42, lbl:'The Standard'},
+ {id:'signpost', x:10, y:70, lbl:'The Signpost'}
 ];
+const CAMP_FIRE_POS={x:50,y:81};
 
 /* ---------- weather (open-meteo, no key) ---------- */
 function wxKind(code){
@@ -2768,7 +2769,14 @@ function renderCampScene(){
   const img=new Image();
   img.onload=()=>{ inner.innerHTML=''; img.style.width='100%'; img.style.display='block'; inner.appendChild(img);
     const fx=document.createElement('div'); fx.style.cssText='position:absolute;inset:0;pointer-events:none';
-    fx.innerHTML='<svg viewBox="0 0 430 640" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%">'+ (function(){let t='';
+    const FXH=538, fcx=430*CAMP_FIRE_POS.x/100, fby=FXH*CAMP_FIRE_POS.y/100+14;
+    const ffs=0.45+lit*0.16;
+    const fireArt= lit===0 ? '' :
+      '<g class="fire-glow"><ellipse cx="'+fcx+'" cy="'+(fby-16)+'" rx="'+(38*ffs)+'" ry="'+(52*ffs)+'" fill="#C9612E" opacity=".28"/>'+
+      '<ellipse cx="'+fcx+'" cy="'+fby+'" rx="'+(95*ffs+30)+'" ry="'+(38*ffs+14)+'" fill="#C9612E" opacity="'+(0.1+lit*0.045)+'"/>'+
+      '<path d="M'+fcx+' '+(fby-60*ffs)+' Q'+(fcx-15*ffs)+' '+(fby-26*ffs)+' '+(fcx-9*ffs)+' '+(fby-4)+' Q'+fcx+' '+(fby-12*ffs)+' '+(fcx+10*ffs)+' '+(fby-4)+' Q'+(fcx+16*ffs)+' '+(fby-28*ffs)+' '+fcx+' '+(fby-60*ffs)+' Z" fill="#E8943A" opacity=".92"/>'+
+      '<path d="M'+fcx+' '+(fby-40*ffs)+' Q'+(fcx-7*ffs)+' '+(fby-17*ffs)+' '+fcx+' '+(fby-5)+' Q'+(fcx+8*ffs)+' '+(fby-19*ffs)+' '+fcx+' '+(fby-40*ffs)+' Z" fill="#F2C868" opacity=".95"/></g>';
+    fx.innerHTML='<svg viewBox="0 0 430 '+FXH+'" preserveAspectRatio="none" style="width:100%;height:100%">'+fireArt+ (function(){let t='';
       if(wkind==='rain'||wkind==='storm'){let d2='';for(let i=0;i<34;i++)d2+='<line x1="'+((i*53)%430)+'" y1="'+((i*37)%560-60)+'" x2="'+((i*53)%430-5)+'" y2="'+((i*37)%560-42)+'" stroke="#8fa2b8" stroke-width="1.1" opacity=".4"/>';t+='<g class="wx-rain">'+d2+'</g>';}
       if(wkind==='snow'){for(let i=0;i<26;i++)t+='<circle cx="'+((i*67)%430)+'" cy="-20" r="'+(1.4+(i%3)*.7)+'" fill="#e8eef2" opacity=".7" style="animation:snowfall '+(7+(i%5))+'s linear infinite;animation-delay:-'+(i%7)+'s"/>';}
       if(wkind==='fog'){for(let i=0;i<4;i++)t+='<ellipse class="'+(i%2?'fog':'fog2')+'" cx="'+(80+i*92)+'" cy="'+(330+i*60)+'" rx="160" ry="26" fill="#9aa4ae" opacity=".14"/>';}
