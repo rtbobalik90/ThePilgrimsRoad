@@ -326,9 +326,9 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
   background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.5);border-radius:5px;padding:2px 7px;white-space:nowrap;
   text-shadow:0 1px 2px #000;
 }
-#town-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow:auto;-webkit-overflow-scrolling:touch}
-#town-full .town-inner{position:relative;width:max-content;min-width:100%;height:max-content;min-height:100%}
-#town-full .town-inner img{display:block}
+#town-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow:hidden}
+#town-full .town-inner{position:absolute;inset:0;width:100%;height:100%}
+#town-full .town-inner img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
 .town-title{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:41;background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.45);border-radius:8px;padding:7px 13px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;letter-spacing:.22em;font-size:12px;color:var(--ember-hi);text-transform:uppercase}
 .town-hint{position:fixed;right:14px;top:calc(12px + env(safe-area-inset-top));z-index:41;background:rgba(14,11,7,.6);border:1px solid var(--edge);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--faint);font-style:italic}
 /* ---------- interior scenes ---------- */
@@ -358,9 +358,10 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 .tl .te.fall::before{background:var(--rust)}
 .tl .te .tw{font-size:15.5px}
 .tl .te .tdt{font-size:12.5px;color:var(--faint)}
-#scene-full,#camp-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow:auto;-webkit-overflow-scrolling:touch}
-#scene-full .scene-inner,#camp-full .scene-inner{position:relative;width:max-content;min-width:100%;height:max-content;min-height:100%}
-#scene-full .scene-inner img,#scene-full .scene-inner svg,#camp-full .scene-inner img,#camp-full .scene-inner svg{display:block}
+#scene-full,#camp-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow:hidden}
+#scene-full .scene-inner,#camp-full .scene-inner{position:absolute;inset:0;width:100%;height:100%}
+#scene-full .scene-inner img,#camp-full .scene-inner img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
+#scene-full .scene-inner svg,#camp-full .scene-inner svg{display:block;position:absolute;inset:0;width:100%;height:100%}
 @keyframes emberup{0%{transform:translateY(0) translateX(0);opacity:0}12%{opacity:.85}100%{transform:translateY(-110px) translateX(8px);opacity:0}}
 .scene-back{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:41;background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.45);border-radius:8px;padding:7px 13px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;letter-spacing:.18em;font-size:12px;color:var(--ember-hi);text-transform:uppercase}
 .layerwrap{position:relative;border-radius:8px;overflow:hidden}
@@ -1750,13 +1751,13 @@ function buildMap(){
 /* ============================================================
    PHASE 3 — THE CAST, THE DIALOGUE, THE TOWN
    ============================================================ */
-const DEFAULT_PINS={ // measured from the vertical painted town (v2)
- chapel:{x:33,y:10}, watchtower:{x:78,y:12}, hall:{x:48,y:21}, yard:{x:79,y:29},
- treasury:{x:20,y:33}, house:{x:48,y:42}, granary:{x:80,y:50}, hearth:{x:21,y:53},
- garden:{x:80,y:67}, forge:{x:21,y:70}, vault:{x:90,y:79} };
-const GATE_PIN={x:48,y:85};
+const DEFAULT_PINS={ // measured from the anime cel-shaded town (v3)
+ vault:{x:37,y:16}, garden:{x:20,y:26}, house:{x:66,y:23}, treasury:{x:47,y:34},
+ yard:{x:22,y:45}, forge:{x:82,y:40}, hall:{x:47,y:55}, granary:{x:84,y:55},
+ watchtower:{x:13,y:62}, chapel:{x:36,y:72}, hearth:{x:81,y:69} };
+const GATE_PIN={x:50,y:88};
 const _storedPins=Store.get('pins');
-let pins=(_storedPins && _storedPins._v===2)? _storedPins : Object.assign({_v:2},DEFAULT_PINS);
+let pins=(_storedPins && _storedPins._v===3)? _storedPins : Object.assign({_v:3},DEFAULT_PINS);
 let npcchat=Store.get('npcchat',{}); // {buildingId:[{role,content,shown}]}
 
 /* ---------- the cast ---------- */
@@ -1921,22 +1922,9 @@ function enterBuilding(id){
 }
 
 /* hard-fit scene media to the overlay's real height (standalone-proof) */
-function fitScene(o){ if(!o) return; const cw=o.clientWidth, ch=o.clientHeight; if(!cw||!ch) return;
-  o.querySelectorAll('.scene-inner>img,.scene-inner>svg,.town-inner>img,.town-inner>svg').forEach(el=>{
-    const nw=el.naturalWidth||el.getBoundingClientRect().width||cw;
-    const nh=el.naturalHeight||el.getBoundingClientRect().height||ch;
-    const isImg=el.tagName==='IMG';
-    if(isImg && nw && nh){
-      const sc=Math.max(cw/nw, ch/nh);            // cover: fill the short side
-      el.style.width=Math.ceil(nw*sc)+'px';
-      el.style.height=Math.ceil(nh*sc)+'px';
-    } else {                                       // svg fallback: stretch to fill
-      el.style.width=cw+'px'; el.style.height=ch+'px';
-      if(el.setAttribute) el.setAttribute('preserveAspectRatio','xMidYMid slice');
-    }
-    el.style.maxWidth='none'; el.style.display='block';
-  });
-  requestAnimationFrame(()=>{ o.scrollLeft=Math.max(0,(o.scrollWidth-cw)/2); o.scrollTop=Math.max(0,(o.scrollHeight-ch)/2); });
+function fitScene(o){ if(!o) return;
+  // SVG fallbacks need slice to cover; <img> is handled by CSS object-fit:cover. No scrolling.
+  o.querySelectorAll('.scene-inner>svg,.town-inner>svg').forEach(el=>{ if(el.setAttribute) el.setAttribute('preserveAspectRatio','xMidYMid slice'); });
 }
 window.addEventListener('resize',()=>['town-full','scene-full','camp-full'].forEach(id=>fitScene(document.getElementById(id))));
 
@@ -2005,7 +1993,7 @@ function startCal(){
       const x=Math.round(((e.clientX-r.left)/r.width)*1000)/10;
       const y=Math.round(((e.clientY-r.top)/r.height)*1000)/10;
       const id=calQueue[0]; if(!id) return;
-      pins[id]={x,y}; pins._v=2; Store.set('pins',pins);
+      pins[id]={x,y}; pins._v=3; Store.set('pins',pins);
       const d=document.createElement('div'); d.className='cal-dot'; d.style.left=x+'%'; d.style.top=y+'%';
       $('#cal-stage').appendChild(d);
       calDone.push(id); calQueue.shift(); calNext();
@@ -2111,7 +2099,7 @@ function renderTown(){
   gate.onclick=openSteward;
   inner.appendChild(gate);
   const img=o.querySelector('img');
-  const center=()=>{ fitScene(o); o.scrollLeft=Math.max(0, inner.scrollWidth*(GATE_PIN.x/100) - o.clientWidth/2); };
+  const center=()=>{ fitScene(o); };
   if(img.complete) center(); else img.onload=center;
   fitScene(o);
 }
@@ -2314,8 +2302,7 @@ function enterHouse(b){
   inner.innerHTML=houseSceneSVG();
   addSpots(); fitScene(o);
   const img=new Image();
-  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o);
-    requestAnimationFrame(()=>{ fitScene(o); o.scrollLeft=Math.max(0,(o.scrollWidth-o.clientWidth)/2); }); };
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
   img.src='art/house_scene.webp';
   function addSpots(){
     HOUSE_SPOTS.forEach(h=>{
@@ -2804,7 +2791,6 @@ function renderCampScene(){
   fitScene(o);
   const img=new Image();
   img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); fitScene(o);
-    requestAnimationFrame(()=>{ fitScene(o); o.scrollLeft=Math.max(0,(o.scrollWidth-o.clientWidth)/2); });
     const fx=document.createElement('div'); fx.style.cssText='position:absolute;inset:0;pointer-events:none';
     const FXH=Math.round(430*(img.naturalHeight||2048)/(img.naturalWidth||1024)), fcx=430*CAMP_FIRE_POS.x/100, fby=FXH*CAMP_FIRE_POS.y/100;
     const ffs=lit/5;
