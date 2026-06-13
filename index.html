@@ -420,10 +420,11 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 #vn-full{position:fixed;inset:0;z-index:60;background:radial-gradient(circle at 50% 30%,#1a140e,#0a0806);display:flex;flex-direction:column}
 .vn-back{position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;z-index:62;background:rgba(20,16,11,.7);border:1px solid var(--edge);color:var(--ember-hi);padding:7px 12px;border-radius:10px;font-size:13px}
 .vn-stage{flex:1;display:flex;align-items:flex-end;justify-content:space-between;padding:0;overflow:hidden;position:relative}
-.vn-side{position:relative;height:78%;display:flex;align-items:flex-end;transition:opacity .25s,filter .25s}
-.vn-side img{height:100%;width:auto;object-fit:contain;object-position:bottom;display:block}
+.vn-side{position:relative;width:50%;height:100%;display:flex;align-items:flex-end;justify-content:center;transition:opacity .25s,filter .25s}
+.vn-side img{max-width:96%;max-height:94%;width:auto;height:auto;object-fit:contain;object-position:bottom center;display:block;border-radius:10px}
 .vn-me{align-self:flex-end}
 .vn-me img{transform:scaleX(-1)}
+.vn-me img.is-placeholder{transform:none}
 .vn-side:not(.active){opacity:.5;filter:brightness(.6) saturate(.8)}
 .vn-side.active{opacity:1;filter:none}
 .vn-name{position:absolute;bottom:8px;background:rgba(20,16,11,.85);border:1px solid var(--edge);border-radius:8px;padding:3px 10px;font-family:'Cinzel',Georgia,serif;font-size:13px;color:var(--ember-hi)}
@@ -3790,7 +3791,7 @@ function pilgrimStage(){ const n=levelInfo(state.xp).n; return Math.min(6, Math.
 function pilgrimPortrait(){ return 'art/pilgrim_s'+pilgrimStage()+'.webp'; }
 /* placeholder silhouette if the staged art isn't present yet */
 function pilgrimSilhouette(){
-  return 'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2018"/><stop offset="1" stop-color="#14100b"/></linearGradient></defs><rect width="400" height="520" fill="url(#g)"/><g fill="#0d0a07" opacity="0.85"><ellipse cx="200" cy="200" rx="78" ry="90"/><path d="M70 520 Q70 330 200 318 Q330 330 330 520 Z"/></g><text x="200" y="500" text-anchor="middle" fill="#5a4a32" font-family="Georgia" font-size="20">Stage '+pilgrimStage()+'</text></svg>');
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2018"/><stop offset="1" stop-color="#14100b"/></linearGradient></defs><rect width="400" height="520" fill="url(#g)"/><g fill="#0d0a07" opacity="0.85"><ellipse cx="200" cy="200" rx="78" ry="90"/><path d="M70 520 Q70 330 200 318 Q330 330 330 520 Z"/></g></svg>');
 }
 
 const VN_KEEPERS={
@@ -3818,7 +3819,8 @@ function openVNChat(keeperId, topic, seed){
     '</div>';
   document.body.appendChild(o);
   // pilgrim portrait w/ silhouette fallback
-  const meImg=o.querySelector('#vn-me-img'); meImg.src=pilgrimPortrait(); meImg.onerror=()=>{ meImg.onerror=null; meImg.src=pilgrimSilhouette(); };
+  const meImg=o.querySelector('#vn-me-img'); meImg.src=pilgrimPortrait();
+  meImg.onerror=()=>{ meImg.onerror=null; meImg.src=pilgrimSilhouette(); meImg.classList.add('is-placeholder'); o.querySelector('.vn-name-me').textContent='You \u00B7 Stage '+pilgrimStage(); };
   // load saved history into the box (show last exchange)
   const hist=chatHistory(keeperId);
   const lastThem=[...hist].reverse().find(m=>m.role==='assistant');
