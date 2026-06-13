@@ -1889,6 +1889,7 @@ async function askNPC(id,text){
 /* ---------- enterBuilding, rebuilt with dialogue ---------- */
 function enterBuilding(id){
   removeTownFull();
+  if(id==='chapel'){ enterChapel(); return; }
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
   if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
@@ -2056,22 +2057,6 @@ function renderCharBody(host,onSaved){
     Store.set('profile',profile); toast('The banner flies','Reforged'); if(onSaved)onSaved();
   };
 }
-function enterHouse(b){
-  $('#keep-main').style.display='none';
-  const el=$('#interior'); el.style.display='block';
-  el.innerHTML='<button class="back" id="int-back">\u2190 The town</button>'+
-   '<div class="flex" style="margin-top:6px"><span style="width:30px;height:30px;color:var(--ember)">'+bcardIcon('house')+'</span>'+
-   '<div><h1 class="display" style="font-size:21px">'+b.name+'</h1><div class="eyebrow">The Pilgrim</div></div></div>'+
-   '<p class="small" style="margin:10px 0 4px">'+b.desc+'</p>'+
-   '<img id="dlg-backdrop" alt="">'+
-   '<div class="panel" id="house-body"></div>';
-  const bd=$('#dlg-backdrop'); bd.onload=()=>bd.style.display='block'; bd.onerror=()=>bd.style.display='none';
-  bd.src='art/b_house.webp';
-  $('#int-back').onclick=renderKeep;
-  renderCharBody($('#house-body'),()=>enterHouse(b));
-  window.scrollTo({top:0});
-}
-
 /* full-screen pannable town (overrides the inline version) */
 function removeTownFull(){
   ['town-full','scene-full','page-full','camp-full'].forEach(id=>{const t=document.getElementById(id); if(t)t.remove();});
@@ -2935,6 +2920,305 @@ function coverSlice(o,svg){
   svg.setAttribute('preserveAspectRatio','xMidYMid slice');
   svg.style.width=o.clientWidth+'px';
   svg.style.height=o.clientHeight+'px';
+}
+
+
+
+/* ============================================================
+   PHASE 11 — THE CHAPEL (full building: room + 7 stations)
+   ============================================================ */
+const CHAPEL_PINS=[
+ {id:'worship',     x:20, y:27, lbl:'Worship'},
+ {id:'curriculum',  x:50, y:21, lbl:'Family Altar'},
+ {id:'discipleship',x:80, y:27, lbl:'Discipleship'},
+ {id:'bible',       x:16, y:38, lbl:'The Word'},
+ {id:'candles',     x:83, y:43, lbl:'Prayer Candles'},
+ {id:'confession',  x:17, y:58, lbl:'Confession'},
+ {id:'memory',      x:82, y:58, lbl:'Memory Verses'}
+];
+const CHAPEL_LBL={bible:'The Word',candles:'Prayer Candles',confession:'Confession',
+ memory:'Memory Verses',worship:'Worship',discipleship:'Discipleship Paths',curriculum:'Family Altar'};
+const CHAPEL_SCENE={bible:'b_chapel_bible',candles:'b_chapel_candles',confession:'b_chapel_confession',
+ memory:'b_chapel_memory',worship:'b_chapel_worship',discipleship:'b_chapel_discipleship',curriculum:'b_chapel_altar_bonus'};
+
+function enterChapel(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML='<div style="height:100%;width:100%;background:linear-gradient(#1a1410,#0c0905);display:flex;align-items:center;justify-content:center;color:var(--parchment-dim)">The Chapel</div>';
+  fitScene(o);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
+  img.onerror=()=>{ addSpots(); };
+  img.src='art/b_chapel_room.webp';
+  function addSpots(){
+    o.querySelectorAll('.pin').forEach(p=>p.remove());
+    CHAPEL_PINS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#C98A2E"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=>openChapelStation(h.id);
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=()=>{ o.remove(); back.remove(); document.querySelector('#nav button[data-v=keep]').click(); };
+  document.body.appendChild(back);
+  const t=document.createElement('div'); t.className='town-title'; t.textContent='The Chapel';
+  document.body.appendChild(t);
+}
+
+function chapelAldousHeader(stationId){
+  return '<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/'+CHAPEL_SCENE[stationId]+'.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+   '<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:10px">'+
+   '<img src="art/npc_chapel.webp" style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+   '<div><div class="display" style="font-size:15px;color:var(--ember-hi)">Brother Aldous</div>'+
+   '<div class="eyebrow">The Chaplain</div></div></div>';
+}
+
+function openChapelStation(id){
+  openFullPage({
+    title:CHAPEL_LBL[id], sub:'The Chapel', backLabel:'The Chapel',
+    onBack:()=>enterChapel(),
+    render:host=>{ host.innerHTML=chapelAldousHeader(id)+'<div id="chap-body"></div>';
+      CHAPEL_STATIONS[id]($('#chap-body')); }
+  });
+}
+
+const CHAPEL_STATIONS={};
+
+
+/* ---- Station: The Word (daily reading) ---- */
+CHAPEL_STATIONS.bible=function(host){
+  world.reading=world.reading||{log:[],plan:null};
+  const d=day(); const readToday=!!d.wordRead;
+  const seed=parseInt(todayKey().replace(/-/g,''),10)%VERSES.length;
+  host.innerHTML=
+   '<div class="aichat" id="bible-ai"></div>'+
+   '<div class="panel"><div class="eyebrow">Today</div>'+
+   '<p class="scripture" style="font-size:18px;margin:6px 0">\u201C'+VERSES[seed][0]+'\u201D</p>'+
+   '<p class="scripture"><span class="ref">'+VERSES[seed][1].toUpperCase()+'</span></p>'+
+   '<button class="btn '+(readToday?'ghost':'primary')+' block" id="word-read" '+(readToday?'disabled':'')+'>'+(readToday?'Read today \u2713':'Mark today read \u00B7 +5')+'</button></div>'+
+   '<div class="panel"><div class="eyebrow">Reading log</div><div id="read-log">'+
+   (world.reading.log.length?world.reading.log.slice(0,10).map(r=>'<div class="between" style="padding:5px 0"><span>'+esc(r.what)+'</span><small>'+shortDate(r.at)+'</small></div>').join(''):'<small>No readings logged yet.</small>')+
+   '</div>'+addRowUI('What did you read?','Log it')+'</div>';
+  aldousChat('bible-ai','the daily Word and Scripture reading');
+  if(!readToday){ host.querySelector('#word-read').onclick=()=>{ const dd=day(); dd.wordRead=nowISO(); Store.set('days',days); addXP(5,'Read the Word','spirit'); openChapelStation('bible'); }; }
+  wireAdd(host.querySelector('.panel:last-child'),v=>{ world.reading.log.unshift({what:v,at:nowISO()}); saveWorld(); openChapelStation('bible'); });
+};
+
+/* ---- Station: Prayer Candles (prayer log by person) ---- */
+CHAPEL_STATIONS.candles=function(host){
+  world.prayers=world.prayers||[];
+  const active=world.prayers.filter(p=>!p.answered), answered=world.prayers.filter(p=>p.answered);
+  host.innerHTML=
+   '<div class="aichat" id="cand-ai"></div>'+
+   '<div class="panel"><div class="eyebrow">Lifting up ('+active.length+')</div><div id="pray-active">'+
+   (active.length?active.map((p,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+esc(p.who||"")+'</b> \u2014 '+esc(p.text)+'</span><button class="mini-btn" data-ans="'+world.prayers.indexOf(p)+'">\u2713</button></div>').join(''):'<small>No active prayers.</small>')+
+   '</div><div style="margin-top:10px"><input id="pray-who" placeholder="For whom?" style="margin-bottom:6px"><div class="flex"><input id="pray-what" placeholder="Your prayer\u2026" style="flex:1"><button class="btn primary" id="pray-add">Add</button></div></div></div>'+
+   (answered.length?'<div class="panel"><div class="eyebrow">Answered ('+answered.length+')</div>'+answered.slice(0,8).map(p=>'<div style="padding:5px 0"><b style="color:var(--moss)">'+esc(p.who||"")+'</b> \u2014 '+esc(p.text)+' <small>'+shortDate(p.answered)+'</small></div>').join('')+'</div>':'');
+  aldousChat('cand-ai','prayer and intercession for the people you love');
+  host.querySelector('#pray-add').onclick=()=>{ const who=host.querySelector('#pray-who').value.trim(), what=host.querySelector('#pray-what').value.trim(); if(!what)return; world.prayers.unshift({who,text:what,at:nowISO()}); addXP(5,'Lifted a prayer','spirit'); saveWorld(); openChapelStation('candles'); };
+  host.querySelectorAll('[data-ans]').forEach(b=>b.onclick=()=>{ world.prayers[+b.dataset.ans].answered=nowISO(); addXP(5,'A prayer answered','spirit'); saveWorld(); openChapelStation('candles'); });
+};
+
+/* ---- Station: Confession (saved + pattern-tracked, gentle) ---- */
+CHAPEL_STATIONS.confession=function(host){
+  world.confessions=world.confessions||[];
+  host.innerHTML=
+   '<div class="aichat" id="conf-ai"></div>'+
+   '<div class="panel sacred"><p class="small" style="font-style:italic">\u201CIf we confess our sins, He is faithful and just to forgive us.\u201D Nothing here is shared. This is between you and God.</p>'+
+   '<textarea id="conf-text" placeholder="Name it honestly\u2026" style="min-height:90px;margin:8px 0"></textarea>'+
+   '<button class="btn primary block" id="conf-save">Confess &amp; release</button></div>'+
+   (world.confessions.length?'<div class="panel"><div class="eyebrow">The record ('+world.confessions.length+')</div>'+
+     world.confessions.slice(0,12).map(c=>'<div style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><div>'+esc(c.text)+'</div><small>'+shortDate(c.at)+'</small></div>').join('')+
+     '</div>':'');
+  aldousChat('conf-ai','confession, repentance, and the grace that follows');
+  host.querySelector('#conf-save').onclick=()=>{ const t=host.querySelector('#conf-text').value.trim(); if(!t)return; world.confessions.unshift({text:t,at:nowISO()}); saveWorld(); toast('Confessed','It is set down, and forgiven.'); openChapelStation('confession'); };
+};
+
+/* ---- Station: Memory Verses (drill + 4 games) ---- */
+CHAPEL_STATIONS.memory=function(host){
+  world.verses=world.verses||[];
+  host.innerHTML=
+   '<div class="aichat" id="mem-ai"></div>'+
+   '<div class="panel"><div class="eyebrow">Your verses ('+world.verses.length+')</div><div id="mem-list">'+
+   (world.verses.length?world.verses.map((v,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+esc(v.ref)+'</b> \u2014 '+esc(v.text.slice(0,50))+(v.text.length>50?'\u2026':'')+'</span><button class="mini-btn" data-del="'+i+'">\u00D7</button></div>').join(''):'<small>Add a verse to start drilling.</small>')+
+   '</div><div style="margin-top:10px"><input id="mv-ref" placeholder="Reference (e.g. Psalm 23:1)" style="margin-bottom:6px"><div class="flex"><input id="mv-text" placeholder="The verse\u2026" style="flex:1"><button class="btn primary" id="mv-add">Add</button></div></div></div>'+
+   (world.verses.length?'<div class="panel"><div class="eyebrow">Practice</div><div class="grid2">'+
+     '<button class="btn" data-game="type">Type It Out</button><button class="btn" data-game="blanks">Fill the Blanks</button>'+
+     '<button class="btn" data-game="first">First Letters</button><button class="btn" data-game="scramble">Word Scramble</button></div></div>':'');
+  aldousChat('mem-ai','hiding Scripture in your heart');
+  host.querySelector('#mv-add').onclick=()=>{ const ref=host.querySelector('#mv-ref').value.trim(), text=host.querySelector('#mv-text').value.trim(); if(!ref||!text)return; world.verses.unshift({ref,text,drills:0}); addXP(5,'Added a memory verse','spirit'); saveWorld(); openChapelStation('memory'); };
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ world.verses.splice(+b.dataset.del,1); saveWorld(); openChapelStation('memory'); });
+  host.querySelectorAll('[data-game]').forEach(b=>b.onclick=()=>memoryGame(b.dataset.game));
+};
+
+/* ---- Station: Worship (song studies) ---- */
+CHAPEL_STATIONS.worship=function(host){
+  world.worship=world.worship||{moments:[],studies:[]};
+  host.innerHTML=
+   '<div class="aichat" id="wor-ai"></div>'+
+   '<div class="panel"><div class="eyebrow">Study a song</div><p class="small">Paste lyrics and Brother Aldous will read them with you \u2014 theology, posture, Scripture.</p>'+
+   '<textarea id="song-text" placeholder="Paste song lyrics\u2026" style="min-height:80px;margin:8px 0"></textarea>'+
+   '<button class="btn primary block" id="song-go">Study it</button><div id="song-result"></div></div>'+
+   '<div class="panel"><div class="eyebrow">Worship moments</div>'+
+   (world.worship.moments.length?world.worship.moments.slice(0,8).map(m=>'<div style="padding:5px 0"><b>'+esc(m.song)+'</b> <small>'+shortDate(m.at)+'</small></div>').join(''):'<small>Log a moment of worship.</small>')+
+   addRowUI('A song that moved you','Log')+'</div>';
+  aldousChat('wor-ai','worship and singing to God');
+  host.querySelector('#song-go').onclick=()=>worshipStudy(host.querySelector('#song-text').value.trim());
+  wireAdd(host.querySelector('.panel:last-child'),v=>{ world.worship.moments.unshift({song:v,at:nowISO()}); addXP(5,'A moment of worship','spirit'); saveWorld(); openChapelStation('worship'); });
+};
+
+/* ---- Station: Discipleship Paths (30-day) ---- */
+CHAPEL_STATIONS.discipleship=function(host){
+  world.paths=world.paths||{};
+  const PATHS=[['identity','Identity in Christ'],['purity','The Purity Fight'],['father','The Father You Want to Be']];
+  host.innerHTML='<div class="aichat" id="disc-ai"></div><div class="panel"><div class="eyebrow">30-day paths</div>'+
+   PATHS.map(([k,nm])=>{ const p=world.paths[k]||{day:0}; return '<div class="between" style="padding:8px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+nm+'</b><br><small>Day '+p.day+' of 30</small></span><button class="btn" data-path="'+k+'" data-nm="'+nm+'">'+(p.day>0?'Continue':'Begin')+'</button></div>'; }).join('')+'</div>';
+  aldousChat('disc-ai','walking a discipleship path day by day');
+  host.querySelectorAll('[data-path]').forEach(b=>b.onclick=()=>discipleshipDay(b.dataset.path,b.dataset.nm));
+};
+
+/* ---- Station: Family Altar (curriculum for the girls) ---- */
+CHAPEL_STATIONS.curriculum=function(host){
+  host.innerHTML='<div class="aichat" id="cur-ai"></div>'+
+   '<div class="panel"><div class="eyebrow">The Family Altar</div>'+
+   '<p class="small">Weekly Bible lessons for Naomi, Zipporah, and Gracelyn \u2014 Scripture, a craft, a game, questions, and a prayer. Ask Brother Aldous to prepare this week\u2019s lesson.</p>'+
+   '<button class="btn primary block" id="cur-gen">Prepare this week\u2019s lesson</button><div id="cur-result"></div></div>';
+  aldousChat('cur-ai','leading your daughters in family worship');
+  host.querySelector('#cur-gen').onclick=()=>familyLesson(host.querySelector('#cur-result'));
+};
+
+
+/* ---------- Chapel shared helpers ---------- */
+function aldousData(){
+  const pr=(world.prayers||[]).filter(p=>!p.answered).slice(0,5).map(p=>(p.who?p.who+': ':'')+p.text);
+  const vs=(world.verses||[]).slice(0,5).map(v=>v.ref);
+  const streak=(typeof fireStreak==='function')?fireStreak():0;
+  return 'Pilgrim: '+(profile.name||'friend')+'. Fire-tending streak: '+streak+' days. '+
+    (pr.length?'Active prayers: '+pr.join('; ')+'. ':'')+
+    (vs.length?'Memory verses: '+vs.join(', ')+'. ':'');
+}
+function aldousChat(mountId, topic){
+  const el=document.getElementById(mountId); if(!el) return;
+  el.innerHTML='<div class="flex" style="gap:6px;flex-wrap:wrap" id="'+mountId+'-q"></div>'+
+    '<div id="'+mountId+'-log" style="margin-top:8px"></div>'+
+    '<div class="flex" style="margin-top:8px"><input id="'+mountId+'-in" placeholder="Ask Brother Aldous\u2026" style="flex:1"><button class="btn" id="'+mountId+'-send">Ask</button></div>';
+  const key=Store.get('secret_anthropic');
+  // seed 3 suggested questions (no API cost — static seeds tuned per topic)
+  const seeds=['What should I do here today?','Help me begin.','Speak to me about '+topic+'.'];
+  const qwrap=document.getElementById(mountId+'-q');
+  seeds.forEach(q=>{ const b=document.createElement('button'); b.className='btn ghost'; b.style.fontSize='12px'; b.textContent=q; b.onclick=()=>askAldous(mountId,topic,q); qwrap.appendChild(b); });
+  document.getElementById(mountId+'-send').onclick=()=>{ const v=document.getElementById(mountId+'-in').value.trim(); if(v){document.getElementById(mountId+'-in').value='';askAldous(mountId,topic,v);} };
+  document.getElementById(mountId+'-in').addEventListener('keydown',e=>{if(e.key==='Enter'){const v=e.target.value.trim();if(v){e.target.value='';askAldous(mountId,topic,v);}}});
+}
+async function askAldous(mountId, topic, text){
+  const log=document.getElementById(mountId+'-log'); if(!log) return;
+  const key=Store.get('secret_anthropic');
+  const me=document.createElement('div'); me.style.cssText='text-align:right;margin:6px 0'; me.innerHTML='<span style="background:rgba(201,138,46,.18);padding:6px 10px;border-radius:10px;display:inline-block">'+esc(text)+'</span>'; log.appendChild(me);
+  if(!key){ const a=document.createElement('div'); a.className='small'; a.style.margin='6px 0'; a.textContent='Brother Aldous: I cannot speak without the key, pilgrim \u2014 add your Anthropic API key under Pack \u2192 Mentor Key.'; log.appendChild(a); return; }
+  const typing=document.createElement('div'); typing.className='small'; typing.style.opacity='.6'; typing.textContent='Brother Aldous is considering\u2026'; log.appendChild(typing);
+  try{
+    const sys='You are Brother Aldous, a gentle, gray-bearded chaplain in a Pilgrim\u2019s Progress-themed life app. You tend the Chapel. Speak warmly, briefly (2-4 sentences), like a wise older brother in the faith. Ground encouragement in Scripture naturally. Current focus: '+topic+'. '+aldousData()+' Never invent facts about the pilgrim you were not given.';
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,system:sys,messages:[{role:'user',content:text}]})});
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json();
+    const say=(data.content||[]).map(b=>b.text||'').join('').trim();
+    typing.remove();
+    const a=document.createElement('div'); a.style.cssText='margin:6px 0'; a.innerHTML='<b style="color:var(--ember-hi)">Brother Aldous:</b> '+esc(say); log.appendChild(a);
+  }catch(err){ typing.textContent='Brother Aldous: the ravens aren\u2019t flying tonight ('+err.message+'). Check your key in the Pack.'; }
+}
+
+/* ---------- Memory games (4) ---------- */
+function memoryGame(kind){
+  const v=world.verses[Math.floor(Math.random()*world.verses.length)]; if(!v) return;
+  let body='', answer=v.text;
+  if(kind==='type'){ body='<p class="small">Type '+esc(v.ref)+' from memory:</p>'; }
+  else if(kind==='blanks'){ const words=v.text.split(' '); const blanked=words.map((w,i)=>i%3===1?'____':w).join(' '); body='<p class="scripture">'+esc(blanked)+'</p>'; }
+  else if(kind==='first'){ const fl=v.text.split(' ').map(w=>w[0]).join(' '); body='<p class="scripture" style="letter-spacing:2px">'+esc(fl)+'</p>'; }
+  else if(kind==='scramble'){ const ws=v.text.split(' ').slice(0,12); for(let i=ws.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ws[i],ws[j]]=[ws[j],ws[i]];} body='<p class="scripture">'+esc(ws.join(' '))+'</p>'; }
+  openFullPage({title:'Drill \u00B7 '+v.ref,sub:'Memory Verses',backLabel:'Memory Verses',onBack:()=>openChapelStation('memory'),
+    render:host=>{ host.innerHTML='<div class="panel">'+body+'<textarea id="mg-try" placeholder="Recall it\u2026" style="min-height:70px;margin:8px 0"></textarea><button class="btn primary block" id="mg-check">Check</button><div id="mg-res"></div></div>';
+      host.querySelector('#mg-check').onclick=()=>{ const t=host.querySelector('#mg-try').value.trim().toLowerCase().replace(/[^a-z ]/g,''); const a=answer.toLowerCase().replace(/[^a-z ]/g,''); const ok=t===a; const wm=t.split(' ').filter((w,i)=>w===a.split(' ')[i]).length; const pct=Math.round(wm/a.split(' ').length*100);
+        host.querySelector('#mg-res').innerHTML='<div class="panel '+(ok?'sacred':'')+'" style="margin-top:10px"><b>'+(ok?'Perfect.':pct+'% there')+'</b><p class="scripture" style="margin-top:6px">'+esc(answer)+'</p></div>';
+        if(ok){ const vv=world.verses.find(x=>x.ref===v.ref); if(vv){vv.drills=(vv.drills||0)+1;} addXP(5,'Drilled '+v.ref,'spirit'); saveWorld(); } }; }});
+}
+
+/* ---------- Worship song study (AI) ---------- */
+async function worshipStudy(lyrics){
+  const out=document.getElementById('song-result'); if(!out||!lyrics) return;
+  const key=Store.get('secret_anthropic');
+  if(!key){ out.innerHTML='<p class="small" style="margin-top:8px">Add your Anthropic API key under Pack \u2192 Mentor Key to study songs.</p>'; return; }
+  out.innerHTML='<p class="small" style="opacity:.6;margin-top:8px">Brother Aldous is reading the lyrics\u2026</p>';
+  try{
+    const sys='You are Brother Aldous, a chaplain. Analyze worship-song lyrics theologically. Respond ONLY with JSON: {"score":0-100,"posture":"SING FREELY|SING AWARE|CAUTION|AVOID","blurb":"one sentence","scriptures":["ref"],"strengths":"short","concerns":"short"}. No markdown.';
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,system:sys,messages:[{role:'user',content:lyrics}]})});
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json(); const raw=(data.content||[]).map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    const o=JSON.parse(raw);
+    const col={'SING FREELY':'var(--moss)','SING AWARE':'var(--ember)','CAUTION':'var(--ember-hi)','AVOID':'var(--rust)'}[o.posture]||'var(--ember)';
+    out.innerHTML='<div class="panel" style="margin-top:10px"><div class="between"><b style="font-size:22px">'+o.score+'/100</b><span style="background:'+col+';color:#1a1410;padding:4px 10px;border-radius:8px;font-weight:700;font-size:12px">'+o.posture+'</span></div>'+
+      '<p class="small" style="margin:8px 0;font-style:italic">'+esc(o.blurb)+'</p>'+
+      (o.scriptures?'<p class="small"><b>Scripture:</b> '+esc([].concat(o.scriptures).join(', '))+'</p>':'')+
+      (o.strengths?'<p class="small"><b>Strengths:</b> '+esc(o.strengths)+'</p>':'')+
+      (o.concerns?'<p class="small"><b>Concerns:</b> '+esc(o.concerns)+'</p>':'')+'</div>';
+    addXP(5,'Studied a worship song','spirit'); 
+  }catch(err){ out.innerHTML='<p class="small" style="margin-top:8px">Could not study it ('+err.message+').</p>'; }
+}
+
+/* ---------- Discipleship day (AI) ---------- */
+async function discipleshipDay(key_,nm){
+  world.paths[key_]=world.paths[key_]||{day:0};
+  const nextDay=world.paths[key_].day+1;
+  if(nextDay>30){ toast('Path complete','You walked all 30 days of '+nm+'.'); return; }
+  const apikey=Store.get('secret_anthropic');
+  openFullPage({title:nm,sub:'Day '+nextDay+' of 30',backLabel:'Discipleship',onBack:()=>openChapelStation('discipleship'),
+    render:host=>{ host.innerHTML='<div class="panel" id="dd-body"><p class="small" style="opacity:.6">Preparing day '+nextDay+'\u2026</p></div>';
+      (async()=>{ const body=host.querySelector('#dd-body');
+        if(!apikey){ body.innerHTML='<p class="small">Add your Anthropic API key under Pack \u2192 Mentor Key to walk the paths.</p>'; return; }
+        try{
+          const sys='You are Brother Aldous, a chaplain guiding a 30-day discipleship path titled "'+nm+'". Produce day '+nextDay+'. Respond ONLY with JSON: {"scripture":"ref + short text","reading":"what to read","reflection":"a prompt","prayer":"a short prayer"}. No markdown.';
+          const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apikey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:sys,messages:[{role:'user',content:'Day '+nextDay}]})});
+          if(!res.ok) throw new Error('API '+res.status); const data=await res.json(); const o=JSON.parse((data.content||[]).map(b=>b.text||'').join('').replace(/```json|```/g,'').trim());
+          body.innerHTML='<div class="eyebrow">Scripture</div><p class="scripture" style="margin:6px 0">'+esc(o.scripture)+'</p>'+
+            '<div class="eyebrow" style="margin-top:10px">Read</div><p class="small">'+esc(o.reading)+'</p>'+
+            '<div class="eyebrow" style="margin-top:10px">Reflect</div><p class="small">'+esc(o.reflection)+'</p>'+
+            '<div class="eyebrow" style="margin-top:10px">Pray</div><p class="scripture" style="font-size:15px">'+esc(o.prayer)+'</p>'+
+            '<button class="btn primary block" id="dd-done" style="margin-top:12px">Mark day '+nextDay+' complete \u00B7 +5</button>';
+          body.querySelector('#dd-done').onclick=()=>{ world.paths[key_].day=nextDay; addXP(5,nm+' day '+nextDay,'spirit'); saveWorld(); openChapelStation('discipleship'); };
+        }catch(err){ body.innerHTML='<p class="small">Could not prepare the day ('+err.message+').</p>'; }
+      })();
+    }});
+}
+
+/* ---------- Family lesson (AI) ---------- */
+async function familyLesson(out){
+  if(!out) return; const key=Store.get('secret_anthropic');
+  if(!key){ out.innerHTML='<p class="small" style="margin-top:8px">Add your Anthropic API key under Pack \u2192 Mentor Key to prepare lessons.</p>'; return; }
+  out.innerHTML='<p class="small" style="opacity:.6;margin-top:8px">Brother Aldous is preparing the lesson\u2026</p>';
+  try{
+    const sys='You are Brother Aldous, preparing a weekly family Bible lesson for three girls: Naomi (8), Zipporah (6), Gracelyn (4). Respond ONLY with JSON: {"theme":"","scripture":"ref","lesson":"2-3 plain sentences","craft":"materials + steps, short","game":"short","questions":["q","q"],"prayer":"short"}. No markdown.';
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,system:sys,messages:[{role:'user',content:'This week\u2019s lesson'}]})});
+    if(!res.ok) throw new Error('API '+res.status); const data=await res.json(); const o=JSON.parse((data.content||[]).map(b=>b.text||'').join('').replace(/```json|```/g,'').trim());
+    out.innerHTML='<div class="panel" style="margin-top:10px"><div class="display" style="color:var(--ember-hi)">'+esc(o.theme)+'</div>'+
+      '<div class="eyebrow" style="margin-top:8px">Scripture</div><p class="scripture">'+esc(o.scripture)+'</p>'+
+      '<div class="eyebrow" style="margin-top:8px">Lesson</div><p class="small">'+esc(o.lesson)+'</p>'+
+      '<div class="eyebrow" style="margin-top:8px">Craft</div><p class="small">'+esc(o.craft)+'</p>'+
+      '<div class="eyebrow" style="margin-top:8px">Game</div><p class="small">'+esc(o.game)+'</p>'+
+      '<div class="eyebrow" style="margin-top:8px">Questions</div><p class="small">'+esc([].concat(o.questions||[]).join(' \u00B7 '))+'</p>'+
+      '<div class="eyebrow" style="margin-top:8px">Prayer</div><p class="scripture" style="font-size:15px">'+esc(o.prayer)+'</p></div>';
+    addXP(5,'Prepared a family lesson','family');
+  }catch(err){ out.innerHTML='<p class="small" style="margin-top:8px">Could not prepare it ('+err.message+').</p>'; }
 }
 
 </script>
