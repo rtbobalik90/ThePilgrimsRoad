@@ -1921,8 +1921,23 @@ function enterBuilding(id){
 }
 
 /* hard-fit scene media to the overlay's real height (standalone-proof) */
-function fitScene(o){ if(!o) return; const h=o.clientHeight; if(!h) return;
-  o.querySelectorAll('.scene-inner>img,.scene-inner>svg,.town-inner>img,.town-inner>svg').forEach(el=>{ el.style.height=h+'px'; el.style.width='auto'; el.style.maxWidth='none'; }); }
+function fitScene(o){ if(!o) return; const cw=o.clientWidth, ch=o.clientHeight; if(!cw||!ch) return;
+  o.querySelectorAll('.scene-inner>img,.scene-inner>svg,.town-inner>img,.town-inner>svg').forEach(el=>{
+    const nw=el.naturalWidth||el.getBoundingClientRect().width||cw;
+    const nh=el.naturalHeight||el.getBoundingClientRect().height||ch;
+    const isImg=el.tagName==='IMG';
+    if(isImg && nw && nh){
+      const sc=Math.max(cw/nw, ch/nh);            // cover: fill the short side
+      el.style.width=Math.ceil(nw*sc)+'px';
+      el.style.height=Math.ceil(nh*sc)+'px';
+    } else {                                       // svg fallback: stretch to fill
+      el.style.width=cw+'px'; el.style.height=ch+'px';
+      if(el.setAttribute) el.setAttribute('preserveAspectRatio','xMidYMid slice');
+    }
+    el.style.maxWidth='none'; el.style.display='block';
+  });
+  requestAnimationFrame(()=>{ o.scrollLeft=Math.max(0,(o.scrollWidth-cw)/2); o.scrollTop=Math.max(0,(o.scrollHeight-ch)/2); });
+}
 window.addEventListener('resize',()=>['town-full','scene-full','camp-full'].forEach(id=>fitScene(document.getElementById(id))));
 
 /* ---------- the town map (overrides renderKeep when art+pins exist) ---------- */
