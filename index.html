@@ -372,6 +372,14 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 #page-full .pf-title{padding:calc(58px + env(safe-area-inset-top)) 16px 6px;max-width:560px;margin:0 auto}
 #page-full .imgpanel{padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;margin:6px -16px 8px!important}
 #page-full .imgpanel .layerwrap{border-radius:0}
+.glass-text{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;
+ font-style:italic;color:#dcd2b8;text-shadow:0 0 14px rgba(220,210,184,.35);cursor:pointer;padding:4%;line-height:1.5}
+.frame-lock{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;
+ background:rgba(8,6,3,.72);border:1px solid rgba(58,47,32,.8);color:#4a4438;font-family:'Cinzel',serif;font-weight:700;pointer-events:none}
+.ink{position:absolute;overflow:hidden;font-style:italic;color:#3d2f1a;line-height:1.45}
+.ink .ie{margin-bottom:2.5%;font-size:inherit}
+.ink .ie .id8{font-size:.78em;opacity:.75;font-style:normal;letter-spacing:.04em}
+.ink .ie.fall{color:#6b2f1d}
 #cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
 #cal-stage img{display:block;width:100%}
 #cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
@@ -2493,6 +2501,112 @@ HOUSE_SECTIONS.deeds=function(el){
   base.onerror=()=>DEEDS_SVG_RENDER(el);
   base.src='art/trophy_base.webp';
   DEEDS_SVG_RENDER(el);
+};
+
+
+/* ============================================================
+   PHASE 8 — MIRROR, PORTRAITS, RECORD: PAINTED TREATMENTS
+   ============================================================ */
+const MIRROR_FALLBACK=HOUSE_SECTIONS.mirror;
+const MANTLE_FALLBACK=HOUSE_SECTIONS.mantle;
+const DESK_FALLBACK=HOUSE_SECTIONS.desk;
+
+/* glass region of mirror_base, frame centers of mantle_base, page region of record_base
+   (estimated to the commissioned zones; recalibrated when final art arrives) */
+const MIRROR_GLASS={x:28,y:20,w:44,h:50};
+const FRAME_POS=[{x:16,y:40},{x:38.7,y:40},{x:61.3,y:40},{x:84,y:40}]; const FRAME_W=19;
+const RECORD_PAGE={x:19,y:30,w:62,h:46};
+
+HOUSE_SECTIONS.mirror=function(el){
+  const base=new Image();
+  base.onload=()=>{
+    let i=0, standing=false;
+    el.innerHTML='<div class="panel imgpanel"><div class="layerwrap" id="mr-wrap"></div></div><div id="mr-list"></div>';
+    const w=$('#mr-wrap'); base.className='base'; w.appendChild(base);
+    const g=document.createElement('div'); g.className='glass-text';
+    g.style.left=MIRROR_GLASS.x+'%'; g.style.top=MIRROR_GLASS.y+'%';
+    g.style.width=MIRROR_GLASS.w+'%'; g.style.height=MIRROR_GLASS.h+'%';
+    g.style.fontSize='clamp(15px,4.6vw,24px)';
+    w.appendChild(g);
+    const showDecl=()=>{ if(!world.identity.length){g.textContent='Speak who you are\u2026';return;}
+      g.innerHTML=esc(world.identity[i%world.identity.length])+
+       (standing?'<br><span style="font-size:.6em;opacity:.7;font-style:normal;letter-spacing:.2em">'+((i%world.identity.length)+1)+' / '+world.identity.length+' \u00B7 SAY IT, THEN TAP</span>':''); };
+    g.onclick=()=>{ i++;
+      if(standing && i>=world.identity.length){ standing=false; i=0; addXP(10,'Stood at the mirror','heart'); toast('Amen','+10 \u00B7 truth spoken'); }
+      showDecl(); };
+    showDecl();
+    const list=$('#mr-list');
+    const renderList=()=>{
+      list.innerHTML='<button class="btn primary block" id="mr-stand2" style="margin-top:6px">Stand at the mirror</button>'+
+       panelHTML('The Declarations', world.identity.map((d,ix)=>'<div class="decl"><span>'+esc(d)+'</span><button class="mini-btn" data-x="'+ix+'">\u00D7</button></div>').join('')+
+       addRowUI('I am\u2026','Declare'));
+      $('#mr-stand2').onclick=()=>{ standing=true; i=0; showDecl(); window.scrollTo({top:0}); };
+      list.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{world.identity.splice(+b.dataset.x,1);saveWorld();renderList();showDecl();});
+      wireAdd(list.querySelector('.panel'),v=>{world.identity.push(v);saveWorld();renderList();});
+    };
+    renderList();
+  };
+  base.onerror=()=>MIRROR_FALLBACK(el);
+  base.src='art/mirror_base.webp';
+  MIRROR_FALLBACK(el);
+};
+
+HOUSE_SECTIONS.mantle=function(el){
+  const base=new Image();
+  base.onload=()=>{
+    const cur=stageOf(), li=levelInfo(state.xp);
+    el.innerHTML='<div class="panel imgpanel"><div class="layerwrap" id="mn-wrap"></div></div>'+
+     '<div id="mn-cap" class="small" style="text-align:center;min-height:44px;padding:8px 14px;font-style:italic">'+
+     'You stand as <b>'+STAGES[cur].nm+'</b> \u2014 Level '+li.n+', '+li.title+'. Tap a frame.</div>';
+    const w=$('#mn-wrap'); base.className='base'; w.appendChild(base);
+    STAGES.forEach((st,ix)=>{
+      const p=FRAME_POS[ix];
+      const pv=new Image(); pv.className='ovp'; pv.style.filter='none';
+      pv.style.left=p.x+'%'; pv.style.top=p.y+'%'; pv.style.width=FRAME_W+'%';
+      if(ix>cur) pv.style.cssText+=';filter:grayscale(1) brightness(.28)';
+      pv.onerror=()=>pv.remove();
+      pv.src='art/pilgrim_s'+(ix+1)+'.webp'; w.appendChild(pv);
+      if(ix>cur){ const lk=document.createElement('div'); lk.className='frame-lock';
+        lk.style.left=p.x+'%'; lk.style.top=p.y+'%'; lk.style.width=(FRAME_W*0.92)+'%'; lk.style.aspectRatio='3/4';
+        lk.style.fontSize='clamp(14px,4vw,22px)'; lk.textContent='?'; w.appendChild(lk); }
+      const tap=document.createElement('button'); tap.className='ovtap';
+      tap.style.left=p.x+'%'; tap.style.top=p.y+'%'; tap.style.width=FRAME_W+'%'; tap.style.aspectRatio='3/4'; tap.style.borderRadius='6px';
+      tap.onclick=()=>{ w.querySelectorAll('.ovtap').forEach(t=>t.classList.remove('flash')); tap.classList.add('flash');
+        $('#mn-cap').innerHTML='<b class="display" style="font-size:13px;color:'+(ix<=cur?'var(--ember-hi)':'var(--parchment-dim)')+'">'+st.nm+'</b><br>'+
+         (ix<cur?'Behind you \u2014 he got you here.':ix===cur?'This is the man in the glass today.':'Unlocks at Level '+st.min+'. He is coming.'); };
+      w.appendChild(tap);
+    });
+  };
+  base.onerror=()=>MANTLE_FALLBACK(el);
+  base.src='art/mantle_base.webp';
+  MANTLE_FALLBACK(el);
+};
+
+HOUSE_SECTIONS.desk=function(el){
+  const base=new Image();
+  base.onload=()=>{
+    const ev=[];
+    ev.push({at:profile.start+'T06:00:00',w:'Set out from the City of Destruction',cls:''});
+    falls.forEach(f=>ev.push({at:f.returnedAt||f.at,w:'Fell \u2014 returned in '+(f.hours<24?Math.round(f.hours)+'h':(f.hours/24).toFixed(1)+'d'),cls:'fall'}));
+    world.letters.forEach(l=>ev.push({at:l.at,w:'Sealed a letter for '+l.to,cls:''}));
+    world.prayers.filter(p=>p.answered).forEach(p=>ev.push({at:p.answered,w:'A prayer answered: '+p.text.slice(0,34),cls:''}));
+    world.death.filter(d=>d.dead).forEach(d=>ev.push({at:d.dead,w:'Put to death: '+d.text.slice(0,34),cls:''}));
+    ev.sort((a,b)=>new Date(b.at)-new Date(a.at));
+    el.innerHTML='<div class="panel imgpanel"><div class="layerwrap" id="rc-wrap"></div></div><div id="rc-more"></div>';
+    const w=$('#rc-wrap'); base.className='base'; w.appendChild(base);
+    const ink=document.createElement('div'); ink.className='ink';
+    ink.style.left=RECORD_PAGE.x+'%'; ink.style.top=RECORD_PAGE.y+'%';
+    ink.style.width=RECORD_PAGE.w+'%'; ink.style.height=RECORD_PAGE.h+'%';
+    ink.style.fontSize='clamp(10px,2.9vw,15px)';
+    ink.innerHTML=ev.slice(0,8).map(e=>'<div class="ie'+(e.cls?' '+e.cls:'')+'"><span class="id8">'+shortDate(e.at)+'</span> \u2014 '+esc(e.w)+'</div>').join('');
+    w.appendChild(ink);
+    if(ev.length>8){
+      $('#rc-more').innerHTML=panelHTML('Earlier Pages','<div class="tl">'+ev.slice(8,30).map(e=>'<div class="te '+e.cls+'"><div class="tw">'+esc(e.w)+'</div><div class="tdt">'+shortDate(e.at)+'</div></div>').join('')+'</div>');
+    }
+  };
+  base.onerror=()=>DESK_FALLBACK(el);
+  base.src='art/record_base.webp';
+  DESK_FALLBACK(el);
 };
 
 </script>
