@@ -1950,6 +1950,7 @@ function enterBuilding(id){
   if(id==='chapel'){ enterChapel(); return; }
   if(id==='watchtower'){ enterWatchtower(); return; }
   if(id==='hall'){ enterHall(); return; }
+  if(id==='treasury'){ enterTreasury(); return; }
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
   if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
@@ -3928,7 +3929,7 @@ function openVNChat(keeperId, topic, seed){
   o.querySelector('#vn-say').onclick=say;
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); say(); } });
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(110,inp.scrollHeight)+'px'; });
-  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall}[keeperId]||enterChapel; home(); };
+  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury}[keeperId]||enterChapel; home(); };
   o.querySelector('#vn-new').onclick=()=>{ if(confirm('Start a new chat with '+K.name+'? This clears this conversation.')){ world.chats[keeperId]=[]; saveWorld(); o.remove(); openVNChat(keeperId,topic); } };
   if(seed) setTimeout(()=>vnSend(keeperId,useTopic,seed),80);
 }
@@ -4181,6 +4182,173 @@ async function familyDevotion(out){ if(!out) return; const key=Store.get('secret
     addXP(5,'Led a family devotion','family');
   }catch(err){ out.innerHTML='<p class="small" style="margin-top:8px">Could not prepare it ('+err.message+').</p>'; }
 }
+
+
+
+/* ============================================================
+   THE TREASURY (Mercer / Finances)
+   ============================================================ */
+const TREASURY_PINS=[
+ {id:'calendar',  x:55, y:18, lbl:'Bill Calendar'},
+ {id:'jars',      x:18, y:27, lbl:'The Jars'},
+ {id:'vault',     x:85, y:32, lbl:'The Vault'},
+ {id:'ledger',    x:16, y:55, lbl:'The Ledger'},
+ {id:'mercer',    x:46, y:55, lbl:'Mercer'},
+ {id:'balance',   x:80, y:52, lbl:'The Balance'},
+ {id:'giving',    x:78, y:78, lbl:'Giving'}
+];
+const TREASURY_LBL={ledger:'The Ledger',balance:'The Balance',calendar:'Bill Calendar',jars:'The Jars',vault:'The Vault',giving:'Giving',mercer:'Mercer'};
+const TREASURY_SCENE={ledger:'b_treasury_ledger',balance:'b_treasury_balance',calendar:'b_treasury_calendar',jars:'b_treasury_jars',vault:'b_treasury_vault',giving:'b_treasury_giving'};
+const TREASURY_TOPIC={ledger:'tracking income and spending',balance:'the monthly budget and what is left',calendar:'bills and what is due',jars:'budget categories and envelopes',vault:'saving toward goals',giving:'generosity and giving'};
+
+KEEPERS.mercer={name:'Mercer',art:'npc_treasury',sys:(t)=>MERCER_SYS(t)};
+VN_KEEPERS.mercer={name:'Mercer',portrait:'art/npc_treasury.webp',topic:'stewarding your money well \u2014 the household accounts'};
+
+function MERCER_SYS(topic){
+  const m=world.money2||{};
+  const inc=(m.income||[]).reduce((a,b)=>a+(+b.amt||0),0);
+  const bills=(m.bills||[]).reduce((a,b)=>a+(+b.amt||0),0);
+  return 'You are Mercer, keeper of the Treasury in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'You are a faithful steward \u2014 calm, practical, precise, content, and generous \u2014 a man who has managed others\u2019 money honestly for decades. '+
+    'Evangelical Free theology: money is a tool and a trust, not a master; you counsel contentment, wise planning, honest work, getting free of debt, and open-handed giving. You are NOT prosperity-gospel and never feed anxiety or greed. '+
+    'Speak plainly and warmly, briefly (2-5 sentences), like a trusted steward going over the books beside the pilgrim. '+
+    'Current focus: '+topic+'. Pilgrim: '+(profile.name||'friend')+'. Monthly income logged: '+inc+'; monthly bills logged: '+bills+'. '+keeperState({topic})+' Never invent figures you were not given; if you lack data, ask plainly.';
+}
+
+function enterTreasury(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML='<div style="height:100%;width:100%;background:linear-gradient(#1a140e,#0c0905);display:flex;align-items:center;justify-content:center;color:var(--parchment-dim)">The Treasury</div>';
+  fitScene(o);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
+  img.onerror=()=>{ addSpots(); };
+  img.src='art/b_treasury_room.webp';
+  function addSpots(){
+    o.querySelectorAll('.pin').forEach(p=>p.remove());
+    TREASURY_PINS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#C98A2E"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=> h.id==='mercer' ? openVNChat('mercer') : openTreasuryStation(h.id);
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=()=>{ document.querySelectorAll('.pin-gear,.place-banner').forEach(e=>e.remove()); o.remove(); back.remove(); document.querySelector('#nav button[data-v=keep]').click(); };
+  document.body.appendChild(back);
+  const t=document.createElement('div'); t.className='town-title'; t.textContent='The Treasury';
+  document.body.appendChild(t);
+  const savedTP=Store.get('pins_treasury'); if(savedTP) TREASURY_PINS.forEach(p=>{ if(savedTP[p.id]){ p.x=savedTP[p.id].x; p.y=savedTP[p.id].y; } });
+  attachPinGear({overlayId:'scene-full',pins:TREASURY_PINS,
+    getXY:p=>({x:p.x,y:p.y}), setXY:(p,x,y)=>{p.x=x;p.y=y;},
+    onDone:()=>{ const m={}; TREASURY_PINS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_treasury',m); enterTreasury(); }});
+}
+
+function treasuryHeader(id){
+  return '<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/'+TREASURY_SCENE[id]+'.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+   '<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:10px">'+
+   '<img src="art/npc_treasury.webp" style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+   '<div><div class="display" style="font-size:15px;color:var(--ember-hi)">Mercer</div><div class="eyebrow">The Steward</div></div></div>';
+}
+function openTreasuryStation(id){
+  ensureMoney();
+  openFullPage({title:TREASURY_LBL[id],sub:'The Treasury',backLabel:'The Treasury',onBack:()=>enterTreasury(),
+    render:host=>{ host.innerHTML=treasuryHeader(id)+'<div id="tr-chat"></div><div id="tr-body" style="margin-top:12px"></div>';
+      mountKeeperChat({mountId:'tr-chat',keeperId:'mercer',threadId:'mercer_'+id,topic:TREASURY_TOPIC[id]||'money'});
+      (TREASURY_STATIONS[id]||(()=>{}))($('#tr-body')); }});
+}
+const TREASURY_STATIONS={};
+function ensureMoney(){ world.money2=world.money2||{income:[],bills:[],cats:[],savings:[],giving:[],spend:[]}; return world.money2; }
+function money2(){ return ensureMoney(); }
+function fmt(n){ return '$'+(Math.round((+n||0)*100)/100).toLocaleString(); }
+
+
+/* ---- The Ledger: income & spending entries ---- */
+TREASURY_STATIONS.ledger=function(host){ const M=money2();
+  const entries=[...(M.income.map(e=>({...e,kind:'in'}))),...(M.spend.map(e=>({...e,kind:'out'})))].sort((a,b)=>new Date(b.at)-new Date(a.at));
+  host.innerHTML=
+   '<div class="panel"><div class="eyebrow">Record an entry</div>'+
+    '<div class="flex" style="gap:6px;margin-bottom:6px"><button class="btn primary" id="le-in" style="flex:1">Money in</button><button class="btn" id="le-out" style="flex:1">Money out</button></div>'+
+    '<input id="le-what" placeholder="What was it?" style="margin-bottom:6px"><div class="flex"><input id="le-amt" type="number" inputmode="decimal" placeholder="Amount" style="flex:1"><button class="btn primary" id="le-add">Add</button></div></div>'+
+   '<div class="panel"><div class="eyebrow">The ledger ('+entries.length+')</div><div id="le-list">'+
+    (entries.length?entries.slice(0,20).map(e=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span style="color:'+(e.kind==="in"?"var(--moss)":"var(--rust)")+'">'+(e.kind==="in"?"+":"\u2212")+fmt(e.amt)+'</span><span style="flex:1;margin:0 10px">'+esc(e.what)+'</span><small>'+shortDate(e.at)+'</small></div>').join(''):'<small>No entries yet. Record what comes in and goes out.</small>')+
+    '</div></div>';
+  let kind='in';
+  const setKind=k=>{ kind=k; host.querySelector('#le-in').className='btn'+(k==='in'?' primary':''); host.querySelector('#le-out').className='btn'+(k==='out'?' primary':''); };
+  host.querySelector('#le-in').onclick=()=>setKind('in'); host.querySelector('#le-out').onclick=()=>setKind('out');
+  host.querySelector('#le-add').onclick=()=>{ const what=host.querySelector('#le-what').value.trim(), amt=parseFloat(host.querySelector('#le-amt').value); if(!what||!amt)return; (kind==='in'?M.income:M.spend).unshift({what,amt,at:nowISO()}); addXP(5,'Logged in the ledger','order'); saveWorld(); openTreasuryStation('ledger'); };
+};
+
+/* ---- The Balance: month overview ---- */
+TREASURY_STATIONS.balance=function(host){ const M=money2();
+  const inc=M.income.reduce((a,b)=>a+(+b.amt||0),0);
+  const bills=M.bills.reduce((a,b)=>a+(+b.amt||0),0);
+  const spent=M.spend.reduce((a,b)=>a+(+b.amt||0),0);
+  const give=M.giving.reduce((a,b)=>a+(+b.amt||0),0);
+  const left=inc-bills-spent-give;
+  host.innerHTML='<div class="panel"><div class="eyebrow">This month, by the books</div>'+
+    '<div class="stat-row" style="margin-top:8px"><div class="stat"><div class="v" style="color:var(--moss)">'+fmt(inc)+'</div><div class="k">In</div></div>'+
+    '<div class="stat"><div class="v" style="color:var(--rust)">'+fmt(bills+spent)+'</div><div class="k">Out</div></div>'+
+    '<div class="stat"><div class="v" style="color:var(--ember-hi)">'+fmt(give)+'</div><div class="k">Given</div></div></div>'+
+    '<div style="text-align:center;margin-top:16px"><div class="eyebrow">What remains</div>'+
+    '<div class="display" style="font-size:38px;color:'+(left>=0?'var(--moss)':'var(--rust)')+'">'+fmt(left)+'</div></div>'+
+    '<p class="small" style="margin-top:10px;text-align:center;font-style:italic">Income minus bills, spending, and giving. Ask Mercer how to steward what remains.</p></div>';
+};
+
+/* ---- The Calendar: bills with recurrence ---- */
+TREASURY_STATIONS.calendar=function(host){ const M=money2();
+  host.innerHTML='<div class="panel"><div class="eyebrow">Add a bill</div>'+
+    '<input id="bl-name" placeholder="Bill name" style="margin-bottom:6px"><div class="flex" style="gap:6px;margin-bottom:6px"><input id="bl-amt" type="number" inputmode="decimal" placeholder="Amount" style="flex:1"><input id="bl-day" type="number" inputmode="numeric" placeholder="Day (1-31)" style="flex:1"></div>'+
+    '<select id="bl-rec" style="margin-bottom:6px;width:100%"><option value="monthly">Every month</option><option value="weekly">Every week</option><option value="yearly">Every year</option><option value="once">One time</option></select>'+
+    '<button class="btn primary block" id="bl-add">Add bill</button></div>'+
+   '<div class="panel"><div class="eyebrow">Bills ('+M.bills.length+')</div><div id="bl-list">'+
+    (M.bills.length?M.bills.slice().sort((a,b)=>(a.day||0)-(b.day||0)).map(b=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+esc(b.name)+'</b><br><small>'+(b.rec==="weekly"?"weekly":b.rec==="yearly"?"yearly":b.rec==="once"?"one time":"monthly")+(b.day?" \u00B7 day "+b.day:"")+'</small></span><span class="flex" style="gap:8px;align-items:center">'+fmt(b.amt)+'<button class="mini-btn" data-bl="'+M.bills.indexOf(b)+'">\u00D7</button></span></div>').join(''):'<small>No bills tracked yet.</small>')+
+    '</div><div class="between" style="margin-top:8px"><span class="eyebrow">Monthly total</span><b>'+fmt(M.bills.filter(b=>b.rec!=='once').reduce((a,b)=>a+(b.rec==='weekly'?(+b.amt||0)*4:b.rec==='yearly'?(+b.amt||0)/12:(+b.amt||0)),0))+'</b></div></div>';
+  host.querySelector('#bl-add').onclick=()=>{ const name=host.querySelector('#bl-name').value.trim(), amt=parseFloat(host.querySelector('#bl-amt').value), day=parseInt(host.querySelector('#bl-day').value)||null, rec=host.querySelector('#bl-rec').value; if(!name||!amt)return; M.bills.unshift({name,amt,day,rec}); addXP(5,'Tracked a bill','order'); saveWorld(); openTreasuryStation('calendar'); };
+  host.querySelectorAll('[data-bl]').forEach(b=>b.onclick=()=>{ M.bills.splice(+b.dataset.bl,1); saveWorld(); openTreasuryStation('calendar'); });
+};
+
+/* ---- The Jars: categories / envelopes ---- */
+TREASURY_STATIONS.jars=function(host){ const M=money2();
+  host.innerHTML='<div class="panel"><div class="eyebrow">Budget jars</div><p class="small">Set a monthly amount for each category \u2014 envelope-style.</p>'+
+    '<div id="jar-list">'+(M.cats.length?M.cats.map((c,i)=>'<div class="between" style="padding:7px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+esc(c.name)+'</b></span><span class="flex" style="gap:8px;align-items:center">'+fmt(c.amt)+'<button class="mini-btn" data-jar="'+i+'">\u00D7</button></span></div>').join(''):'<small>No jars yet.</small>')+'</div>'+
+    '<div style="margin-top:8px"><input id="jar-name" placeholder="Category (e.g. Food)" style="margin-bottom:6px"><div class="flex"><input id="jar-amt" type="number" inputmode="decimal" placeholder="Monthly amount" style="flex:1"><button class="btn primary" id="jar-add">Add</button></div></div>'+
+    '<div class="between" style="margin-top:8px"><span class="eyebrow">Allotted</span><b>'+fmt(M.cats.reduce((a,b)=>a+(+b.amt||0),0))+'</b></div></div>';
+  host.querySelector('#jar-add').onclick=()=>{ const name=host.querySelector('#jar-name').value.trim(), amt=parseFloat(host.querySelector('#jar-amt').value); if(!name||!amt)return; M.cats.push({name,amt}); addXP(5,'Set a budget jar','order'); saveWorld(); openTreasuryStation('jars'); };
+  host.querySelectorAll('[data-jar]').forEach(b=>b.onclick=()=>{ M.cats.splice(+b.dataset.jar,1); saveWorld(); openTreasuryStation('jars'); });
+};
+
+/* ---- The Vault: savings goals ---- */
+TREASURY_STATIONS.vault=function(host){ const M=money2();
+  host.innerHTML='<div class="panel"><div class="eyebrow">Savings goals</div><div id="sav-list">'+
+    (M.savings.length?M.savings.map((g,i)=>{ const pct=Math.min(100,Math.round((g.saved||0)/g.target*100)); return '<div style="padding:8px 0;border-bottom:1px solid rgba(58,47,32,.4)"><div class="between"><b style="color:var(--ember-hi)">'+esc(g.name)+'</b><span>'+fmt(g.saved||0)+' / '+fmt(g.target)+'</span></div>'+
+      '<div style="height:8px;background:rgba(58,47,32,.5);border-radius:4px;margin:6px 0;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--moss)"></div></div>'+
+      '<div class="flex" style="gap:6px"><input type="number" inputmode="decimal" placeholder="Add amount" id="sav-add-'+i+'" style="flex:1"><button class="btn" data-save="'+i+'">Add</button><button class="mini-btn" data-delsav="'+i+'">\u00D7</button></div></div>'; }).join(''):'<small>Set a goal worth saving for.</small>')+
+    '</div><div style="margin-top:10px"><input id="sav-name" placeholder="Goal (e.g. Emergency fund)" style="margin-bottom:6px"><div class="flex"><input id="sav-target" type="number" inputmode="decimal" placeholder="Target" style="flex:1"><button class="btn primary" id="sav-new">Create</button></div></div></div>';
+  host.querySelector('#sav-new').onclick=()=>{ const name=host.querySelector('#sav-name').value.trim(), target=parseFloat(host.querySelector('#sav-target').value); if(!name||!target)return; M.savings.push({name,target,saved:0}); addXP(5,'Set a savings goal','order'); saveWorld(); openTreasuryStation('vault'); };
+  host.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.save; const v=parseFloat(host.querySelector('#sav-add-'+i).value); if(!v)return; M.savings[i].saved=(M.savings[i].saved||0)+v; if(M.savings[i].saved>=M.savings[i].target) toast('Goal reached','\u201C'+M.savings[i].name+'\u201D \u2014 well stewarded.'); addXP(5,'Added to savings','order'); saveWorld(); openTreasuryStation('vault'); });
+  host.querySelectorAll('[data-delsav]').forEach(b=>b.onclick=()=>{ M.savings.splice(+b.dataset.delsav,1); saveWorld(); openTreasuryStation('vault'); });
+};
+
+/* ---- Giving: generosity ---- */
+TREASURY_STATIONS.giving=function(host){ const M=money2();
+  const total=M.giving.reduce((a,b)=>a+(+b.amt||0),0);
+  const inc=M.income.reduce((a,b)=>a+(+b.amt||0),0);
+  const pct=inc?Math.round(total/inc*100):0;
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">Given with an open hand</div>'+
+    '<div style="text-align:center;margin:8px 0"><div class="display" style="font-size:32px;color:var(--ember-hi)">'+fmt(total)+'</div>'+(inc?'<small>about '+pct+'% of logged income</small>':'')+'</div>'+
+    '<p class="small" style="font-style:italic;text-align:center">\u201CEach one must give as he has decided in his heart, not reluctantly\u2026 for God loves a cheerful giver.\u201D</p></div>'+
+   '<div class="panel"><div class="eyebrow">Record giving</div><input id="gv-to" placeholder="To whom / what?" style="margin-bottom:6px"><div class="flex"><input id="gv-amt" type="number" inputmode="decimal" placeholder="Amount" style="flex:1"><button class="btn primary" id="gv-add">Add</button></div>'+
+    '<div id="gv-list" style="margin-top:10px">'+(M.giving.length?M.giving.slice(0,12).map(g=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(g.to)+'</span><span>'+fmt(g.amt)+' <small>'+shortDate(g.at)+'</small></span></div>').join(''):'<small>No giving logged yet.</small>')+'</div></div>';
+  host.querySelector('#gv-add').onclick=()=>{ const to=host.querySelector('#gv-to').value.trim(), amt=parseFloat(host.querySelector('#gv-amt').value); if(!to||!amt)return; M.giving.unshift({to,amt,at:nowISO()}); addXP(8,'Gave generously','order'); saveWorld(); openTreasuryStation('giving'); };
+};
 
 </script>
 </body>
