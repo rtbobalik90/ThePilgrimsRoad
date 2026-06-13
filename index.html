@@ -367,6 +367,11 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 .ovp{position:absolute;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 0 12px rgba(232,178,84,.5))}
 .ovtap{position:absolute;transform:translate(-50%,-50%);background:none;border:0;border-radius:50%;cursor:pointer}
 .ovtap.flash{box-shadow:0 0 0 2px var(--ember-hi), 0 0 18px rgba(232,178,84,.6)}
+#page-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:var(--night);overflow-y:auto;-webkit-overflow-scrolling:touch}
+#page-full .pf-host{padding:0 16px 50px;max-width:560px;margin:0 auto}
+#page-full .pf-title{padding:calc(58px + env(safe-area-inset-top)) 16px 6px;max-width:560px;margin:0 auto}
+#page-full .imgpanel{padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;margin:6px -16px 8px!important}
+#page-full .imgpanel .layerwrap{border-radius:0}
 #cal-stage{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;cursor:crosshair}
 #cal-stage img{display:block;width:100%}
 #cal-banner{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:14px;color:var(--ember-hi);text-align:center;margin:10px 0}
@@ -1722,12 +1727,13 @@ function buildMap(){
 /* ============================================================
    PHASE 3 — THE CAST, THE DIALOGUE, THE TOWN
    ============================================================ */
-const DEFAULT_PINS={ // measured from the painted town
- chapel:{x:21,y:36}, watchtower:{x:13,y:15}, hall:{x:47,y:19}, yard:{x:79,y:24},
- treasury:{x:83,y:47}, hearth:{x:36,y:47}, forge:{x:60,y:48}, granary:{x:20,y:66},
- garden:{x:50,y:69}, vault:{x:81,y:75} };
-const GATE_PIN={x:44,y:88};
-let pins=Store.get('pins') || DEFAULT_PINS;   // {buildingId:{x:%, y:%}}
+const DEFAULT_PINS={ // measured from the vertical painted town (v2)
+ chapel:{x:33,y:10}, watchtower:{x:78,y:12}, hall:{x:48,y:21}, yard:{x:79,y:29},
+ treasury:{x:20,y:33}, house:{x:48,y:42}, granary:{x:80,y:50}, hearth:{x:21,y:53},
+ garden:{x:80,y:67}, forge:{x:21,y:70}, vault:{x:90,y:79} };
+const GATE_PIN={x:48,y:85};
+const _storedPins=Store.get('pins');
+let pins=(_storedPins && _storedPins._v===2)? _storedPins : Object.assign({_v:2},DEFAULT_PINS);
 let npcchat=Store.get('npcchat',{}); // {buildingId:[{role,content,shown}]}
 
 /* ---------- the cast ---------- */
@@ -1956,7 +1962,7 @@ function startCal(){
       const x=Math.round(((e.clientX-r.left)/r.width)*1000)/10;
       const y=Math.round(((e.clientY-r.top)/r.height)*1000)/10;
       const id=calQueue[0]; if(!id) return;
-      pins[id]={x,y}; Store.set('pins',pins);
+      pins[id]={x,y}; pins._v=2; Store.set('pins',pins);
       const d=document.createElement('div'); d.className='cal-dot'; d.style.left=x+'%'; d.style.top=y+'%';
       $('#cal-stage').appendChild(d);
       calDone.push(id); calQueue.shift(); calNext();
@@ -1986,7 +1992,6 @@ $('#cal-redo').onclick=()=>{ const last=calDone.pop(); if(last){ delete pins[las
    PHASE 4 — FULL-SCREEN TOWN + THE PILGRIM'S HOUSE
    ============================================================ */
 BICON.house='<path d="M5 21V11l7-6 7 6v10M5 21h14M10 21v-6h4v6M12 5V3M12 3h4v2h-4"/>';
-DEFAULT_PINS.house={x:63,y:12};
 BUILDINGS.push({id:'house',name:'The Pilgrim\u2019s House',pillar:null,
  desc:'Your own hearth inside the walls. The banner, the titles, the record of who you are becoming \u2014 it all hangs here.',
  status:()=>{const li=levelInfo(state.xp);return 'Level '+li.n+' \u00B7 '+li.title;}});
@@ -2038,7 +2043,7 @@ function enterHouse(b){
 
 /* full-screen pannable town (overrides the inline version) */
 function removeTownFull(){
-  ['town-full','scene-full'].forEach(id=>{const t=document.getElementById(id); if(t)t.remove();});
+  ['town-full','scene-full','page-full'].forEach(id=>{const t=document.getElementById(id); if(t)t.remove();});
   document.querySelectorAll('.town-title,.town-hint,.scene-back').forEach(x=>x.remove()); }
 function renderTown(){
   removeTownFull();
@@ -2282,17 +2287,26 @@ function enterHouse(b){
   document.body.appendChild(back);
   armorCheck();
 }
-function openHouseSection(id){
+function openFullPage(opts){
   removeTownFull();
-  $('#keep-main').style.display='none';
-  const el=$('#interior'); el.style.display='block';
-  el.innerHTML='<button class="back" id="int-back">\u2190 The House</button>'+
-   '<div class="flex" style="margin-top:6px"><span style="width:30px;height:30px;color:var(--ember)">'+bcardIcon('house')+'</span>'+
-   '<div><h1 class="display" style="font-size:21px">'+HOUSE_LBL[id]+'</h1><div class="eyebrow">The Pilgrim\u2019s House</div></div></div>'+
-   '<div id="house-body"></div>';
-  $('#int-back').onclick=()=>enterHouse(BUILDINGS.find(x=>x.id==='house'));
-  HOUSE_SECTIONS[id]($('#house-body'));
-  window.scrollTo({top:0});
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='page-full';
+  o.innerHTML='<div class="pf-title"><div class="eyebrow">'+esc(opts.sub||'')+'</div>'+
+   '<h1 class="display" style="font-size:23px;margin-top:2px">'+esc(opts.title)+'</h1></div>'+
+   '<div class="pf-host" id="pf-host"></div>';
+  document.body.appendChild(o);
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 '+(opts.backLabel||'Back');
+  back.onclick=opts.onBack;
+  document.body.appendChild(back);
+  opts.render(o.querySelector('#pf-host'));
+}
+function openHouseSection(id){
+  openFullPage({
+    title:HOUSE_LBL[id], sub:'The Pilgrim\u2019s House', backLabel:'The House',
+    onBack:()=>enterHouse(BUILDINGS.find(x=>x.id==='house')),
+    render:host=>HOUSE_SECTIONS[id](host)
+  });
 }
 
 
@@ -2339,7 +2353,7 @@ HOUSE_SECTIONS.armor=function(el){
   armorCheck();
   const earned=ARMOR.filter(a=>world.armor[a.id]).length;
   el.innerHTML=
-   '<div class="panel" style="padding:10px"><div id="ar-svg">'+armorStandSVG()+'</div>'+
+   '<div class="panel imgpanel" style="padding:10px"><div id="ar-svg">'+armorStandSVG()+'</div>'+
    '<div id="ar-cap" class="small" style="text-align:center;min-height:40px;padding:6px 4px;font-style:italic">'+
    (earned===6?'The whole armour of God. Stand therefore.':'Pieces earned: '+earned+' of 6 \u2014 \u201CPut on the whole armour of God.\u201D')+'</div></div>';
   el.querySelectorAll('.piece').forEach(g=>{
@@ -2385,7 +2399,7 @@ function trophyWallSVG(){
 }
 HOUSE_SECTIONS.deeds=function(el){
   const earned=DEEDS.filter(d=>d[2]()).length;
-  el.innerHTML='<div class="panel" style="padding:10px">'+trophyWallSVG()+
+  el.innerHTML='<div class="panel imgpanel" style="padding:10px">'+trophyWallSVG()+
    '<div id="tw-cap" class="small" style="text-align:center;min-height:40px;padding:6px 4px;font-style:italic">'+
    earned+' of '+DEEDS.length+' deeds hang on the wall. Tap a mount.</div></div>';
   el.querySelectorAll('.mount').forEach(g=>{
@@ -2414,7 +2428,7 @@ HOUSE_SECTIONS.armor=function(el){
   const base=new Image();
   base.onload=()=>{
     const earned=ARMOR.filter(a=>world.armor[a.id]).length;
-    el.innerHTML='<div class="panel" style="padding:10px"><div class="layerwrap" id="ar-wrap"></div>'+
+    el.innerHTML='<div class="panel imgpanel" style="padding:10px"><div class="layerwrap" id="ar-wrap"></div>'+
      '<div id="ar-cap" class="small" style="text-align:center;min-height:40px;padding:8px 4px;font-style:italic">'+
      (earned===6?'The whole armour of God. Stand therefore.':'Pieces earned: '+earned+' of 6 \u2014 tap a place on the stand.')+'</div></div>';
     const w=$('#ar-wrap'); base.className='base'; w.appendChild(base);
@@ -2448,7 +2462,7 @@ HOUSE_SECTIONS.deeds=function(el){
   const base=new Image();
   base.onload=()=>{
     const earned=DEEDS.filter(d=>d[2]()).length;
-    el.innerHTML='<div class="panel" style="padding:10px"><div class="layerwrap" id="tw-wrap"></div>'+
+    el.innerHTML='<div class="panel imgpanel" style="padding:10px"><div class="layerwrap" id="tw-wrap"></div>'+
      '<div id="tw-cap" class="small" style="text-align:center;min-height:40px;padding:8px 4px;font-style:italic">'+
      earned+' of '+DEEDS.length+' deeds hang on the wall. Tap a plaque.</div></div>';
     const w=$('#tw-wrap'); base.className='base'; w.appendChild(base);
