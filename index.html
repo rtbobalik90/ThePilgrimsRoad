@@ -1952,6 +1952,7 @@ function enterBuilding(id){
   if(id==='hall'){ enterHall(); return; }
   if(id==='treasury'){ enterTreasury(); return; }
   if(id==='vault'){ enterVault(); return; }
+  if(id==='hearth'){ enterHearth(); return; }
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
   if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
@@ -4001,7 +4002,7 @@ function openVNChat(keeperId, topic, seed){
   o.querySelector('#vn-say').onclick=say;
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); say(); } });
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(110,inp.scrollHeight)+'px'; });
-  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury,crane:enterVault}[keeperId]||enterChapel; home(); };
+  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury,crane:enterVault,marta:enterHearth}[keeperId]||enterChapel; home(); };
   o.querySelector('#vn-new').onclick=()=>{ if(confirm('Start a new chat with '+K.name+'? This clears this conversation.')){ world.chats[keeperId]=[]; saveWorld(); o.remove(); openVNChat(keeperId,topic); } };
   if(seed) setTimeout(()=>vnSend(keeperId,useTopic,seed),80);
 }
@@ -4050,7 +4051,8 @@ function sectionThreadDigest(keeperId){
     garrick_why:'his why & mission',garrick_oath:'identity & the vow',garrick_arsenal:'the Scripture arsenal',garrick_plan:'his battle plan',garrick_bell:'reaching his people',
     tomas_marriage:'the marriage he prays to restore',tomas_letters:'letters he is writing',tomas_days:'days with his daughters',tomas_guide:'leading his family',tomas_lizzie:'Lizzie',tomas_kid_naomi:'Naomi',tomas_kid_zipporah:'Zipporah',tomas_kid_grace:'Grace',
     mercer_ledger:'income & spending',mercer_balance:'the budget',mercer_calendar:'the bills',mercer_jars:'budget jars',mercer_vault:'savings goals',mercer_giving:'giving',
-    crane_list:'his forty-by-forty',crane_stars:'his north stars',crane_compass:'taking his bearings'
+    crane_list:'his forty-by-forty',crane_stars:'his north stars',crane_compass:'taking his bearings',
+    marta_checkin:'how his heart has been',marta_mercies:'the mercies he is counting',marta_weight:'what he is carrying'
   };
   const seen=[];
   Object.keys(world.chats).forEach(t=>{
@@ -4071,13 +4073,13 @@ function sectionThreadDigest(keeperId){
 const HALL_PINS=[
  {id:'lizzie',     x:50, y:22, lbl:'The Door'},
  {id:'daughters',  x:84, y:27, lbl:'The Daughters'},
- {id:'marriage',   x:16, y:30, lbl:'The Hearth'},
+ {id:'marriage',   x:16, y:30, lbl:'The Work of Love'},
  {id:'letters',    x:82, y:47, lbl:'Letters'},
  {id:'tomas',      x:46, y:46, lbl:'Elder Tomas'},
  {id:'days',       x:16, y:74, lbl:'Daddy-Daughter Days'},
  {id:'guide',      x:72, y:74, lbl:'Family Bible'}
 ];
-const HALL_LBL={marriage:'The Hearth',lizzie:'Her Door',daughters:'The Daughters',letters:'Letters',days:'Daddy-Daughter Days',guide:'The Family Bible',tomas:'Elder Tomas'};
+const HALL_LBL={marriage:'The Work of Love',lizzie:'Her Door',daughters:'The Daughters',letters:'Letters',days:'Daddy-Daughter Days',guide:'The Family Bible',tomas:'Elder Tomas'};
 const HALL_SCENE={marriage:'b_hall_marriage',lizzie:'b_hall_lizzie',daughters:'b_hall_daughters',letters:'b_hall_letters',days:'b_hall_days',guide:'b_hall_guide'};
 const HALL_TOPIC={marriage:'the marriage you pray to see restored with Lizzie',letters:'writing letters to those you love',days:'time with your daughters',guide:'leading your family spiritually',daughters:'raising your daughters'};
 
@@ -4567,6 +4569,128 @@ VAULT_STATIONS.compass=function(host){ const L=ensureLegacy(); const keys=Object
     inp.oninput=()=>{ const lbl=host.querySelector('#cp-v-'+inp.dataset.pillar); if(lbl) lbl.textContent=inp.value; };
     inp.onchange=()=>{ L.compass[inp.dataset.pillar]=+inp.value; saveWorld(); const sv=host.querySelector('.panel.sacred svg'); if(sv) sv.outerHTML=compassSVG(L.compass); };
   });
+};
+
+/* ============================================================
+   THE HEARTH \u2014 Marta the Hearthkeeper \u2014 emotional check-in (heart)
+   Sections: The Check-In (checkin), The Mercies (mercies),
+   What You Carry (weight). A threshold, not a basement \u2014 name it,
+   give thanks, lay it down. Threads marta_checkin/mercies/weight.
+   ============================================================ */
+function ensureHeart(){ world.heart=world.heart||{checkins:[],mercies:[],weights:[]}; if(!world.heart.checkins)world.heart.checkins=[]; if(!world.heart.mercies)world.heart.mercies=[]; if(!world.heart.weights)world.heart.weights=[]; return world.heart; }
+
+function MARTA_SYS(topic, thread){
+  return 'You are Marta, the Hearthkeeper of the Hearth in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'You are a wise, warm older woman who tends the inner fire \u2014 keeper of the room a man steps into from the cold to tell the truth about how he actually is. You ask what the heart truly feels and you wait; you treat numbness as a signal, not a flaw; you never rush, never lecture, never clinicalize. You carry deep biblical wisdom but wear it lightly, the way a grandmother does. '+
+    'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. You help him NAME what he feels, NOTICE the patterns gently, bring it honestly to God (casting his cares \u2014 Psalm 62, 1 Peter 5:7; new mercies \u2014 Lamentations 3:22-23), and turn toward the real people who love him. You are a threshold, not a basement: you never let this room become a place to sink or spiral; you always, tenderly, turn him back toward hope, prayer, and his people. '+
+    'Speak briefly (2-5 sentences), warm and unhurried, like someone who has set a kettle on and pulled up a chair. '+
+    'Current focus: '+topic+'. '+keeperContext('marta', thread)+
+    ' CRISIS RULE: If he ever speaks of despair, hopelessness, or any thought of harming himself, do not try to be his only help \u2014 with great gentleness urge him toward a real person who loves him tonight, and if he may be in danger tell him to call or text 988 (the Suicide & Crisis Lifeline). People first, then 988. Never minimize, never lecture. Never invent feelings or facts he has not shared.';
+}
+
+KEEPER_CTX.marta={
+  _core(){ const h=(world.heart&&world.heart.checkins)||[]; if(!h.length) return ''; return 'Most recently he named his heart as \u201C'+h[0].state+'\u201D ('+daysAgo(h[0].at)+')'+(h[0].note?(', adding: \u201C'+h[0].note+'\u201D'):'')+'. '; },
+  checkin(){ const h=(world.heart&&world.heart.checkins)||[]; if(!h.length) return 'He has not checked in on his heart yet; invite him gently to name how he actually is \u2014 numbness counts. '; return 'How he has named his heart lately (newest first): '+_ctxList(h,7,c=>c.state+(c.note?(' (\u201C'+c.note.slice(0,40)+'\u201D)'):'')+' \u2014 '+daysAgo(c.at)).join('; ')+'. Notice the pattern across these gently, without alarming him. '; },
+  mercies(){ const m=(world.heart&&world.heart.mercies)||[]; return m.length?('Mercies he has counted lately: '+_ctxList(m,6,_entryText).join('; ')+'. '):'He has not named any mercies yet; gratitude is medicine \u2014 help him find one small, true thing. '; },
+  weight(){ const w=(world.heart&&world.heart.weights)||[]; const carrying=w.filter(x=>!x.laid), laid=w.filter(x=>x.laid); let s=''; s+=carrying.length?('What he is still carrying: '+_ctxList(carrying,6,_entryText).join('; ')+'. '):'He is not naming a particular burden right now. '; if(laid.length) s+='He has already laid down before God: '+_ctxList(laid,4,_entryText).join('; ')+'. '; return s; }
+};
+
+KEEPERS.marta={name:'Marta',art:'npc_hearth',sys:(t,th)=>MARTA_SYS(t,th)};
+VN_KEEPERS.marta={name:'Marta',portrait:'art/npc_hearth.webp',topic:'how your heart actually is today \u2014 the truth of it, numbness included'};
+
+const HEARTH_PINS=[
+ {id:'checkin', x:17, y:48, lbl:'The Check-In'},
+ {id:'mercies', x:70, y:23, lbl:'The Mercies'},
+ {id:'weight',  x:24, y:80, lbl:'What You Carry'},
+ {id:'marta',   x:50, y:46, lbl:'Marta'}
+];
+const HEARTH_LBL={checkin:'The Check-In',mercies:'The Mercies',weight:'What You Carry',marta:'Marta'};
+const HEARTH_SCENE={checkin:'b_hearth_checkin',mercies:'b_hearth_mercies',weight:'b_hearth_weight'};
+const HEARTH_TOPIC={checkin:'how your heart actually is right now \u2014 naming it honestly, numbness included',mercies:'the mercies worth counting, even today',weight:'what you are carrying, and laying it down before God'};
+const HEARTH_STATIONS={};
+
+function enterHearth(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML='<div style="height:100%;width:100%;background:linear-gradient(#1a1310,#0a0705);display:flex;align-items:center;justify-content:center;color:var(--parchment-dim)">The Hearth</div>';
+  fitScene(o);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
+  img.onerror=()=>{ addSpots(); };
+  img.src='art/b_hearth_room.webp';
+  function addSpots(){
+    o.querySelectorAll('.pin').forEach(p=>p.remove());
+    HEARTH_PINS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#C97A4A"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=> h.id==='marta' ? openVNChat('marta') : openHearthStation(h.id);
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=()=>{ document.querySelectorAll('.pin-gear,.place-banner').forEach(e=>e.remove()); o.remove(); back.remove(); document.querySelector('#nav button[data-v=keep]').click(); };
+  document.body.appendChild(back);
+  const t=document.createElement('div'); t.className='town-title'; t.textContent='The Hearth';
+  document.body.appendChild(t);
+  const savedHP=Store.get('pins_hearth'); if(savedHP) HEARTH_PINS.forEach(p=>{ if(savedHP[p.id]){ p.x=savedHP[p.id].x; p.y=savedHP[p.id].y; } });
+  attachPinGear({overlayId:'scene-full',pins:HEARTH_PINS,
+    getXY:p=>({x:p.x,y:p.y}), setXY:(p,x,y)=>{p.x=x;p.y=y;},
+    onDone:()=>{ const m={}; HEARTH_PINS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_hearth',m); enterHearth(); }});
+}
+
+function hearthHeader(id){
+  return '<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/'+HEARTH_SCENE[id]+'.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+   '<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:10px">'+
+   '<img src="art/npc_hearth.webp" style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+   '<div><div class="display" style="font-size:15px;color:var(--ember-hi)">Marta</div><div class="eyebrow">The Hearthkeeper</div></div></div>';
+}
+function openHearthStation(id){
+  ensureHeart();
+  openFullPage({title:HEARTH_LBL[id],sub:'The Hearth',backLabel:'The Hearth',onBack:()=>enterHearth(),
+    render:host=>{ host.innerHTML=hearthHeader(id)+'<div id="ht-chat"></div><div id="ht-body" style="margin-top:12px"></div>';
+      mountKeeperChat({mountId:'ht-chat',keeperId:'marta',threadId:'marta_'+id,topic:HEARTH_TOPIC[id]||'how your heart is'});
+      (HEARTH_STATIONS[id]||(()=>{}))($('#ht-body')); }});
+}
+
+HEARTH_STATIONS.checkin=function(host){ const H=ensureHeart();
+  const cs='padding:7px 13px;border:1px solid var(--edge);border-radius:16px;background:rgba(201,122,74,.14);color:var(--parchment);font-size:13px;cursor:pointer';
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">The Check-In</div>'+
+    '<p class="small" style="font-style:italic;text-align:center;margin:6px 0">No scoreboard here \u2014 just the truth of how you are. Numbness counts too.</p></div>'+
+   '<div class="panel"><div class="eyebrow">How is your heart right now?</div>'+
+    '<input id="ci-note" placeholder="A line about it, if you want\u2026" style="margin:8px 0">'+
+    '<div id="ci-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">'+
+     FEELINGS.map(f=>'<button data-feel="'+f+'" style="'+cs+'">'+f+'</button>').join('')+'</div></div>'+
+   '<div class="panel"><div class="eyebrow">Lately</div><div id="ci-list">'+
+    (H.checkins.length?H.checkins.slice(0,12).map((c,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span><b style="color:var(--ember-hi)">'+esc(c.state)+'</b>'+(c.note?' \u2014 '+esc(c.note):'')+'</span><span style="white-space:nowrap"><small>'+daysAgo(c.at)+'</small> <button class="mini-btn" data-del="'+i+'">\u00d7</button></span></div>').join(''):'<small>Nothing named yet. Whenever you\u2019re ready.</small>')+'</div></div>';
+  host.querySelectorAll('[data-feel]').forEach(b=>b.onclick=()=>{ const note=(host.querySelector('#ci-note').value||'').trim(); H.checkins.unshift({state:b.dataset.feel,note:note,at:nowISO()}); const dk=todayKey(); days[dk]=days[dk]||{}; days[dk].feel=b.dataset.feel; Store.set('days',days); addXP(5,'Told the truth about my heart','heart'); saveWorld(); openHearthStation('checkin'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ H.checkins.splice(+b.dataset.del,1); saveWorld(); openHearthStation('checkin'); });
+};
+
+HEARTH_STATIONS.mercies=function(host){ const H=ensureHeart();
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">The Mercies</div>'+
+    '<p class="scripture" style="text-align:center;margin:6px 0">\u201CHis mercies are new every morning.\u201D \u2014 Lamentations 3:22-23</p></div>'+
+   '<div class="panel" id="me-add"><div class="eyebrow">Name one mercy \u2014 small counts</div>'+addRowUI('Something you\u2019re thankful for\u2026','Count it')+
+    '<div id="me-list" style="margin-top:10px">'+(H.mercies.length?H.mercies.map((m,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>\u2726 '+esc(_entryText(m))+'</span><button class="mini-btn" data-del="'+i+'">\u00d7</button></div>').join(''):'<small>None counted yet. Start with one small thing.</small>')+'</div></div>';
+  wireAdd(host.querySelector('#me-add'),v=>{ H.mercies.unshift({text:v,at:nowISO()}); addXP(5,'Counted a mercy','heart'); saveWorld(); openHearthStation('mercies'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ H.mercies.splice(+b.dataset.del,1); saveWorld(); openHearthStation('mercies'); });
+};
+
+HEARTH_STATIONS.weight=function(host){ const H=ensureHeart(); const carrying=H.weights.filter(x=>!x.laid), laid=H.weights.filter(x=>x.laid);
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">What You Carry</div>'+
+    '<p class="scripture" style="text-align:center;margin:6px 0">\u201CCast all your anxiety on him, because he cares for you.\u201D \u2014 1 Peter 5:7</p></div>'+
+   '<div class="panel" id="wt-add"><div class="eyebrow">Name what\u2019s heavy</div>'+addRowUI('What are you carrying?\u2026','Name it')+
+    '<div id="wt-list" style="margin-top:10px">'+(carrying.length?carrying.map(w=>{const i=H.weights.indexOf(w);return '<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(_entryText(w))+'</span><button class="mini-btn" data-lay="'+i+'">lay it down</button></div>';}).join(''):'<small>Nothing named right now.</small>')+'</div></div>'+
+   (laid.length?'<div class="panel"><div class="eyebrow">Laid down before God ('+laid.length+')</div>'+laid.map(w=>{const i=H.weights.indexOf(w);return '<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span class="struck">'+esc(_entryText(w))+'</span><button class="mini-btn" data-del="'+i+'">\u00d7</button></div>';}).join('')+'</div>':'');
+  wireAdd(host.querySelector('#wt-add'),v=>{ H.weights.unshift({text:v,at:nowISO(),laid:null}); saveWorld(); openHearthStation('weight'); });
+  host.querySelectorAll('[data-lay]').forEach(b=>b.onclick=()=>{ H.weights[+b.dataset.lay].laid=nowISO(); addXP(10,'Laid a burden down','heart'); saveWorld(); openHearthStation('weight'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ H.weights.splice(+b.dataset.del,1); saveWorld(); openHearthStation('weight'); });
 };
 
 </script>
