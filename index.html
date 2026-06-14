@@ -879,7 +879,7 @@ const FEELINGS = ['Alive','Grateful','Steady','Tired','Numb','Anxious','Tempted'
 
 const XP = { anchor:15, evening:20, stood:25, battled:35, fellReturn:20 };
 
-const DEFAULT_VOW = 'I wake up on the morning of my 40th birthday a different man.\n\nMy wife and my girls are beside me, and they have watched it happen — not a diet, not a phase, but a husband and father remade. I am stronger in my faith than I have ever been. The chains that owned my twenties and thirties are dead on the road behind me.\n\nI am proud of who I became — not because I was perfect, but because I kept getting up. Full. By forty.';
+const DEFAULT_VOW = 'I wake up on the morning of my 40th birthday a different man.\n\nLizzie and my girls are beside me, our family restored by grace, and they have watched it happen — not a diet, not a phase, but a father remade \u2014 and, if God wills it, a husband again. I am stronger in my faith than I have ever been. The chains that owned my twenties and thirties are dead on the road behind me.\n\nI am proud of who I became — not because I was perfect, but because I kept getting up. Full. By forty.';
 
 /* ---------- state helpers ---------- */
 const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
@@ -1373,8 +1373,8 @@ const BUILDINGS=[
    status:()=>{const t=world.tasks.filter(x=>!x.done).length; return t? t+' tasks open':'All is in order';}},
  {id:'garden',    name:'The Garden',      pillar:'joy',    desc:'What makes you feel alive gets planted and watered here. Joy is not optional on this road.',
    status:()=>{const j=world.joy.length; return j? j+(j===1?' moment':' moments')+' of life':'Plant something';}},
- {id:'vault',     name:'The Vault',       pillar:null,     desc:'The deep room under the keep. The Vow, the Death List, and what is being grown in its place.',
-   status:()=>{const d=world.death.filter(x=>!x.dead).length; return d? d+' named for death':'Name what must die';}}
+ {id:'vault',     name:'The Vault',       pillar:null,     desc:'The deep room beneath the keep, where the long view is kept. The man you mean to be by forty \u2014 named, weighed, and steered toward.',
+   status:()=>{const L=world.legacy||{}; const n=(L.list||[]).length; const j=journey(); return n? n+' of 40 named':(j? j.daysLeft+' days to forty':'Name the first');}}
 ];
 
 /* ---------- castle hero ---------- */
@@ -1683,7 +1683,7 @@ function stewardContext(){
 }
 const STEW_SYS=()=>
  'You are the Steward of the Keep in \u201CFull by 40 \u2014 The Pilgrim\u2019s Road,\u201D a personal life-transformation app built as a Pilgrim\u2019s Progress role-playing world. '+
- 'You serve Robert, a 30s Christian husband and father of three daughters (Naomi, Zipporah, Grace), a sales leader, walking a four-year road to wholeness by his 40th birthday: faith, purity, fatherhood, fitness, finances, work, order, joy. '+
+ 'You serve Robert, a 30s Christian father of three daughters (Naomi, Zipporah, Grace), divorced from his former wife Lizzie and praying for reconciliation, a sales leader, walking a four-year road to wholeness by his 40th birthday: faith, purity, fatherhood, fitness, finances, work, order, joy. '+
  'Your voice: a wise older brother and man of God \u2014 plain-spoken, warm, direct, firm when needed, never shaming, never cheesy. Lightly flavored like a castle steward (you may say \u201Cthe Keep,\u201D \u201Cthe road,\u201D \u201Cthe watch\u201D) but always practical and biblical. Quote Scripture (KJV) sparingly and aptly. '+
  'If he confesses a fall: no condemnation (Romans 8:1), get him back up, look for the pattern, point him to the Watchtower. Celebrate real wins. Ask one good question when it serves. Keep replies under 120 words. '+
  'The Keep\u2019s buildings you can open for him: chapel (prayer/scripture), watchtower (purity battle), hall (daughters/letters), yard (body), treasury (money), hearth (emotions), forge (work), granary (home tasks), garden (joy), vault (vow/death list). '+
@@ -1885,7 +1885,7 @@ const NPCS={
 /* ---------- NPC dialogue engine ---------- */
 function npcSys(id){
   const n=NPCS[id], b=BUILDINGS.find(x=>x.id===id);
-  return 'You are '+n.nm+', '+n.rl+' of the Keep in \u201CFull by 40 \u2014 The Pilgrim\u2019s Road,\u201D a personal life-transformation app built as a Pilgrim\u2019s Progress RPG world. You serve Robert: a Christian husband, father of Naomi, Zipporah and Grace, sales leader, walking a four-year road to wholeness by 40. '+
+  return 'You are '+n.nm+', '+n.rl+' of the Keep in \u201CFull by 40 \u2014 The Pilgrim\u2019s Road,\u201D a personal life-transformation app built as a Pilgrim\u2019s Progress RPG world. You serve Robert: a Christian father of Naomi, Zipporah and Grace \u2014 divorced from his former wife Lizzie and praying tenderly for reconciliation \u2014 a sales leader, walking a four-year road to wholeness by 40. '+
   'PERSONA: '+n.voice+' '+
   'Never shaming, never cheesy, always Christ-centered and practical. Stay in character but give real counsel. Keep replies under 110 words. '+
   'Your building: '+b.name+' ('+b.desc+'). If the matter belongs to another keeper, you may send him there. Building ids: chapel, watchtower, hall, yard, treasury, hearth, forge, granary, garden, vault. '+
@@ -1951,6 +1951,7 @@ function enterBuilding(id){
   if(id==='watchtower'){ enterWatchtower(); return; }
   if(id==='hall'){ enterHall(); return; }
   if(id==='treasury'){ enterTreasury(); return; }
+  if(id==='vault'){ enterVault(); return; }
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
   if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
@@ -3426,8 +3427,8 @@ const KEEPER_CTX = {
   },
   tomas: {
     _core(){ return 'His daughters: '+DAUGHTERS.map(g=>g.name+' ('+g.age+')').join(', ')+'. '; },
-    marriage(){ const m=world.marriage||{moments:[],work:[]}; let s=''; if((m.moments||[]).length) s+='Marriage moments noted: '+_ctxList(m.moments,4,_entryText).join('; ')+'. '; if((m.work||[]).length) s+='What he is working on in marriage: '+_ctxList(m.work,4,_entryText).join('; ')+'. '; return s||'He has not logged marriage notes yet. '; },
-    lizzie(){ const L=world.lizzie||{growth:[],memories:[],prayers:[],letters:[]}; let s='This room is about Lizzie \u2014 his wife, from whom he is separated, for whose reconciliation he prays. Hold it with great tenderness, never glibly. '; if((L.prayers||[]).length) s+='His prayers over her and the marriage: '+_ctxList(L.prayers,5,_entryText).join('; ')+'. '; if((L.growth||[]).length) s+='How he is growing for her sake: '+_ctxList(L.growth,4,_entryText).join('; ')+'. '; if((L.memories||[]).length) s+='Memories he treasures: '+_ctxList(L.memories,3,_entryText).join('; ')+'. '; if((L.letters||[]).length) s+='He has set down '+L.letters.length+' sealed letter(s) for her. '; return s; },
+    marriage(){ const m=world.marriage||{moments:[],work:[]}; let s=''; if((m.moments||[]).length) s+='Notes toward the marriage he prays to rebuild with Lizzie: '+_ctxList(m.moments,4,_entryText).join('; ')+'. '; if((m.work||[]).length) s+='What he is working on in himself, for her sake: '+_ctxList(m.work,4,_entryText).join('; ')+'. '; return s||'He has not logged anything here yet about the marriage he hopes to see restored. '; },
+    lizzie(){ const L=world.lizzie||{growth:[],memories:[],prayers:[],letters:[]}; let s='This room is about Lizzie \u2014 his former wife. They are divorced, and he prays tenderly for reconciliation. Never refer to her as his current wife or speak as though they are married; hold it with great tenderness, never glibly. '; if((L.prayers||[]).length) s+='His prayers over her and the hope of reconciliation: '+_ctxList(L.prayers,5,_entryText).join('; ')+'. '; if((L.growth||[]).length) s+='How he is growing for her sake: '+_ctxList(L.growth,4,_entryText).join('; ')+'. '; if((L.memories||[]).length) s+='Memories he treasures: '+_ctxList(L.memories,3,_entryText).join('; ')+'. '; if((L.letters||[]).length) s+='He has set down '+L.letters.length+' sealed letter(s) for her. '; return s; },
     letters(){ const l=world.letters||[]; return l.length?('He has written '+l.length+' letter(s): '+_ctxList(l,6,x=>(x.to?'to '+x.to:_entryText(x).slice(0,30))).join('; ')+'. '):'He has not written any letters yet. '; },
     days(){ const dd=world.ddays||[]; return dd.length?('Daddy-daughter days logged: '+_ctxList(dd,6,x=>(x.who?x.who+' \u2014 ':'')+x.what+' ('+daysAgo(x.at)+')').join('; ')+'. '):'No daddy-daughter days logged yet \u2014 gently encourage one. '; },
     guide(){ return 'He wants to lead his family spiritually \u2014 worship, prayer, and Scripture in the home. '; },
@@ -3521,12 +3522,12 @@ function keeperSeedsHall(topic,s){
     s.push((K&&K.prayers&&K.prayers.length)?'Keep praying with me for '+nm+'.':'What should I pray for '+nm+'?');
     s.push('What does '+nm+' need most from me right now?'); return true;
   }
-  if(/to lizzie|reconciliation/i.test(topic)){
+  if(/marriage that ended|to lizzie/i.test(topic)){
     const L=world.lizzie||{};
     s.push((L.growth&&L.growth.length)?'Am I becoming the man she needs?':'Where do I even begin to change?');
     s.push('How do I hope without forcing it?'); s.push('Help me pray for Lizzie tonight.'); return true;
   }
-  if(/tending your marriage/i.test(topic)){
+  if(/pray to see restored|tending your marriage/i.test(topic)){
     s.push('How do I love her well from here?'); s.push('What does patient love look like?'); s.push('Help me guard my own heart.'); return true;
   }
   if(/writing letters/i.test(topic)){
@@ -3538,7 +3539,7 @@ function keeperSeedsHall(topic,s){
   if(/leading your family spiritually/i.test(topic)){
     s.push('Make tonight\u2019s devotion simple.'); s.push('How do I lead without preaching?'); s.push('What can little hearts hold?'); return true;
   }
-  if(/people you love most|marriage and your children/i.test(topic)){
+  if(/reconciliation with Lizzie|your daughters, and your hope|people you love most|marriage and your children/i.test(topic)){
     const L=world.lizzie||{};
     if(L.growth&&L.growth.length) s.push('How is my growth toward Lizzie going?');
     s.push('How are my girls, really?'); s.push('What should I tend first at home?');
@@ -4000,7 +4001,7 @@ function openVNChat(keeperId, topic, seed){
   o.querySelector('#vn-say').onclick=say;
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); say(); } });
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(110,inp.scrollHeight)+'px'; });
-  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury}[keeperId]||enterChapel; home(); };
+  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury,crane:enterVault}[keeperId]||enterChapel; home(); };
   o.querySelector('#vn-new').onclick=()=>{ if(confirm('Start a new chat with '+K.name+'? This clears this conversation.')){ world.chats[keeperId]=[]; saveWorld(); o.remove(); openVNChat(keeperId,topic); } };
   if(seed) setTimeout(()=>vnSend(keeperId,useTopic,seed),80);
 }
@@ -4047,8 +4048,9 @@ function sectionThreadDigest(keeperId){
   const LABELS={
     aldous_bible:'the Word',aldous_prayer:'prayer',aldous_confession:'confession',aldous_memory:'memory verses',aldous_worship:'worship',aldous_discipleship:'a discipleship path',aldous_family:'the family altar',
     garrick_why:'his why & mission',garrick_oath:'identity & the vow',garrick_arsenal:'the Scripture arsenal',garrick_plan:'his battle plan',garrick_bell:'reaching his people',
-    tomas_marriage:'his marriage',tomas_letters:'letters he is writing',tomas_days:'days with his daughters',tomas_guide:'leading his family',tomas_lizzie:'Lizzie',tomas_kid_naomi:'Naomi',tomas_kid_zipporah:'Zipporah',tomas_kid_grace:'Grace',
-    mercer_ledger:'income & spending',mercer_balance:'the budget',mercer_calendar:'the bills',mercer_jars:'budget jars',mercer_vault:'savings goals',mercer_giving:'giving'
+    tomas_marriage:'the marriage he prays to restore',tomas_letters:'letters he is writing',tomas_days:'days with his daughters',tomas_guide:'leading his family',tomas_lizzie:'Lizzie',tomas_kid_naomi:'Naomi',tomas_kid_zipporah:'Zipporah',tomas_kid_grace:'Grace',
+    mercer_ledger:'income & spending',mercer_balance:'the budget',mercer_calendar:'the bills',mercer_jars:'budget jars',mercer_vault:'savings goals',mercer_giving:'giving',
+    crane_list:'his forty-by-forty',crane_stars:'his north stars',crane_compass:'taking his bearings'
   };
   const seen=[];
   Object.keys(world.chats).forEach(t=>{
@@ -4077,17 +4079,17 @@ const HALL_PINS=[
 ];
 const HALL_LBL={marriage:'The Hearth',lizzie:'Her Door',daughters:'The Daughters',letters:'Letters',days:'Daddy-Daughter Days',guide:'The Family Bible',tomas:'Elder Tomas'};
 const HALL_SCENE={marriage:'b_hall_marriage',lizzie:'b_hall_lizzie',daughters:'b_hall_daughters',letters:'b_hall_letters',days:'b_hall_days',guide:'b_hall_guide'};
-const HALL_TOPIC={marriage:'tending your marriage',letters:'writing letters to those you love',days:'time with your daughters',guide:'leading your family spiritually',daughters:'raising your daughters'};
+const HALL_TOPIC={marriage:'the marriage you pray to see restored with Lizzie',letters:'writing letters to those you love',days:'time with your daughters',guide:'leading your family spiritually',daughters:'raising your daughters'};
 
 /* Keeper registration for the shared chat engines */
 KEEPERS.tomas={name:'Elder Tomas',art:'npc_hall',sys:(t,th)=>TOMAS_SYS(t,th)};
-VN_KEEPERS.tomas={name:'Elder Tomas',portrait:'art/npc_hall.webp',topic:'your marriage and your children \u2014 the people you love most'};
+VN_KEEPERS.tomas={name:'Elder Tomas',portrait:'art/npc_hall.webp',topic:'your daughters, and your hope \u2014 prayerful and tender \u2014 for reconciliation with Lizzie, your former wife'};
 
 function TOMAS_SYS(topic, thread){
   return 'You are Elder Tomas, keeper of the Great Hall in a Pilgrim\u2019s Progress-themed Christian life app. '+
     'Your voice is that of a wise elder counselor \u2014 a seasoned mentor and grandfatherly figure who has lived long, loved one woman his whole life, raised good children, and buried his share of sorrows. You speak with unhurried warmth, gravity, and gentle humor; you tell the truth kindly; you often answer a worry with a question or a short story before the counsel. Never preachy, never clinical. '+
     'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. Keep replies brief (2-5 sentences) and personal, the way a grandfather speaks across a table by the fire. '+
-    'The pilgrim is '+((profile&&profile.name)||'a father')+', a father raising daughters. He is separated/divorced from his wife Lizzie and longs, prayerfully, for reconciliation \u2014 hold this with great tenderness, never glibly; steer him toward becoming the man God is making him, toward patience, repentance, humility, and hope, never toward manipulation, pressure, or despair. '+
+    'The pilgrim is '+((profile&&profile.name)||'a father')+', a father raising daughters. He is divorced from Lizzie \u2014 she is his former wife, and they are not currently married \u2014 yet he longs, prayerfully and tenderly, for reconciliation. Never speak of her as his current wife and never assume they are married; hold the whole thing with great tenderness, never glibly; steer him toward becoming the man God is making him, toward patience, repentance, humility, and hope, never toward manipulation, pressure, or despair. '+
     'Current focus: '+topic+'. '+keeperContext('tomas', thread)+' Never invent facts you were not given.';
 }
 
@@ -4214,7 +4216,7 @@ function openLizzieDoor(){
         '<div id="liz-letters">'+(L.letters.length?L.letters.map((lt,i)=>'<div style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><div>'+esc(lt.text.slice(0,80))+(lt.text.length>80?'\u2026':'')+'</div><small>sealed '+shortDate(lt.at)+'</small></div>').join(''):'')+'</div>'+
         '<textarea id="liz-letter" placeholder="Write to her\u2026" style="min-height:80px;margin:8px 0"></textarea>'+
         '<button class="btn primary block" id="liz-seal">Seal this letter</button></div>';
-      mountKeeperChat({mountId:'liz-chat',keeperId:'tomas',threadId:'tomas_lizzie',topic:'your marriage to Lizzie and your hope, prayerfully, for reconciliation'});
+      mountKeeperChat({mountId:'liz-chat',keeperId:'tomas',threadId:'tomas_lizzie',topic:'Lizzie, your former wife \u2014 the marriage that ended in divorce, and your hope, prayerful and tender, for reconciliation'});
       const panels=host.querySelectorAll('.panel');
       wireAdd(panels[0],v=>{ L.growth.unshift(v); addXP(5,'Growth toward Lizzie','heart'); saveWorld(); openLizzieDoor(); });
       wireAdd(panels[1],v=>{ L.memories.unshift(v); saveWorld(); openLizzieDoor(); });
@@ -4431,6 +4433,140 @@ TREASURY_STATIONS.giving=function(host){ const M=money2();
    '<div class="panel"><div class="eyebrow">Record giving</div><input id="gv-to" placeholder="To whom / what?" style="margin-bottom:6px"><div class="flex"><input id="gv-amt" type="number" inputmode="decimal" placeholder="Amount" style="flex:1"><button class="btn primary" id="gv-add">Add</button></div>'+
     '<div id="gv-list" style="margin-top:10px">'+(M.giving.length?M.giving.slice(0,12).map(g=>'<div class="between" style="padding:5px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(g.to)+'</span><span>'+fmt(g.amt)+' <small>'+shortDate(g.at)+'</small></span></div>').join(''):'<small>No giving logged yet.</small>')+'</div></div>';
   host.querySelector('#gv-add').onclick=()=>{ const to=host.querySelector('#gv-to').value.trim(), amt=parseFloat(host.querySelector('#gv-amt').value); if(!to||!amt)return; M.giving.unshift({to,amt,at:nowISO()}); addXP(8,'Gave generously','order'); saveWorld(); openTreasuryStation('giving'); };
+};
+
+/* ============================================================
+   THE VAULT \u2014 Crane \u2014 Legacy by 40 (capstone building)
+   Sections: Forty by Forty (list), North Stars (stars),
+   The Compass (compass radar). Plugs into the scoped keeper
+   context engine via thread ids crane_list/stars/compass.
+   ============================================================ */
+function ensureLegacy(){ world.legacy=world.legacy||{list:[],stars:[],compass:{}}; if(!world.legacy.list)world.legacy.list=[]; if(!world.legacy.stars)world.legacy.stars=[]; if(!world.legacy.compass)world.legacy.compass={}; return world.legacy; }
+
+function CRANE_SYS(topic, thread){
+  return 'You are Crane, keeper of the Vault in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'You are solemn and speak with weight, rarely wasting a word \u2014 an old keeper of the long view who thinks in decades, not days. You help the pilgrim lift his eyes to the whole arc of his life: the man he means to be by forty, the fixed points he steers by, and an honest reckoning of where he stands. '+
+    'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. You are resurrection-minded (Colossians 3, Galatians 2:20) \u2014 the old self put to death, the new self raised. You reframe \u201Clegacy\u201D away from worldly achievement or vanity toward faithfulness, character, the people he loves, and the glory of God \u2014 the aim is \u201Cwell done, good and faithful servant,\u201D not a monument to himself. You quietly remember that his days are numbered and time is short (Psalm 90:12), yet you are never morbid \u2014 you call him to number his days and spend them well, in hope. '+
+    'Speak briefly (2-5 sentences), with gravity and hope, like a keeper turning a heavy ledger by candlelight. '+
+    'Current focus: '+topic+'. '+keeperContext('crane', thread)+' Never invent facts you were not given.';
+}
+
+KEEPER_CTX.crane={
+  _core(){ const j=journey(); return j? ('He walks a four-year road to be \u201Cfull by forty\u201D \u2014 about '+Math.round(j.pct*100)+'% of the way, with '+j.daysLeft+' days remaining. '):''; },
+  list(){ const li=((world.legacy||{}).list)||[]; if(!li.length) return 'His forty-by-forty list is empty; help him name the first thing he means to become, do, or finish by forty. '; const done=li.filter(x=>x.done); let s='His forty-by-forty ('+li.length+'/40 named, '+done.length+' done). Still ahead: '+_ctxList(li.filter(x=>!x.done),8,x=>x.text).join('; ')+'. '; if(done.length) s+='Already accomplished: '+_ctxList(done,4,x=>x.text).join('; ')+'. '; return s; },
+  stars(){ const st=((world.legacy||{}).stars)||[]; return st.length?('His north stars \u2014 the fixed points he steers by: '+_ctxList(st,8,_entryText).join('; ')+'. '):'He has not set any north stars yet. '; },
+  compass(){ const C=((world.legacy||{}).compass)||{}; const keys=Object.keys(PILLARS); const rated=keys.filter(k=>C[k]!=null && C[k]!==0); if(!rated.length) return 'He has not yet taken his bearings on the Compass. '; const sorted=rated.slice().sort((a,b)=>C[a]-C[b]); const low=sorted[0], high=sorted[sorted.length-1]; const unrated=keys.filter(k=>!C[k]); let s='His own reckoning right now (0\u201310) \u2014 strongest: '+PILLARS[high]+' ('+C[high]+'); weakest: '+PILLARS[low]+' ('+C[low]+'). '; if(unrated.length) s+='Not yet weighed: '+unrated.map(k=>PILLARS[k]).join(', ')+'. '; return s; }
+};
+
+KEEPERS.crane={name:'Crane',art:'npc_vault',sys:(t,th)=>CRANE_SYS(t,th)};
+VN_KEEPERS.crane={name:'Crane',portrait:'art/npc_vault.webp',topic:'the long view \u2014 the man you mean to be by forty'};
+
+const VAULT_PINS=[
+ {id:'list',    x:30, y:44, lbl:'Forty by Forty'},
+ {id:'stars',   x:62, y:30, lbl:'North Stars'},
+ {id:'compass', x:48, y:62, lbl:'The Compass'},
+ {id:'crane',   x:82, y:48, lbl:'Crane'}
+];
+const VAULT_LBL={list:'Forty by Forty',stars:'North Stars',compass:'The Compass',crane:'Crane'};
+const VAULT_SCENE={list:'b_vault_list',stars:'b_vault_stars',compass:'b_vault_compass'};
+const VAULT_TOPIC={list:'your forty-by-forty \u2014 the man you mean to be by forty',stars:'the fixed points you steer your life by',compass:'an honest reckoning of where you stand in each part of life'};
+const VAULT_STATIONS={};
+
+function enterVault(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML='<div style="height:100%;width:100%;background:linear-gradient(#15101c,#080610);display:flex;align-items:center;justify-content:center;color:var(--parchment-dim)">The Vault</div>';
+  fitScene(o);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
+  img.onerror=()=>{ addSpots(); };
+  img.src='art/b_vault_room.webp';
+  function addSpots(){
+    o.querySelectorAll('.pin').forEach(p=>p.remove());
+    VAULT_PINS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#7E6BA8"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=> h.id==='crane' ? openVNChat('crane') : openVaultStation(h.id);
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=()=>{ document.querySelectorAll('.pin-gear,.place-banner').forEach(e=>e.remove()); o.remove(); back.remove(); document.querySelector('#nav button[data-v=keep]').click(); };
+  document.body.appendChild(back);
+  const t=document.createElement('div'); t.className='town-title'; t.textContent='The Vault';
+  document.body.appendChild(t);
+  const savedVP=Store.get('pins_vault'); if(savedVP) VAULT_PINS.forEach(p=>{ if(savedVP[p.id]){ p.x=savedVP[p.id].x; p.y=savedVP[p.id].y; } });
+  attachPinGear({overlayId:'scene-full',pins:VAULT_PINS,
+    getXY:p=>({x:p.x,y:p.y}), setXY:(p,x,y)=>{p.x=x;p.y=y;},
+    onDone:()=>{ const m={}; VAULT_PINS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_vault',m); enterVault(); }});
+}
+
+function vaultHeader(id){
+  return '<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/'+VAULT_SCENE[id]+'.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+   '<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:10px">'+
+   '<img src="art/npc_vault.webp" style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+   '<div><div class="display" style="font-size:15px;color:var(--ember-hi)">Crane</div><div class="eyebrow">Keeper of the Vault</div></div></div>';
+}
+function openVaultStation(id){
+  ensureLegacy();
+  openFullPage({title:VAULT_LBL[id],sub:'The Vault',backLabel:'The Vault',onBack:()=>enterVault(),
+    render:host=>{ host.innerHTML=vaultHeader(id)+'<div id="vl-chat"></div><div id="vl-body" style="margin-top:12px"></div>';
+      mountKeeperChat({mountId:'vl-chat',keeperId:'crane',threadId:'crane_'+id,topic:VAULT_TOPIC[id]||'the long view'});
+      (VAULT_STATIONS[id]||(()=>{}))($('#vl-body')); }});
+}
+
+function compassSVG(C){
+  C=C||{}; const keys=Object.keys(PILLARS); const cx=150, cy=150, R=104, n=keys.length;
+  const ang=i=>(-Math.PI/2)+(i*2*Math.PI/n);
+  const pt=(i,r)=>[cx+Math.cos(ang(i))*r, cy+Math.sin(ang(i))*r];
+  let rings=''; [2,4,6,8,10].forEach(v=>{ const pts=keys.map((k,i)=>pt(i,R*v/10).map(z=>z.toFixed(1)).join(',')).join(' '); rings+='<polygon points="'+pts+'" fill="none" stroke="rgba(126,107,168,.18)" stroke-width="1"/>'; });
+  let axes=''; keys.forEach((k,i)=>{ const p=pt(i,R); axes+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'" stroke="rgba(126,107,168,.22)" stroke-width="1"/>'; });
+  const dpts=keys.map((k,i)=>pt(i, R*((C[k]||0)/10)).map(z=>z.toFixed(1)).join(',')).join(' ');
+  const poly='<polygon points="'+dpts+'" fill="rgba(126,107,168,.30)" stroke="#9d86c8" stroke-width="2" stroke-linejoin="round"/>';
+  let dots=''; keys.forEach((k,i)=>{ if(C[k]){ const p=pt(i, R*(C[k]/10)); dots+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3" fill="#cdb8f0"/>'; } });
+  let labels=''; keys.forEach((k,i)=>{ const p=pt(i, R+16); const anchor=Math.abs(p[0]-cx)<12?'middle':(p[0]<cx?'end':'start'); labels+='<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+3).toFixed(1)+'" text-anchor="'+anchor+'" font-size="10" fill="var(--parchment-dim)">'+PILLARS[k]+'</text>'; });
+  return '<svg viewBox="0 0 300 300" style="width:100%;max-width:340px;display:block;margin:6px auto 0"><circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="rgba(20,16,28,.35)"/>'+rings+axes+poly+dots+labels+'</svg>';
+}
+
+VAULT_STATIONS.list=function(host){ const L=ensureLegacy(); const j=journey(); const done=L.list.filter(x=>x.done).length;
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">Forty by Forty</div>'+
+    '<div style="text-align:center;margin:8px 0"><div class="display" style="font-size:30px;color:var(--ember-hi)">'+L.list.length+' / 40</div><small>'+done+' already done'+(j?' \u00B7 '+j.daysLeft+' days left':'')+'</small></div>'+
+    '<p class="small" style="font-style:italic;text-align:center">\u201CTeach us to number our days, that we may get a heart of wisdom.\u201D \u2014 Psalm 90:12</p></div>'+
+   '<div class="panel"><div class="eyebrow">What do you mean to be true by forty?</div>'+addRowUI('Something to become, do, or finish\u2026','Name it')+
+    '<div id="fl-list" style="margin-top:10px">'+(L.list.length?L.list.map((it,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span class="grow '+(it.done?'struck':'')+'">'+esc(it.text)+'</span><span style="white-space:nowrap"><button class="mini-btn" data-done="'+i+'">'+(it.done?'\u21ba':'\u2713')+'</button> <button class="mini-btn" data-del="'+i+'">\u00d7</button></span></div>').join(''):'<small>Nothing named yet. Start with one.</small>')+'</div></div>';
+  wireAdd(host.querySelector('.panel:last-child'),v=>{ if(L.list.length>=40){ toast('Forty is full','That is the number. Make them count.'); return; } L.list.push({text:v,done:false,at:nowISO()}); addXP(5,'Named a stone for the road'); saveWorld(); openVaultStation('list'); });
+  host.querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>{ const it=L.list[+b.dataset.done]; it.done=!it.done; if(it.done) addXP(15,'A forty-by-forty, finished'); saveWorld(); openVaultStation('list'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ L.list.splice(+b.dataset.del,1); saveWorld(); openVaultStation('list'); });
+};
+
+VAULT_STATIONS.stars=function(host){ const L=ensureLegacy();
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">North Stars</div>'+
+    '<p class="small" style="font-style:italic;text-align:center;margin:6px 0">The handful of fixed points you steer by \u2014 the things that do not move when everything else does.</p></div>'+
+   '<div class="panel"><div class="eyebrow">Your fixed points</div>'+addRowUI('A truth or value you steer by\u2026','Set it')+
+    '<div id="ns-list" style="margin-top:10px">'+(L.stars.length?L.stars.map((s,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>\u2726 '+esc(s.text)+'</span><button class="mini-btn" data-del="'+i+'">\u00d7</button></div>').join(''):'<small>No stars set yet.</small>')+'</div></div>';
+  wireAdd(host.querySelector('.panel:last-child'),v=>{ L.stars.push({text:v,at:nowISO()}); addXP(5,'Fixed a north star'); saveWorld(); openVaultStation('stars'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ L.stars.splice(+b.dataset.del,1); saveWorld(); openVaultStation('stars'); });
+};
+
+VAULT_STATIONS.compass=function(host){ const L=ensureLegacy(); const keys=Object.keys(PILLARS);
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">The Compass</div>'+
+    '<p class="small" style="font-style:italic;text-align:center;margin:6px 0">An honest reckoning \u2014 not where you should be, but where you are today, in each part of the life.</p>'+
+    compassSVG(L.compass)+'</div>'+
+   '<div class="panel"><div class="eyebrow">Take your bearings (0\u201310)</div><div id="cp-rows">'+
+    keys.map(k=>'<div style="margin:10px 0"><div class="between"><span>'+PILLARS[k]+'</span><span id="cp-v-'+k+'" style="color:var(--ember-hi)">'+(L.compass[k]||0)+'</span></div>'+
+      '<input type="range" min="0" max="10" step="1" value="'+(L.compass[k]||0)+'" data-pillar="'+k+'" style="width:100%"></div>').join('')+
+    '</div></div>';
+  host.querySelectorAll('input[data-pillar]').forEach(inp=>{
+    inp.oninput=()=>{ const lbl=host.querySelector('#cp-v-'+inp.dataset.pillar); if(lbl) lbl.textContent=inp.value; };
+    inp.onchange=()=>{ L.compass[inp.dataset.pillar]=+inp.value; saveWorld(); const sv=host.querySelector('.panel.sacred svg'); if(sv) sv.outerHTML=compassSVG(L.compass); };
+  });
 };
 
 </script>
