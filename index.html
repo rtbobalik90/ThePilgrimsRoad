@@ -2123,7 +2123,7 @@ function renderCharBody(host,onSaved){
 /* full-screen pannable town (overrides the inline version) */
 function removeTownFull(){
   ['town-full','scene-full','page-full','camp-full'].forEach(id=>{const t=document.getElementById(id); if(t)t.remove();});
-  document.querySelectorAll('.town-title,.town-hint,.scene-back').forEach(x=>x.remove()); }
+  document.querySelectorAll('.town-title,.town-hint,.scene-back,.place-banner,.pin-gear,.place-ghost').forEach(x=>x.remove()); }
 function renderTown(){
   removeTownFull();
   $('#keep-main').style.display='none'; $('#interior').style.display='none';
@@ -2696,14 +2696,14 @@ HOUSE_SECTIONS.desk=function(el){
    PHASE 9 — BASE CAMP: LIVING SKY, REAL WEATHER, THE FIRE
    ============================================================ */
 const CAMP_SPOTS=[
- {id:'fire',  x:48, y:75, lbl:'The Fire \u00B7 Anchors'},
- {id:'tent',  x:26, y:56, lbl:'The Tent \u00B7 Evening'},
- {id:'book',  x:87, y:73, lbl:'The Book \u00B7 Verse'},
- {id:'standard', x:86, y:49, lbl:'The Standard'},
- {id:'signpost', x:10, y:69, lbl:'The Signpost'},
- {id:'weather', x:50, y:33, lbl:'The Sky'}
+ {id:'fire',  x:48, y:68, lbl:'The Fire \u00B7 Anchors'},
+ {id:'tent',  x:24, y:48, lbl:'The Tent \u00B7 Evening'},
+ {id:'book',  x:80, y:80, lbl:'The Book \u00B7 Verse'},
+ {id:'standard', x:80, y:40, lbl:'The Standard'},
+ {id:'signpost', x:18, y:70, lbl:'The Signpost'},
+ {id:'weather', x:50, y:20, lbl:'The Sky'}
 ];
-const CAMP_FIRE_POS={x:48.5,y:75};
+const CAMP_FIRE_POS={x:48,y:66};
 
 /* ---------- weather (open-meteo, no key) ---------- */
 function wxKind(code){
@@ -2836,6 +2836,7 @@ function renderCampScene(){
   const wx=Store.get('wx'); campWX=wx;
   const ts=timeState(wx), wkind=wx?wxKind(wx.code):'clear';
   const lit=Object.keys(day().anchors||{}).length;
+  const _savedCS=Store.get('pins_camp'); if(_savedCS) CAMP_SPOTS.forEach(p=>{ if(_savedCS[p.id]){ p.x=_savedCS[p.id].x; p.y=_savedCS[p.id].y; } });
   const o=document.createElement('div'); o.id='camp-full';
   o.innerHTML='<div class="scene-inner"></div>';
   document.body.appendChild(o);
@@ -2863,6 +2864,14 @@ function renderCampScene(){
       }
     }
     fx.innerHTML='<svg viewBox="0 0 430 '+FXH+'" preserveAspectRatio="none" style="width:100%;height:100%">'+fireArt+ (function(){let t='';
+      if(wkind==='clouds'||wkind==='overcast'||wkind==='rain'||wkind==='storm'){
+        const _hv=(wkind==='overcast'||wkind==='storm'),_ng=ts==='night';
+        let _cf=_hv?'#5e6770':'#eef2f6'; if(_ng)_cf=_hv?'#0e1320':'#2b3346'; else if(ts==='dusk')_cf=_hv?'#5a4750':'#cda58a'; else if(ts==='dawn')_cf=_hv?'#6a5560':'#ead0b8';
+        const _op=_hv?0.5:0.4,_n=_hv?5:3;
+        if(_hv)t+='<rect width="430" height="'+(0.40*FXH)+'" fill="'+_cf+'" opacity="'+(_ng?0.34:0.2)+'"/>';
+        for(let i=0;i<_n;i++){const _cy=(0.05+(i%3)*0.07)*FXH,_cx=((i*150+(i%2)*40)%520)-40,_sc=0.9+(i%3)*0.4;
+          t+='<g style="animation:drift '+(70+i*16)+'s ease-in-out infinite alternate" opacity="'+_op+'"><g transform="translate('+_cx+','+_cy+') scale('+_sc+')" fill="'+_cf+'"><ellipse cx="0" cy="0" rx="46" ry="19"/><ellipse cx="34" cy="6" rx="38" ry="16"/><ellipse cx="-30" cy="7" rx="32" ry="14"/><ellipse cx="8" cy="-11" rx="28" ry="15"/></g></g>';}
+      }
       if(wkind==='rain'||wkind==='storm'){let d2='';for(let i=0;i<34;i++)d2+='<line x1="'+((i*53)%430)+'" y1="'+((i*37)%560-60)+'" x2="'+((i*53)%430-5)+'" y2="'+((i*37)%560-42)+'" stroke="#8fa2b8" stroke-width="1.1" opacity=".4"/>';t+='<g class="wx-rain">'+d2+'</g>';}
       if(wkind==='snow'){for(let i=0;i<26;i++)t+='<circle cx="'+((i*67)%430)+'" cy="-20" r="'+(1.4+(i%3)*.7)+'" fill="#e8eef2" opacity=".7" style="animation:snowfall '+(7+(i%5))+'s linear infinite;animation-delay:-'+(i%7)+'s"/>';}
       if(wkind==='fog'){for(let i=0;i<4;i++)t+='<ellipse class="'+(i%2?'fog':'fog2')+'" cx="'+(80+i*92)+'" cy="'+(330+i*60)+'" rx="160" ry="26" fill="#9aa4ae" opacity=".14"/>';}
@@ -2880,6 +2889,9 @@ function renderCampScene(){
     });
   }
   addSpots();
+  attachPinGear({overlayId:'camp-full',pins:CAMP_SPOTS,
+    getXY:p=>({x:p.x,y:p.y}), setXY:(p,x,y)=>{p.x=x;p.y=y;},
+    onDone:()=>{ const m={}; CAMP_SPOTS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_camp',m); renderCampScene(); }});
   const t1=document.createElement('div'); t1.className='town-title';
   const h=new Date().getHours();
   t1.textContent=(h<12?'Morning':h<17?'Afternoon':'Evening')+', '+profile.name.split(' ')[0];
