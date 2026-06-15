@@ -391,6 +391,10 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 .wx-rain2{animation:rainfall .42s linear infinite}
 .wx-flash{animation:flash 7s linear infinite}
 .fire-glow{animation:flick 1.6s ease-in-out infinite}
+@keyframes strike{0%,89%,100%{opacity:0}89.6%{opacity:.95}90.4%{opacity:.25}91.2%{opacity:.85}92%{opacity:0}}
+@keyframes strike2{0%,94%,100%{opacity:0}94.6%{opacity:.9}95.4%{opacity:.2}96%{opacity:.75}96.8%{opacity:0}}
+.wx-bolt{animation:strike 8s linear infinite}
+.wx-bolt2{animation:strike2 12s linear infinite}
 .wx-chip{position:fixed;right:14px;top:calc(12px + env(safe-area-inset-top));z-index:41;background:rgba(14,11,7,.78);border:1px solid var(--edge);border-radius:8px;padding:7px 12px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.14em;color:var(--parchment-dim)}
 .kchat{display:flex;flex-direction:column;gap:8px}
 .kchat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
@@ -2757,6 +2761,39 @@ const SKY={
  dusk:['#241a2e','#5a2a3c','#b85a34','#2e2230'],
  night:['#07080f','#0c1020','#141a2e','#0a0c14']
 };
+function campWeatherSVG(wkind, ts, H){
+  let t=''; const night=ts==='night';
+  if(wkind==='clouds'||wkind==='overcast'||wkind==='rain'||wkind==='storm'){
+    const hv=(wkind==='overcast'||wkind==='storm');
+    let cf=hv?'#5e6770':'#eef2f6'; if(night)cf=hv?'#0e1320':'#2b3346'; else if(ts==='dusk')cf=hv?'#5a4750':'#cda58a'; else if(ts==='dawn')cf=hv?'#6a5560':'#ead0b8';
+    const op=hv?0.5:0.4, n=hv?5:3;
+    if(hv) t+='<rect width="430" height="'+(0.40*H).toFixed(0)+'" fill="'+cf+'" opacity="'+(night?0.34:0.2)+'"/>';
+    for(let i=0;i<n;i++){const cy=(0.05+(i%3)*0.07)*H, cx=((i*150+(i%2)*40)%520)-40, sc=0.9+(i%3)*0.4;
+      t+='<g style="animation:drift '+(70+i*16)+'s ease-in-out infinite alternate" opacity="'+op+'"><g transform="translate('+cx+','+cy.toFixed(0)+') scale('+sc+')" fill="'+cf+'"><ellipse cx="0" cy="0" rx="46" ry="19"/><ellipse cx="34" cy="6" rx="38" ry="16"/><ellipse cx="-30" cy="7" rx="32" ry="14"/><ellipse cx="8" cy="-11" rx="28" ry="15"/></g></g>';}
+  }
+  if(wkind==='rain'||wkind==='storm'){
+    const heavy=wkind==='storm';
+    t+='<rect width="430" height="'+H+'" fill="#1a2230" opacity="'+(heavy?0.22:0.12)+'"/>';
+    const layer=(c,w,op,sl,cls)=>{let d='';for(let i=0;i<c;i++){const x=(i*47)%440-5,y=(i*89)%H-H*0.15;d+='<line x1="'+x+'" y1="'+y.toFixed(0)+'" x2="'+(x-sl)+'" y2="'+(y+22).toFixed(0)+'" stroke="#9fb2c8" stroke-width="'+w+'" opacity="'+op+'"/>';}return '<g class="'+cls+'">'+d+'</g>';};
+    t+=layer(28,1.0,0.26,5,'wx-rain')+layer(heavy?40:30,1.4,0.42,8,'wx-rain2');
+    if(heavy) t+=layer(22,1.9,0.5,12,'wx-rain');
+  }
+  if(wkind==='snow'){
+    for(let i=0;i<34;i++){const x=(i*61)%440,r=1.2+(i%3)*0.8,dur=8+(i%6),dl=(i%9);
+      t+='<circle cx="'+x+'" cy="-20" r="'+r+'" fill="#eef4f8" opacity="'+(0.5+(i%3)*0.18)+'" style="animation:snowfall '+dur+'s linear infinite;animation-delay:-'+dl+'s"/>';}
+    t+='<rect y="'+(0.80*H).toFixed(0)+'" width="430" height="'+(0.20*H).toFixed(0)+'" fill="#dfe8f0" opacity="'+(night?0.05:0.09)+'"/>';
+  }
+  if(wkind==='fog'){
+    for(let i=0;i<5;i++) t+='<ellipse class="'+(i%2?'fog':'fog2')+'" cx="'+(60+i*90)+'" cy="'+((0.5+i*0.09)*H).toFixed(0)+'" rx="170" ry="30" fill="'+(night?'#3a414c':'#aab4be')+'" opacity="'+(night?0.16:0.2)+'"/>';
+  }
+  if(wkind==='storm'){
+    const bolt=(cx,cls)=>'<g class="'+cls+'"><rect width="430" height="'+H+'" fill="#e6eef6" opacity="0.5"/>'+
+      '<path d="M'+cx+' '+(0.03*H).toFixed(0)+' l-16 '+(0.10*H).toFixed(0)+' l10 '+(0.015*H).toFixed(0)+' l-20 '+(0.12*H).toFixed(0)+' l13 '+(0.02*H).toFixed(0)+' l-9 '+(0.11*H).toFixed(0)+'" fill="none" stroke="#f4f8ff" stroke-width="2.4" opacity="0.95"/>'+
+      '<path d="M'+cx+' '+(0.03*H).toFixed(0)+' l-16 '+(0.10*H).toFixed(0)+' l10 '+(0.015*H).toFixed(0)+' l-20 '+(0.12*H).toFixed(0)+'" fill="none" stroke="#cfe0f2" stroke-width="5" opacity="0.3"/></g>';
+    t+=bolt(150,'wx-bolt')+bolt(300,'wx-bolt2');
+  }
+  return t;
+}
 function campSceneSVG(ts, wkind, lit){
   const sky=SKY[ts], c=charOf();
   const night=ts==='night', dim=(ts==='night'||ts==='dusk');
@@ -2766,21 +2803,7 @@ function campSceneSVG(ts, wkind, lit){
   if(ts==='dusk') celest='<circle cx="340" cy="158" r="28" fill="#e8813a" opacity=".85"/><circle cx="340" cy="158" r="48" fill="#c95a2a" opacity=".22"/>';
   if(night) celest='<circle cx="328" cy="86" r="20" fill="#dcd6c0" opacity=".85"/><circle cx="322" cy="82" r="18" fill="'+sky[0]+'"/>'+
     Array.from({length:40},(q,k)=>'<circle cx="'+((k*89)%430)+'" cy="'+((k*47)%200+8)+'" r="'+(k%5===0?1.4:0.9)+'" fill="#E6D6B0" opacity="'+((k%3+1)*.16)+'"/>').join('');
-  let wx='';
-  if(wkind==='clouds'||wkind==='overcast'||wkind==='storm'){
-    const o=wkind==='overcast'?0.5:0.32, n=wkind==='overcast'?5:3;
-    for(let i=0;i<n;i++) wx+='<ellipse class="fog" cx="'+(60+i*95)+'" cy="'+(54+(i%2)*36)+'" rx="92" ry="22" fill="'+(night?'#10141e':'#7C8CA0')+'" opacity="'+o+'"/>';
-  }
-  if(wkind==='fog') for(let i=0;i<4;i++) wx+='<ellipse class="'+(i%2?'fog':'fog2')+'" cx="'+(80+i*92)+'" cy="'+(330+i*60)+'" rx="160" ry="26" fill="#9aa4ae" opacity=".14"/>';
-  if(wkind==='rain'||wkind==='storm'){
-    let drops='';
-    for(let i=0;i<34;i++) drops+='<line x1="'+((i*53)%430)+'" y1="'+((i*37)%560-60)+'" x2="'+((i*53)%430-5)+'" y2="'+((i*37)%560-42)+'" stroke="#8fa2b8" stroke-width="1.1" opacity=".4"/>';
-    wx+='<g class="wx-rain">'+drops+'</g><g class="wx-rain2" transform="translate(20,-30)">'+drops+'</g>';
-  }
-  if(wkind==='snow'){
-    for(let i=0;i<26;i++) wx+='<circle class="snowflake" cx="'+((i*67)%430)+'" cy="'+((i*43)%500-50)+'" r="'+(1.4+(i%3)*.7)+'" fill="#e8eef2" opacity=".7" style="animation:snowfall '+(7+(i%5))+'s linear infinite;animation-delay:-'+(i%7)+'s"/>';
-  }
-  if(wkind==='storm') wx+='<rect class="wx-flash" width="430" height="640" fill="#dce8f2"/>';
+  const wx=campWeatherSVG(wkind, ts, 640);
   /* fire by anchors lit (0..5) */
   const fs=0.45+lit*0.16, fg=lit===0?0.12:0.18+lit*0.1;
   const fire= lit===0
@@ -2863,20 +2886,7 @@ function renderCampScene(){
          'style="animation:emberup '+(2.6+(i%4)*0.7)+'s ease-out infinite;animation-delay:-'+((i*0.83)%3).toFixed(2)+'s"/>';
       }
     }
-    fx.innerHTML='<svg viewBox="0 0 430 '+FXH+'" preserveAspectRatio="none" style="width:100%;height:100%">'+fireArt+ (function(){let t='';
-      if(wkind==='clouds'||wkind==='overcast'||wkind==='rain'||wkind==='storm'){
-        const _hv=(wkind==='overcast'||wkind==='storm'),_ng=ts==='night';
-        let _cf=_hv?'#5e6770':'#eef2f6'; if(_ng)_cf=_hv?'#0e1320':'#2b3346'; else if(ts==='dusk')_cf=_hv?'#5a4750':'#cda58a'; else if(ts==='dawn')_cf=_hv?'#6a5560':'#ead0b8';
-        const _op=_hv?0.5:0.4,_n=_hv?5:3;
-        if(_hv)t+='<rect width="430" height="'+(0.40*FXH)+'" fill="'+_cf+'" opacity="'+(_ng?0.34:0.2)+'"/>';
-        for(let i=0;i<_n;i++){const _cy=(0.05+(i%3)*0.07)*FXH,_cx=((i*150+(i%2)*40)%520)-40,_sc=0.9+(i%3)*0.4;
-          t+='<g style="animation:drift '+(70+i*16)+'s ease-in-out infinite alternate" opacity="'+_op+'"><g transform="translate('+_cx+','+_cy+') scale('+_sc+')" fill="'+_cf+'"><ellipse cx="0" cy="0" rx="46" ry="19"/><ellipse cx="34" cy="6" rx="38" ry="16"/><ellipse cx="-30" cy="7" rx="32" ry="14"/><ellipse cx="8" cy="-11" rx="28" ry="15"/></g></g>';}
-      }
-      if(wkind==='rain'||wkind==='storm'){let d2='';for(let i=0;i<34;i++)d2+='<line x1="'+((i*53)%430)+'" y1="'+((i*37)%560-60)+'" x2="'+((i*53)%430-5)+'" y2="'+((i*37)%560-42)+'" stroke="#8fa2b8" stroke-width="1.1" opacity=".4"/>';t+='<g class="wx-rain">'+d2+'</g>';}
-      if(wkind==='snow'){for(let i=0;i<26;i++)t+='<circle cx="'+((i*67)%430)+'" cy="-20" r="'+(1.4+(i%3)*.7)+'" fill="#e8eef2" opacity=".7" style="animation:snowfall '+(7+(i%5))+'s linear infinite;animation-delay:-'+(i%7)+'s"/>';}
-      if(wkind==='fog'){for(let i=0;i<4;i++)t+='<ellipse class="'+(i%2?'fog':'fog2')+'" cx="'+(80+i*92)+'" cy="'+(330+i*60)+'" rx="160" ry="26" fill="#9aa4ae" opacity=".14"/>';}
-      if(wkind==='storm')t+='<rect class="wx-flash" width="430" height="640" fill="#dce8f2"/>';
-      return t;})()+'</svg>';
+    fx.innerHTML='<svg viewBox="0 0 430 '+FXH+'" preserveAspectRatio="none" style="width:100%;height:100%">'+fireArt+ campWeatherSVG(wkind, ts, FXH)+'</svg>';
     inner.appendChild(fx); addSpots(); };
   img.src='art/camp_'+ts+'.webp';
   function addSpots(){
