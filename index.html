@@ -395,6 +395,8 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 @keyframes strike2{0%,94%,100%{opacity:0}94.6%{opacity:.9}95.4%{opacity:.2}96%{opacity:.75}96.8%{opacity:0}}
 .wx-bolt{animation:strike 8s linear infinite}
 .wx-bolt2{animation:strike2 12s linear infinite}
+.fx-fire{animation:firelive 1.8s ease-in-out infinite;will-change:transform,opacity}
+@keyframes firelive{0%,100%{opacity:.85;transform:translate(-50%,-88%) scale(1)}50%{opacity:1;transform:translate(-50%,-89%) scale(1.05)}}
 .wx-chip{position:fixed;right:14px;top:calc(12px + env(safe-area-inset-top));z-index:41;background:rgba(14,11,7,.78);border:1px solid var(--edge);border-radius:8px;padding:7px 12px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.14em;color:var(--parchment-dim)}
 .kchat{display:flex;flex-direction:column;gap:8px}
 .kchat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
@@ -2860,6 +2862,7 @@ function renderCampScene(){
   const ts=timeState(wx), wkind=wx?wxKind(wx.code):'clear';
   const lit=Object.keys(day().anchors||{}).length;
   const _savedCS=Store.get('pins_camp'); if(_savedCS) CAMP_SPOTS.forEach(p=>{ if(_savedCS[p.id]){ p.x=_savedCS[p.id].x; p.y=_savedCS[p.id].y; } });
+  const _fp=Store.get('camp_fire'); if(_fp){ CAMP_FIRE_POS.x=_fp.x; CAMP_FIRE_POS.y=_fp.y; }
   const o=document.createElement('div'); o.id='camp-full';
   o.innerHTML='<div class="scene-inner"></div>';
   document.body.appendChild(o);
@@ -2887,7 +2890,14 @@ function renderCampScene(){
       }
     }
     fx.innerHTML='<svg viewBox="0 0 430 '+FXH+'" preserveAspectRatio="none" style="width:100%;height:100%">'+fireArt+ campWeatherSVG(wkind, ts, FXH)+'</svg>';
-    inner.appendChild(fx); addSpots(); };
+    inner.appendChild(fx);
+    if(lit>0){ const stage=lit>=5?'full':lit>=3?'mid':'low'; const fw=stage==='full'?20:stage==='mid'?15:11;
+      const ff=new Image(); ff.className='fx-fire';
+      ff.style.cssText='position:absolute;left:'+CAMP_FIRE_POS.x+'%;top:'+CAMP_FIRE_POS.y+'%;width:'+fw+'%;pointer-events:none;visibility:hidden';
+      ff.onload=()=>{ ff.style.visibility='visible'; };
+      let _ft=0; ff.onerror=()=>{ if(_ft===0){ _ft=1; ff.src='art/fx_fire.webp'; } else { ff.remove(); } };
+      ff.src='art/fx_fire_'+stage+'.webp'; inner.appendChild(ff); }
+    addSpots(); };
   img.src='art/camp_'+ts+'.webp';
   function addSpots(){
     CAMP_SPOTS.forEach(h=>{
@@ -2899,9 +2909,10 @@ function renderCampScene(){
     });
   }
   addSpots();
-  attachPinGear({overlayId:'camp-full',pins:CAMP_SPOTS,
-    getXY:p=>({x:p.x,y:p.y}), setXY:(p,x,y)=>{p.x=x;p.y=y;},
-    onDone:()=>{ const m={}; CAMP_SPOTS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_camp',m); renderCampScene(); }});
+  attachPinGear({overlayId:'camp-full',pins:[...CAMP_SPOTS,{id:'__fire__',lbl:'The Flame'}],
+    getXY:p=> p.id==='__fire__'?{x:CAMP_FIRE_POS.x,y:CAMP_FIRE_POS.y}:{x:p.x,y:p.y},
+    setXY:(p,x,y)=>{ if(p.id==='__fire__'){CAMP_FIRE_POS.x=x;CAMP_FIRE_POS.y=y;} else {p.x=x;p.y=y;} },
+    onDone:()=>{ const m={}; CAMP_SPOTS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_camp',m); Store.set('camp_fire',{x:CAMP_FIRE_POS.x,y:CAMP_FIRE_POS.y}); renderCampScene(); }});
   const t1=document.createElement('div'); t1.className='town-title';
   const h=new Date().getHours();
   t1.textContent=(h<12?'Morning':h<17?'Afternoon':'Evening')+', '+profile.name.split(' ')[0];
