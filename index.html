@@ -326,6 +326,7 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
   background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.5);border-radius:5px;padding:2px 7px;white-space:nowrap;
   text-shadow:0 1px 2px #000;
 }
+.pin.pin-bare{padding:0;gap:0}
 #town-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow:hidden}
 #town-full .town-inner{position:absolute;inset:0;width:100%;height:100%}
 #town-full .town-inner img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
@@ -2903,7 +2904,8 @@ function renderCampScene(){
     CAMP_SPOTS.forEach(h=>{
       const btn=document.createElement('button'); btn.className='pin';
       btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
-      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:'+charOf().color+'"></span><span class="lbl">'+h.lbl+'</span>';
+      if(h.id==='fire'){ btn.classList.add('pin-bare'); btn.style.width='17%'; btn.style.height='15%'; }
+      else { btn.innerHTML='<span class="ring"></span><span class="dot" style="background:'+charOf().color+'"></span><span class="lbl">'+h.lbl+'</span>'; }
       btn.onclick=()=>openCampSection(h.id);
       inner.appendChild(btn);
     });
