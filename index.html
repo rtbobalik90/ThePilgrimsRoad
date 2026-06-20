@@ -362,6 +362,7 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 #scene-full,#camp-full{position:fixed;top:0;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom));z-index:40;background:#0b0906;overflow:hidden}
 #scene-full .scene-inner,#camp-full .scene-inner{position:absolute;inset:0;width:100%;height:100%}
 #scene-full .scene-inner img,#camp-full .scene-inner img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
+#camp-full .scene-inner img.fx-fire,#camp-full .scene-inner img.fx-smoke,#camp-full .scene-inner img.fx-cloud,#camp-full .scene-inner img.fx-fog,#camp-full .scene-inner img.fx-boltimg{inset:auto;height:auto;object-fit:contain;max-height:none}
 #scene-full .scene-inner svg,#camp-full .scene-inner svg{display:block;position:absolute;inset:0;width:100%;height:100%}
 @keyframes emberup{0%{transform:translateY(0) translateX(0);opacity:0}12%{opacity:.85}100%{transform:translateY(-110px) translateX(8px);opacity:0}}
 .scene-back{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;z-index:41;background:rgba(14,11,7,.78);border:1px solid rgba(201,138,46,.45);border-radius:8px;padding:7px 13px;backdrop-filter:blur(5px);font-family:'Cinzel',serif;letter-spacing:.18em;font-size:12px;color:var(--ember-hi);text-transform:uppercase}
@@ -2881,7 +2882,7 @@ function campSceneSVG(ts, wkind, lit){
 }
 
 /* ---------- camp render + pages ---------- */
-let campWX=null;
+let campWX=null; let campTimer=null;
 function fireStreak(){
   let n=0; const d=new Date();
   for(;;){ const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -2893,6 +2894,7 @@ function fireStreak(){
 function renderCampScene(){
   if(!profile){ renderCamp(); return; }
   removeTownFull();
+  if(campTimer){ clearInterval(campTimer); campTimer=null; }
   const wx=Store.get('wx'); campWX=wx;
   const ts=timeState(wx), wkind=wx?wxKind(wx.code):'clear';
   const lit=Object.keys(day().anchors||{}).length;
@@ -2963,6 +2965,12 @@ function renderCampScene(){
     t2.textContent=wx.temp+'\u00B0 \u00B7 '+wkind.charAt(0).toUpperCase()+wkind.slice(1);
     document.body.appendChild(t2); }
   fetchWeather().then(w2=>{ if(w2 && (!wx || w2.at!==wx.at) && document.getElementById('camp-full')) renderCampScene(); });
+  campTimer=setInterval(()=>{
+    if(!document.getElementById('camp-full')){ clearInterval(campTimer); campTimer=null; return; }
+    const w=Store.get('wx'); const nts=timeState(w), nwk=w?wxKind(w.code):'clear';
+    if(nts!==ts || nwk!==wkind){ renderCampScene(); return; }
+    fetchWeather().then(w2=>{ if(w2 && w2.at!==(w&&w.at) && document.getElementById('camp-full')) renderCampScene(); });
+  }, 60000);
 }
 const CAMP_LBL={fire:'The Fire',tent:'The Tent',book:'The Book',standard:'The Standard',signpost:'The Signpost',weather:'The Sky'};
 function renderAnchorsInto(host){
