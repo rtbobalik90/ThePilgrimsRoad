@@ -1368,7 +1368,10 @@ document.getElementById('splash-ver').textContent=APP_VERSION;
 (function(){
   const sp=document.getElementById('splash'); if(!sp) return;
   const bg=sp.querySelector('.splash-bg');
-  if(bg){ const im=new Image(); im.onload=()=>bg.classList.add('on'); im.src='art/splash.webp'; }
+  if(bg){ const cands=['art/splash.webp','art/splash.png','art/splash.jpg'];
+    (function tryNext(i){ if(i>=cands.length) return; const im=new Image();
+      im.onload=()=>{ bg.style.backgroundImage="url('"+cands[i]+"')"; bg.classList.add('on'); };
+      im.onerror=()=>tryNext(i+1); im.src=cands[i]; })(0); }
   const vid=sp.querySelector('.splash-vid');
   if(vid){ vid.addEventListener('canplaythrough',()=>{ vid.play().catch(()=>{}); vid.classList.add('on'); },{once:true});
     vid.innerHTML='<source src="art/splash.webm" type="video/webm"><source src="art/splash.mp4" type="video/mp4">'; vid.load(); }
