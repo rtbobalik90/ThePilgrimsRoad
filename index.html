@@ -2013,6 +2013,7 @@ function enterBuilding(id){
   if(id==='treasury'){ enterTreasury(); return; }
   if(id==='vault'){ enterVault(); return; }
   if(id==='hearth'){ enterHearth(); return; }
+  if(id==='garden'){ enterGarden(); return; }
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
   if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
@@ -4131,7 +4132,7 @@ function openVNChat(keeperId, topic, seed){
   o.querySelector('#vn-say').onclick=say;
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); say(); } });
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(110,inp.scrollHeight)+'px'; });
-  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury,crane:enterVault,marta:enterHearth}[keeperId]||enterChapel; home(); };
+  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury,crane:enterVault,marta:enterHearth,linden:enterGarden}[keeperId]||enterChapel; home(); };
   o.querySelector('#vn-new').onclick=()=>{ if(confirm('Start a new chat with '+K.name+'? This clears this conversation.')){ world.chats[keeperId]=[]; saveWorld(); o.remove(); openVNChat(keeperId,topic); } };
   if(seed) setTimeout(()=>vnSend(keeperId,useTopic,seed),80);
 }
@@ -4820,6 +4821,121 @@ HEARTH_STATIONS.weight=function(host){ const H=ensureHeart(); const carrying=H.w
   wireAdd(host.querySelector('#wt-add'),v=>{ H.weights.unshift({text:v,at:nowISO(),laid:null}); saveWorld(); openHearthStation('weight'); });
   host.querySelectorAll('[data-lay]').forEach(b=>b.onclick=()=>{ H.weights[+b.dataset.lay].laid=nowISO(); addXP(10,'Laid a burden down','heart'); saveWorld(); openHearthStation('weight'); });
   host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ H.weights.splice(+b.dataset.del,1); saveWorld(); openHearthStation('weight'); });
+};
+
+/* ======================= THE GARDEN \u2014 Linden (joy) ======================= */
+function LINDEN_SYS(topic, thread){
+  return 'You are Linden, the Gardener of the Garden in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'You are a quiet, weathered, unhurried man with earth on his hands and an unshakable gentleness \u2014 the keeper of the one place on the road that exists for delight, rest, and the things that make a man feel alive again. You believe joy is not a luxury but evidence of life returning: a green shoot proving the root is not dead. You notice small things, you are slow to speak, and when you do it is warm and few-worded, like a man who has learned the patience of growing seasons. '+
+    'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. You help him name what gave him life, tend the joys worth keeping, and receive rest as obedience rather than laziness (joy as a gift from the Father \u2014 James 1:17; fullness of joy in His presence \u2014 Psalm 16:11; the joy of the Lord as strength \u2014 Nehemiah 8:10; Sabbath made for man \u2014 Mark 2:27). His joys are real and particular: hiking, wildlife, and camping; his three girls; his houseplants; building things and creative projects; and the long family road trip he is planning. '+
+    'You never moralize joy into one more duty; you never let rest become something to perform. You simply help him notice life, and thank the One who gives it. '+
+    'Speak briefly (2-5 sentences), warm and unhurried, like a man leaning on a spade at the end of a row. '+
+    'Current focus: '+topic+'. '+keeperContext('linden', thread)+
+    ' CRISIS RULE: If he ever speaks of despair, hopelessness, or any thought of harming himself, do not try to be his only help \u2014 with great gentleness urge him toward a real person who loves him tonight, and if he may be in danger tell him to call or text 988 (the Suicide & Crisis Lifeline). People first, then 988. Never minimize, never lecture. Never invent feelings or facts he has not shared.';
+}
+KEEPER_CTX.linden={
+  _core(){ const j=(world.joy)||[]; if(!j.length) return ''; return 'The most recent thing that made him feel alive: \u201C'+_entryText(j[0]).slice(0,60)+'\u201D ('+daysAgo(j[0].at)+'). '; },
+  alive(){ const j=(world.joy)||[]; return j.length?('What has made him feel alive lately (newest first): '+_ctxList(j,7,_entryText).join('; ')+'. Help him notice what kind of things keep showing up. '):'He has not named anything that made him feel alive yet; invite him gently \u2014 a hike, the girls, a plant, something he built. '; },
+  tending(){ const g=(world.garden&&world.garden.tending)||[]; if(!g.length) return 'He is not tending any particular joy right now; help him pick one small living thing to keep \u2014 a plant, a hobby, a hike to plan, the road trip. '; return 'Joys he is tending: '+_ctxList(g,6,t=>_entryText(t)+(t.last?(' (last tended '+daysAgo(t.last)+')'):' (not tended yet)')).join('; ')+'. Gently encourage the ones going dry. '; },
+  sabbath(){ const r=(world.garden&&world.garden.rest)||[]; return r.length?('Rest and delight he has actually taken lately: '+_ctxList(r,6,_entryText).join('; ')+'. Affirm that this is obedience, not waste. '):'He has not logged any true rest yet; rest is hard for him \u2014 help him receive it as a gift, not earn it. '; }
+};
+KEEPERS.linden={name:'Linden',art:'npc_garden',sys:(t,th)=>LINDEN_SYS(t,th)};
+VN_KEEPERS.linden={name:'Linden',portrait:'art/npc_garden.webp',topic:'what is making you feel alive lately \u2014 and the rest you keep putting off'};
+
+function ensureGarden(){ world.garden=world.garden||{tending:[],rest:[]}; if(!world.garden.tending)world.garden.tending=[]; if(!world.garden.rest)world.garden.rest=[]; world.joy=world.joy||[]; return world.garden; }
+
+const GARDEN_PINS=[
+ {id:'alive',   x:18, y:46, lbl:'What Made You Alive'},
+ {id:'tending', x:72, y:28, lbl:'The Tending'},
+ {id:'sabbath', x:26, y:80, lbl:'The Sabbath'},
+ {id:'linden',  x:50, y:50, lbl:'Linden'}
+];
+const GARDEN_LBL={alive:'What Made You Alive',tending:'The Tending',sabbath:'The Sabbath',linden:'Linden'};
+const GARDEN_SCENE={alive:'b_garden_alive',tending:'b_garden_tending',sabbath:'b_garden_sabbath'};
+const GARDEN_TOPIC={alive:'what has made you feel alive lately \u2014 the small green shoots',tending:'the joys worth tending so they don\u2019t go dry',sabbath:'rest and delight as a gift to receive, not a task to earn'};
+const GARDEN_STATIONS={};
+
+function enterGarden(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML='<div style="height:100%;width:100%;background:linear-gradient(#13200f,#070d06);display:flex;align-items:center;justify-content:center;color:var(--parchment-dim)">The Garden</div>';
+  fitScene(o);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
+  img.onerror=()=>{ addSpots(); };
+  img.src='art/b_garden_room.webp';
+  function addSpots(){
+    o.querySelectorAll('.pin').forEach(p=>p.remove());
+    GARDEN_PINS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#6FA05A"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=> h.id==='linden' ? openVNChat('linden') : openGardenStation(h.id);
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=()=>{ document.querySelectorAll('.pin-gear,.place-banner').forEach(e=>e.remove()); o.remove(); back.remove(); document.querySelector('#nav button[data-v=keep]').click(); };
+  document.body.appendChild(back);
+  const t=document.createElement('div'); t.className='town-title'; t.textContent='The Garden';
+  document.body.appendChild(t);
+  const savedGP=Store.get('pins_garden'); if(savedGP) GARDEN_PINS.forEach(p=>{ if(savedGP[p.id]){ p.x=savedGP[p.id].x; p.y=savedGP[p.id].y; } });
+  attachPinGear({overlayId:'scene-full',pins:GARDEN_PINS,
+    getXY:p=>({x:p.x,y:p.y}), setXY:(p,x,y)=>{p.x=x;p.y=y;},
+    onDone:()=>{ const m={}; GARDEN_PINS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_garden',m); enterGarden(); }});
+}
+
+function gardenHeader(id){
+  return '<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/'+GARDEN_SCENE[id]+'.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+   '<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:10px">'+
+   '<img src="art/npc_garden.webp" style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+   '<div><div class="display" style="font-size:15px;color:#9CC97A">Linden</div><div class="eyebrow">The Gardener</div></div></div>';
+}
+function openGardenStation(id){
+  ensureGarden();
+  openFullPage({title:GARDEN_LBL[id],sub:'The Garden',backLabel:'The Garden',onBack:()=>enterGarden(),
+    render:host=>{ host.innerHTML=gardenHeader(id)+'<div id="gd-chat"></div><div id="gd-body" style="margin-top:12px"></div>';
+      mountKeeperChat({mountId:'gd-chat',keeperId:'linden',threadId:'linden_'+id,topic:GARDEN_TOPIC[id]||'what makes you feel alive'});
+      (GARDEN_STATIONS[id]||(()=>{}))($('#gd-body')); }});
+}
+
+GARDEN_STATIONS.alive=function(host){ ensureGarden(); world.joy=world.joy||[];
+  const cs='padding:7px 13px;border:1px solid var(--edge);border-radius:16px;background:rgba(111,160,90,.16);color:var(--parchment);font-size:13px;cursor:pointer';
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">What Made You Alive</div>'+
+    '<p class="scripture" style="text-align:center;margin:6px 0">\u201CIn your presence there is fullness of joy.\u201D \u2014 Psalm 16:11</p></div>'+
+   '<div class="panel" id="al-add"><div class="eyebrow">Name a moment of life \u2014 small counts</div>'+
+    addRowUI('Hiked with the girls, repotted the monstera\u2026','Plant it')+
+    '<div id="al-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">'+
+     ['Outdoors','The girls','Made something','Quiet','Friends'].map(f=>'<button data-tag="'+f+'" style="'+cs+'">'+f+'</button>').join('')+'</div>'+
+    '<div id="al-list" style="margin-top:10px">'+(world.joy.length?world.joy.slice(0,12).map((j,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>\u2618 '+esc(_entryText(j))+'</span><span style="white-space:nowrap"><small>'+daysAgo(j.at)+'</small> <button class="mini-btn" data-del="'+i+'">\u00d7</button></span></div>').join(''):'<small>Nothing planted yet. What made you feel alive?</small>')+'</div></div>';
+  wireAdd(host.querySelector('#al-add'),v=>{ world.joy.unshift({text:v,at:nowISO()}); addXP(5,'A moment of life','joy'); saveWorld(); openGardenStation('alive'); });
+  host.querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{ world.joy.unshift({text:b.dataset.tag,at:nowISO()}); addXP(5,'A moment of life','joy'); saveWorld(); openGardenStation('alive'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ world.joy.splice(+b.dataset.del,1); saveWorld(); openGardenStation('alive'); });
+};
+
+GARDEN_STATIONS.tending=function(host){ const G=ensureGarden();
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">The Tending</div>'+
+    '<p class="small" style="font-style:italic;text-align:center;margin:6px 0">A joy you don\u2019t water dries up. Pick a few living things and keep them.</p></div>'+
+   '<div class="panel" id="td-add"><div class="eyebrow">Plant a joy worth keeping</div>'+addRowUI('A plant, a hobby, a hike to plan, the road trip\u2026','Plant')+
+    '<div id="td-list" style="margin-top:10px">'+(G.tending.length?G.tending.map((t,i)=>'<div class="between" style="padding:7px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span class="grow">'+esc(_entryText(t))+'<div class="meta">'+(t.last?'tended '+daysAgo(t.last):'not tended yet')+'</div></span><span style="white-space:nowrap"><button class="mini-btn gold" data-tend="'+i+'">Tend +5</button> <button class="mini-btn" data-del="'+i+'">\u00d7</button></span></div>').join(''):'<small>Nothing being tended. Choose one small living thing.</small>')+'</div></div>';
+  wireAdd(host.querySelector('#td-add'),v=>{ G.tending.unshift({text:v,at:nowISO(),last:null}); saveWorld(); openGardenStation('tending'); });
+  host.querySelectorAll('[data-tend]').forEach(b=>b.onclick=()=>{ G.tending[+b.dataset.tend].last=nowISO(); addXP(5,'Tended a joy','joy'); saveWorld(); openGardenStation('tending'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ G.tending.splice(+b.dataset.del,1); saveWorld(); openGardenStation('tending'); });
+};
+
+GARDEN_STATIONS.sabbath=function(host){ const G=ensureGarden();
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">The Sabbath</div>'+
+    '<p class="scripture" style="text-align:center;margin:6px 0">\u201CThe Sabbath was made for man.\u201D \u2014 Mark 2:27</p></div>'+
+   '<div class="panel" id="sb-add"><div class="eyebrow">Name a true rest you took \u2014 receive it, don\u2019t earn it</div>'+addRowUI('A real day off, an evening with no agenda\u2026','Receive it')+
+    '<div id="sb-list" style="margin-top:10px">'+(G.rest.length?G.rest.map((r,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>\u263C '+esc(_entryText(r))+'<div class="meta">'+daysAgo(r.at)+'</div></span><button class="mini-btn" data-del="'+i+'">\u00d7</button></div>').join(''):'<small>No rest logged yet. It is harder to receive than to earn \u2014 start with one.</small>')+'</div></div>';
+  wireAdd(host.querySelector('#sb-add'),v=>{ G.rest.unshift({text:v,at:nowISO()}); addXP(10,'Received rest as a gift','joy'); saveWorld(); openGardenStation('sabbath'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ G.rest.splice(+b.dataset.del,1); saveWorld(); openGardenStation('sabbath'); });
 };
 
 </script>
