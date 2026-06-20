@@ -171,15 +171,27 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 #splash{
   position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;
-  background:var(--night);padding:32px;transition:opacity .6s;
+  padding:32px;transition:opacity .6s;overflow:hidden;
+  background:radial-gradient(130% 90% at 50% 18%, #1c1408, #0b0906 72%);
 }
 #splash.gone{opacity:0;pointer-events:none}
-#splash .gate-glow{position:absolute;inset:0;background:radial-gradient(60% 45% at 50% 30%, rgba(232,178,84,.14), transparent 70%);pointer-events:none}
+#splash .splash-bg{position:absolute;inset:0;background:#0b0906 center/cover no-repeat;background-image:url('art/splash.webp');opacity:0;transition:opacity 1.4s ease;animation:splashken 26s ease-in-out infinite alternate}
+#splash .splash-bg.on{opacity:1}
+#splash .splash-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease}
+#splash .splash-vid.on{opacity:1}
+@keyframes splashken{0%{transform:scale(1.05)}100%{transform:scale(1.14) translateY(-2%)}}
+#splash .splash-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,6,4,.55),rgba(8,6,4,.12) 30%,rgba(8,6,4,.30) 60%,rgba(8,6,4,.93) 100%)}
+#splash .gate-glow{position:absolute;inset:0;background:radial-gradient(60% 45% at 50% 32%, rgba(232,178,84,.18), transparent 70%);pointer-events:none}
 #splash .ember{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--ember-hi);opacity:0;animation:rise 7s linear infinite}
 @keyframes rise{0%{transform:translateY(0);opacity:0}12%{opacity:.7}100%{transform:translateY(-65vh);opacity:0}}
-#splash h1{font-size:38px;margin:18px 0 4px;text-shadow:0 0 24px rgba(201,138,46,.35)}
-#splash .sub{font-family:'Cinzel',serif;letter-spacing:.34em;font-size:12px;color:var(--ember);text-transform:uppercase}
-#splash .verse{max-width:330px;margin:26px auto 34px}
+#splash .splash-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;max-width:430px}
+#splash .splash-crest{margin-bottom:4px;animation:crestglow 4.5s ease-in-out infinite}
+@keyframes crestglow{0%,100%{filter:drop-shadow(0 0 12px rgba(232,178,84,.4))}50%{filter:drop-shadow(0 0 24px rgba(232,178,84,.65))}}
+#splash h1{font-size:40px;line-height:1.05;margin:12px 0 6px;text-shadow:0 2px 30px rgba(0,0,0,.7),0 0 18px rgba(201,138,46,.28)}
+#splash .eyebrow{text-shadow:0 1px 8px rgba(0,0,0,.7)}
+#splash .sub{font-family:'Cinzel',serif;letter-spacing:.34em;font-size:12px;color:var(--ember);text-transform:uppercase;text-shadow:0 1px 10px rgba(0,0,0,.8)}
+#splash .verse{max-width:340px;margin:24px auto 30px;text-shadow:0 1px 12px rgba(0,0,0,.85)}
+#splash #splash-btn{box-shadow:0 0 26px rgba(232,178,84,.35);padding:13px 30px}
 
 /* ---------- map ---------- */
 #mapwrap{position:relative;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;background:#0b0906;box-shadow:var(--shadow)}
@@ -476,13 +488,36 @@ nav#nav button.on svg{filter:drop-shadow(0 0 6px rgba(201,138,46,.6))}
 
 <!-- ======================= SPLASH ======================= -->
 <div id="splash">
+  <div class="splash-bg"></div>
+  <video class="splash-vid" muted loop playsinline preload="auto"></video>
+  <div class="splash-scrim"></div>
   <div class="gate-glow"></div>
-  <div class="eyebrow">Full by 40</div>
-  <h1 class="display">THE PILGRIM'S<br>ROAD</h1>
-  <div class="sub">Sixteen lands · One gate</div>
-  <p class="verse scripture">"I have fought a good fight, I have finished my course, I have kept the faith."<br><span class="ref">2 TIMOTHY 4:7</span></p>
-  <button class="btn primary" id="splash-btn">Continue the journey</button>
-  <p style="position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:#4a4438" id="splash-ver"></p>
+  <div class="splash-content">
+    <div class="splash-crest" aria-hidden="true">
+      <svg viewBox="0 0 64 64" width="54" height="54" fill="none">
+        <defs>
+          <linearGradient id="crestGold" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#B07A28"/>
+            <stop offset="0.44" stop-color="#C98A2E"/>
+            <stop offset="0.5" stop-color="#FBEFC8"/>
+            <stop offset="0.56" stop-color="#C98A2E"/>
+            <stop offset="1" stop-color="#B07A28"/>
+            <animateTransform attributeName="gradientTransform" type="translate" values="-1 0;1 0;-1 0" dur="4.5s" repeatCount="indefinite"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 3 v15 M25.5 8.5 h13" stroke="url(#crestGold)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M15 41 L13 23 L24 32 L32 19 L40 32 L51 23 L49 41 Z" fill="url(#crestGold)" stroke="#E8B254" stroke-width="1.4" stroke-linejoin="round"/>
+        <rect x="15" y="41" width="34" height="6.5" rx="2" fill="url(#crestGold)" stroke="#E8B254" stroke-width="1.4"/>
+        <circle cx="13" cy="23" r="2.6" fill="#F4E6C2"/><circle cx="32" cy="19" r="2.6" fill="#F4E6C2"/><circle cx="51" cy="23" r="2.6" fill="#F4E6C2"/>
+      </svg>
+    </div>
+    <div class="eyebrow">Full by 40</div>
+    <h1 class="display">THE PILGRIM'S<br>ROAD</h1>
+    <div class="sub">Sixteen lands · One gate</div>
+    <p class="verse scripture">"I have fought a good fight, I have finished my course, I have kept the faith."<br><span class="ref">2 TIMOTHY 4:7</span></p>
+    <button class="btn primary" id="splash-btn">Begin the journey</button>
+  </div>
+  <p style="position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:#6a6052;z-index:2" id="splash-ver"></p>
 </div>
 
 <div id="app">
@@ -1330,6 +1365,15 @@ $('#splash-btn').onclick=()=>{
 };
 
 document.getElementById('splash-ver').textContent=APP_VERSION;
+(function(){
+  const sp=document.getElementById('splash'); if(!sp) return;
+  const bg=sp.querySelector('.splash-bg');
+  if(bg){ const im=new Image(); im.onload=()=>bg.classList.add('on'); im.src='art/splash.webp'; }
+  const vid=sp.querySelector('.splash-vid');
+  if(vid){ vid.addEventListener('canplaythrough',()=>{ vid.play().catch(()=>{}); vid.classList.add('on'); },{once:true});
+    vid.innerHTML='<source src="art/splash.webm" type="video/webm"><source src="art/splash.mp4" type="video/mp4">'; vid.load(); }
+  if(!sp.querySelector('.ember')){ for(let i=0;i<14;i++){ const e=document.createElement('div'); e.className='ember'; e.style.left=(Math.random()*100)+'%'; e.style.bottom=(Math.random()*28)+'%'; e.style.animationDelay=(-Math.random()*7)+'s'; e.style.animationDuration=(5+Math.random()*5)+'s'; sp.appendChild(e); } }
+})();
 /* splash embers */
 (function(){
   const s=$('#splash');
