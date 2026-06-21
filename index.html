@@ -2014,6 +2014,7 @@ function enterBuilding(id){
   if(id==='vault'){ enterVault(); return; }
   if(id==='hearth'){ enterHearth(); return; }
   if(id==='garden'){ enterGarden(); return; }
+  if(id==='forge'){ enterForge(); return; }
   const b=BUILDINGS.find(x=>x.id===id), n=NPCS[id];
   if(!n){ enterHouse(b); return; }
   $('#keep-main').style.display='none';
@@ -4132,7 +4133,7 @@ function openVNChat(keeperId, topic, seed){
   o.querySelector('#vn-say').onclick=say;
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); say(); } });
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(110,inp.scrollHeight)+'px'; });
-  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury,crane:enterVault,marta:enterHearth,linden:enterGarden}[keeperId]||enterChapel; home(); };
+  o.querySelector('#vn-back').onclick=()=>{ o.remove(); const home={garrick:enterWatchtower,aldous:enterChapel,tomas:enterHall,mercer:enterTreasury,crane:enterVault,marta:enterHearth,linden:enterGarden,wulf:enterForge}[keeperId]||enterChapel; home(); };
   o.querySelector('#vn-new').onclick=()=>{ if(confirm('Start a new chat with '+K.name+'? This clears this conversation.')){ world.chats[keeperId]=[]; saveWorld(); o.remove(); openVNChat(keeperId,topic); } };
   if(seed) setTimeout(()=>vnSend(keeperId,useTopic,seed),80);
 }
@@ -4936,6 +4937,123 @@ GARDEN_STATIONS.sabbath=function(host){ const G=ensureGarden();
     '<div id="sb-list" style="margin-top:10px">'+(G.rest.length?G.rest.map((r,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>\u263C '+esc(_entryText(r))+'<div class="meta">'+daysAgo(r.at)+'</div></span><button class="mini-btn" data-del="'+i+'">\u00d7</button></div>').join(''):'<small>No rest logged yet. It is harder to receive than to earn \u2014 start with one.</small>')+'</div></div>';
   wireAdd(host.querySelector('#sb-add'),v=>{ G.rest.unshift({text:v,at:nowISO()}); addXP(10,'Received rest as a gift','joy'); saveWorld(); openGardenStation('sabbath'); });
   host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ G.rest.splice(+b.dataset.del,1); saveWorld(); openGardenStation('sabbath'); });
+};
+
+/* ======================= THE FORGE \u2014 Wulf (craft) ======================= */
+function WULF_SYS(topic, thread){
+  return 'You are Wulf, the Smith of the Forge in a Pilgrim\u2019s Progress-themed Christian life app. '+
+    'You are a broad, weathered blacksmith \u2014 a man of few words who lets the work speak. You respect craft, follow-through, and the weight of leading people. You are not cold, only economical: you say the true thing and stop. You believe a man is forged the way iron is \u2014 heat, pressure, repeated blows, patient shaping over years \u2014 and that the work of his hands and the leading of his people is holy when it is offered to God (work heartily as for the Lord \u2014 Colossians 3:23; faithful in little \u2014 Luke 16:10; iron sharpens iron \u2014 Proverbs 27:17). '+
+    'You know his work: he leads sixteen sales reps at a company called TCP \u2014 coaching them, closing deals, making hard calls. You ask what got forged today: a deal, a conversation that landed, a decision he stopped putting off. You use hammer-and-iron metaphors, but sparingly \u2014 one good one beats five. '+
+    'Evangelical Free theology: gospel-centered, grace-driven, Scripture-first, never sacramental. You never let work become his identity or his idol \u2014 the forge serves the man, not the other way round. You honor good work, then point him home. '+
+    'Speak briefly (2-4 sentences), plain and grounded, like a man resting a hammer on the anvil to look you in the eye. '+
+    'Current focus: '+topic+'. '+keeperContext('wulf', thread)+
+    ' CRISIS RULE: If he ever speaks of despair, hopelessness, or any thought of harming himself, do not try to be his only help \u2014 with great gentleness urge him toward a real person who loves him tonight, and if he may be in danger tell him to call or text 988 (the Suicide & Crisis Lifeline). People first, then 988. Never minimize, never lecture. Never invent facts he has not shared.';
+}
+KEEPER_CTX.wulf={
+  _core(){ const w=(world.wins)||[]; if(!w.length) return ''; return 'The last thing he forged: \u201C'+_entryText(w[0]).slice(0,60)+'\u201D ('+daysAgo(w[0].at)+'). '; },
+  anvil(){ const w=(world.wins)||[]; return w.length?('What he has forged lately (newest first): '+_ctxList(w,7,_entryText).join('; ')+'. Honor the work plainly; do not flatter. '):'He has not named anything he forged yet; ask what he made, closed, or decided today \u2014 small counts. '; },
+  whetstone(){ const s=(world.forge&&world.forge.sharpen)||[]; if(!s.length) return 'He is not deliberately sharpening any skill right now; help him pick one thing to get better at on purpose. '; return 'Skills he is sharpening: '+_ctxList(s,6,t=>_entryText(t)+(t.last?(' (last worked '+daysAgo(t.last)+')'):' (not worked yet)')).join('; ')+'. Nudge the ones gone dull. '; },
+  sixteen(){ const t=(world.forge&&world.forge.team)||[]; const open=t.filter(x=>!x.done), done=t.filter(x=>x.done); let s=''; s+=open.length?('His people who need something from him: '+_ctxList(open,6,_entryText).join('; ')+'. '):'No open needs named for his team right now. '; if(done.length) s+='Recently handled: '+_ctxList(done,4,_entryText).join('; ')+'. '; return s; }
+};
+KEEPERS.wulf={name:'Wulf',art:'npc_forge',sys:(t,th)=>WULF_SYS(t,th)};
+VN_KEEPERS.wulf={name:'Wulf',portrait:'art/npc_forge.webp',topic:'what you forged today \u2014 the work, the craft, and the people you lead'};
+
+function ensureForge(){ world.forge=world.forge||{sharpen:[],team:[]}; if(!world.forge.sharpen)world.forge.sharpen=[]; if(!world.forge.team)world.forge.team=[]; world.wins=world.wins||[]; return world.forge; }
+
+const FORGE_PINS=[
+ {id:'anvil',     x:36, y:54, lbl:'The Anvil'},
+ {id:'whetstone', x:82, y:25, lbl:'The Whetstone'},
+ {id:'sixteen',   x:44, y:72, lbl:'The Sixteen'},
+ {id:'wulf',      x:41, y:24, lbl:'Wulf'}
+];
+const FORGE_LBL={anvil:'The Anvil',whetstone:'The Whetstone',sixteen:'The Sixteen',wulf:'Wulf'};
+const FORGE_SCENE={anvil:'b_forge_anvil',whetstone:'b_forge_whetstone',sixteen:'b_forge_sixteen'};
+const FORGE_TOPIC={anvil:'what you forged today \u2014 a deal, a conversation that landed, a hard call made',whetstone:'the craft you are sharpening on purpose',sixteen:'leading the sixteen \u2014 who needs you, and the conversation you keep putting off'};
+const FORGE_STATIONS={};
+
+function enterForge(){
+  removeTownFull();
+  $('#keep-main').style.display='none'; $('#interior').style.display='none';
+  const o=document.createElement('div'); o.id='scene-full';
+  o.innerHTML='<div class="scene-inner"></div>';
+  document.body.appendChild(o);
+  const inner=o.querySelector('.scene-inner');
+  inner.innerHTML='<div style="height:100%;width:100%;background:linear-gradient(#1c130b,#080503);display:flex;align-items:center;justify-content:center;color:var(--parchment-dim)">The Forge</div>';
+  fitScene(o);
+  const img=new Image();
+  img.onload=()=>{ inner.innerHTML=''; inner.appendChild(img); addSpots(); fitScene(o); };
+  img.onerror=()=>{ addSpots(); };
+  img.src='art/b_forge_room.webp';
+  function addSpots(){
+    o.querySelectorAll('.pin').forEach(p=>p.remove());
+    FORGE_PINS.forEach(h=>{
+      const btn=document.createElement('button'); btn.className='pin';
+      btn.style.left=h.x+'%'; btn.style.top=h.y+'%';
+      btn.innerHTML='<span class="ring"></span><span class="dot" style="background:#E2702A"></span><span class="lbl">'+h.lbl+'</span>';
+      btn.onclick=()=> h.id==='wulf' ? openVNChat('wulf') : openForgeStation(h.id);
+      inner.appendChild(btn);
+    });
+  }
+  addSpots();
+  const back=document.createElement('button'); back.className='scene-back';
+  back.textContent='\u2190 The Town';
+  back.onclick=()=>{ document.querySelectorAll('.pin-gear,.place-banner').forEach(e=>e.remove()); o.remove(); back.remove(); document.querySelector('#nav button[data-v=keep]').click(); };
+  document.body.appendChild(back);
+  const t=document.createElement('div'); t.className='town-title'; t.textContent='The Forge';
+  document.body.appendChild(t);
+  const savedFP=Store.get('pins_forge'); if(savedFP) FORGE_PINS.forEach(p=>{ if(savedFP[p.id]){ p.x=savedFP[p.id].x; p.y=savedFP[p.id].y; } });
+  attachPinGear({overlayId:'scene-full',pins:FORGE_PINS,
+    getXY:p=>({x:p.x,y:p.y}), setXY:(p,x,y)=>{p.x=x;p.y=y;},
+    onDone:()=>{ const m={}; FORGE_PINS.forEach(p=>m[p.id]={x:p.x,y:p.y}); Store.set('pins_forge',m); enterForge(); }});
+}
+
+function forgeHeader(id){
+  return '<div class="imgpanel" style="margin:0 -16px 12px"><img src="art/'+FORGE_SCENE[id]+'.webp" style="width:100%;display:block" onerror="this.style.display=\'none\'"></div>'+
+   '<div class="flex" style="gap:10px;align-items:flex-start;margin-bottom:10px">'+
+   '<img src="art/npc_forge.webp" style="width:54px;height:54px;border-radius:10px;object-fit:cover;border:1px solid var(--edge)" onerror="this.style.display=\'none\'">'+
+   '<div><div class="display" style="font-size:15px;color:#E89B5E">Wulf</div><div class="eyebrow">The Smith</div></div></div>';
+}
+function openForgeStation(id){
+  ensureForge();
+  openFullPage({title:FORGE_LBL[id],sub:'The Forge',backLabel:'The Forge',onBack:()=>enterForge(),
+    render:host=>{ host.innerHTML=forgeHeader(id)+'<div id="fg-chat"></div><div id="fg-body" style="margin-top:12px"></div>';
+      mountKeeperChat({mountId:'fg-chat',keeperId:'wulf',threadId:'wulf_'+id,topic:FORGE_TOPIC[id]||'the work'});
+      (FORGE_STATIONS[id]||(()=>{}))($('#fg-body')); }});
+}
+
+FORGE_STATIONS.anvil=function(host){ ensureForge(); world.wins=world.wins||[];
+  const cs='padding:7px 13px;border:1px solid var(--edge);border-radius:16px;background:rgba(226,112,42,.16);color:var(--parchment);font-size:13px;cursor:pointer';
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">The Anvil</div>'+
+    '<p class="scripture" style="text-align:center;margin:6px 0">\u201CWhatever you do, work heartily, as for the Lord.\u201D \u2014 Colossians 3:23</p></div>'+
+   '<div class="panel" id="an-add"><div class="eyebrow">What did you forge today?</div>'+
+    addRowUI('A deal closed, a coaching call that landed, a hard decision\u2026','Strike')+
+    '<div id="an-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">'+
+     ['Closed a deal','Coached a rep','Hard call made','Shipped it'].map(f=>'<button data-tag="'+f+'" style="'+cs+'">'+f+'</button>').join('')+'</div>'+
+    '<div id="an-list" style="margin-top:10px">'+(world.wins.length?world.wins.slice(0,12).map((w,i)=>'<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>\u2692 '+esc(_entryText(w))+'</span><span style="white-space:nowrap"><small>'+daysAgo(w.at)+'</small> <button class="mini-btn" data-del="'+i+'">\u00d7</button></span></div>').join(''):'<small>Nothing forged yet. What did you make, close, or decide?</small>')+'</div></div>';
+  wireAdd(host.querySelector('#an-add'),v=>{ world.wins.unshift({text:v,at:nowISO()}); addXP(5,'A win at the anvil','craft'); saveWorld(); openForgeStation('anvil'); });
+  host.querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{ world.wins.unshift({text:b.dataset.tag,at:nowISO()}); addXP(5,'A win at the anvil','craft'); saveWorld(); openForgeStation('anvil'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ world.wins.splice(+b.dataset.del,1); saveWorld(); openForgeStation('anvil'); });
+};
+
+FORGE_STATIONS.whetstone=function(host){ const F=ensureForge();
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">The Whetstone</div>'+
+    '<p class="scripture" style="text-align:center;margin:6px 0">\u201CIron sharpens iron.\u201D \u2014 Proverbs 27:17</p></div>'+
+   '<div class="panel" id="wh-add"><div class="eyebrow">A craft you are sharpening on purpose</div>'+addRowUI('A skill, a habit, a tool you\u2019re learning\u2026','Set')+
+    '<div id="wh-list" style="margin-top:10px">'+(F.sharpen.length?F.sharpen.map((t,i)=>'<div class="between" style="padding:7px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span class="grow">'+esc(_entryText(t))+'<div class="meta">'+(t.last?'worked '+daysAgo(t.last):'not worked yet')+'</div></span><span style="white-space:nowrap"><button class="mini-btn gold" data-work="'+i+'">Work +5</button> <button class="mini-btn" data-del="'+i+'">\u00d7</button></span></div>').join(''):'<small>Nothing on the stone. Choose one thing to get better at.</small>')+'</div></div>';
+  wireAdd(host.querySelector('#wh-add'),v=>{ F.sharpen.unshift({text:v,at:nowISO(),last:null}); saveWorld(); openForgeStation('whetstone'); });
+  host.querySelectorAll('[data-work]').forEach(b=>b.onclick=()=>{ F.sharpen[+b.dataset.work].last=nowISO(); addXP(5,'Sharpened the craft','craft'); saveWorld(); openForgeStation('whetstone'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ F.sharpen.splice(+b.dataset.del,1); saveWorld(); openForgeStation('whetstone'); });
+};
+
+FORGE_STATIONS.sixteen=function(host){ const F=ensureForge(); const open=F.team.filter(x=>!x.done), done=F.team.filter(x=>x.done);
+  host.innerHTML='<div class="panel sacred"><div class="eyebrow">The Sixteen</div>'+
+    '<p class="small" style="font-style:italic;text-align:center;margin:6px 0">You answer for sixteen. Who needs you \u2014 and what have you been putting off?</p></div>'+
+   '<div class="panel" id="sx-add"><div class="eyebrow">Name a rep, a win to give, a hard conversation</div>'+addRowUI('Who needs coaching, a word, or a hard talk\u2026','Add')+
+    '<div id="sx-list" style="margin-top:10px">'+(open.length?open.map(x=>{const i=F.team.indexOf(x);return '<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span>'+esc(_entryText(x))+'</span><button class="mini-btn gold" data-done="'+i+'">Handled +10</button></div>';}).join(''):'<small>No open needs named. The crew\u2019s in good order.</small>')+'</div></div>'+
+   (done.length?'<div class="panel"><div class="eyebrow">Handled ('+done.length+')</div>'+done.map(x=>{const i=F.team.indexOf(x);return '<div class="between" style="padding:6px 0;border-bottom:1px solid rgba(58,47,32,.4)"><span class="struck">'+esc(_entryText(x))+'</span><button class="mini-btn" data-del="'+i+'">\u00d7</button></div>';}).join('')+'</div>':'');
+  wireAdd(host.querySelector('#sx-add'),v=>{ F.team.unshift({text:v,at:nowISO(),done:null}); saveWorld(); openForgeStation('sixteen'); });
+  host.querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>{ F.team[+b.dataset.done].done=nowISO(); addXP(10,'Led the sixteen','craft'); saveWorld(); openForgeStation('sixteen'); });
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ F.team.splice(+b.dataset.del,1); saveWorld(); openForgeStation('sixteen'); });
 };
 
 </script>
