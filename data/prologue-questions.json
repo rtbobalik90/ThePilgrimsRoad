@@ -1,0 +1,17 @@
+[
+  {
+    "id": "intent",
+    "version": 1,
+    "text": "What do you intend to build here?"
+  },
+  {
+    "id": "difference",
+    "version": 1,
+    "text": "What must be different by forty?"
+  },
+  {
+    "id": "witness",
+    "version": 1,
+    "text": "Who should be able to say you kept your word?"
+  }
+]

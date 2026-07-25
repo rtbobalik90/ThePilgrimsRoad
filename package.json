@@ -1,0 +1,15 @@
+{
+  "name": "full-by-40-pilgrims-road",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 foundation for Full by 40 \u2014 The Pilgrim's Road.",
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "smoke": "node tools/smoke.mjs",
+    "check": "bash tools/check.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

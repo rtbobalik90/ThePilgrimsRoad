@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Returning to the road</title>
+</head>
+<body>
+<script>
+  // GitHub Pages project sites retain one path segment for the repository name.
+  // Change PATH_SEGMENTS_TO_KEEP to 0 only when deploying at a custom-domain root.
+  const PATH_SEGMENTS_TO_KEEP = 1;
+  const locationParts = window.location.pathname.split('/').filter(Boolean);
+  const rootParts = locationParts.slice(0, PATH_SEGMENTS_TO_KEEP);
+  const routeParts = locationParts.slice(PATH_SEGMENTS_TO_KEEP);
+  const root = `/${rootParts.length ? `${rootParts.join('/')}/` : ''}`;
+  const route = `/${routeParts.join('/')}${window.location.search}${window.location.hash}`;
+  sessionStorage.setItem('fb40:redirect-route', route);
+  window.location.replace(root);
+</script>
+</body>
+</html>

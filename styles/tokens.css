@@ -1,0 +1,27 @@
+:root {
+  --night: #0E0B07;
+  --iron: #221C15;
+  --iron-raised: #2B231A;
+  --edge: #3A2F20;
+  --parchment: #E6D6B0;
+  --parchment-dim: #9A8C6E;
+  --ember: #C98A2E;
+  --ember-low: #7A5219;
+
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-body: 'EB Garamond', Georgia, serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 28px;
+  --space-7: 36px;
+
+  --radius: 4px;
+  --content-max: 560px;
+  --nav-height: 66px;
+  --transition-screen: 180ms;
+  --transition-sheet: 240ms;
+}

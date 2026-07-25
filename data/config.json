@@ -1,0 +1,13 @@
+{
+  "FINALE_DATE": null,
+  "CAMPAIGN_START": "first-launch",
+  "WEEK_ANCHOR": "Monday",
+  "PILLAR_MAX_LEVEL": 10,
+  "BUILDING_TIERS": 5,
+  "DIM_THRESHOLD_DAYS": 14,
+  "SCENE_SPECIFICITY_MIN": 3,
+  "MAX_ACTIVE_BOSSES": 2,
+  "CHECKIN_MODE": "focus",
+  "DEFAULT_PILGRIM_NAME": "Robert",
+  "TIME_ZONE": "America/Chicago"
+}
