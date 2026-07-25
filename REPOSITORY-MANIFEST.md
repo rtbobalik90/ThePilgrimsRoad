@@ -1,64 +1,182 @@
-# Repository Manifest
-
-Phase 0 · v0.1.0 · 2026-07-25
-
-- `2f939dbe214bb76ea7376f6f8fdcfd0ee84c349699fc5a1751e4ff8cec992bfe`  `.github/workflows/phase-0-check.yml`
-- `45967935f2e05d9187b7c436841cf484d1df0ad25afccc2206bc774a718217d6`  `.gitignore`
-- `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`  `.nojekyll`
-- `414a3b41bf8a5937df810caecc1d0c066b12b71a9c3f168ffaacba83d2d482e4`  `404.html`
-- `e6b99725402943b2a93ddb2d783d3da7ff5fa9738522b7643566b3dbd7e41acc`  `CHANGELOG.md`
-- `d219857faf183672d149d32559f6c5e73495d9ad3fdc9d1eadf598bcbdb596bb`  `README.md`
-- `d99429facf43dd0825aae71de4c9bd2373c7e753d70d694176952a1ffab052fa`  `assets/icons/app-icon.svg`
-- `8966e4bbc27798e2094b77394e6011657cc28f7e4cc31f527d5d5cf0ef95e687`  `assets/icons/apple-touch-icon.png`
-- `5f62cc8131226b599cd1e50795784bb3aaaaf8d32dcf6d534ce6fafc2edf9d13`  `assets/icons/icon-192.png`
-- `c1db1dd259534518f135dd394eaf33cd2461f86545b300831d820fc72a206106`  `assets/icons/icon-512.png`
-- `d507f6f023adbf9745ebf7f38de3f2f7abd01476c24132202a97a0b14f97884c`  `assets/icons/icon-maskable-512.png`
-- `fe80c8e17dbf31115a3d05dec631746c3626152954f53c889c3c43f964cfb304`  `assets/settlement/settlement-shell-fallback.svg`
-- `9f4883747963cc63dd383bf67c33c9aa236e00013c5b60c82d43b674107f29a5`  `assets/settlement/settlement-shell.webp`
-- `df274f0009526f6587bf2b05d3a8d6bed18033255900f486234115c725a93762`  `data/asset-manifest.json`
-- `cfa115194ff995fb5076967af637972b5dd713c8a78a18779862ab3a78cf09dd`  `data/config.json`
-- `8395039730e4c00540bbc286fd384266c6a44e13281f2502b4843c3e68aebdd3`  `data/prologue-questions.json`
-- `59e72cff1c2c54b0b3435a7c2e513857ec8929f6c13206d5d3372428d92d5c16`  `docs/architecture.md`
-- `9e030ec2535053581316597f6fcf456ea324b537e3cf0f44c083fec59177f6cd`  `docs/asset-manifest.md`
-- `cec7b00b701fed10ad4e7e50fb9eb7de31da694a85016571a3b53a55b626fdbc`  `docs/data-contract.md`
-- `1a156bf96a4d3a4e01d57bf09cc4c46a4b6c9d41199bd89735e680e7258679e7`  `docs/legacy-translation-matrix.md`
-- `19d584d44dc01e59700b72dca8663e41cb66b5c34865eb619cfaac453cae1bf4`  `docs/phase-0-test-plan.md`
-- `e5851710d69e5b666e5d476c6699aba90e078cb59881e6061c14779d597db1bc`  `docs/phase-0-verification.md`
-- `425ac4ee4761b1ad645cfa9baf0a057301d3e274449791171d05a63235961e13`  `docs/product/DESIGN.md`
-- `911ceaac781c4fb8658ecf40b7dddbe17b4aab35cccbcfc73e5351219e696415`  `docs/product/design-narrative-bible.md`
-- `55df086e3b78ab5ce5eba9929721182c998dbe43a023ca73142063e9188d22f9`  `docs/product/master-build-prompt.md`
-- `519358255562bd6f4d3e6c1321d080867ec80cb753bd634f6b1a9159a222520e`  `index.html`
-- `8bc7c26c5fcbaf1bdc001056e73bdbcc5d5f881f89b85d4472e93d1e5915b97d`  `js/core/dates.js`
-- `64a9b73e63cabf034026088cf8192e2810ec212ea83cc85219b780844c8381fd`  `js/core/db.js`
-- `5d32d8ccaa12108809653482f37eb1a0d1d02c711ee723d1ef08bace7b22c9c6`  `js/core/events.js`
-- `2f4b5dea3cbf6821ba7e210a55aaadaec1d8d624646ca0a03585f9c308565a79`  `js/core/log.js`
-- `da24386a0d2f2486296d2f8adef32ef7ec6fef48c2464e139c873f3952f33569`  `js/core/router.js`
-- `8703e3811400ad7c03d67d525dace393c635bfc48b3934915e426826e4577749`  `js/core/state.js`
-- `903c6d8b7e2dd389ea0543679f74bdf2883040f5b6ed7cf64b5f42016e63bbb4`  `js/core/version.js`
-- `8d91b61856142002265d5a31ba4e7c5116e672b26faace56c39d735992a75ff7`  `js/data/backup.js`
-- `bfebc3b6ade6f44e7a4c866483837c2c7a3d7007f7157b65067123b356f48310`  `js/data/migrate.js`
-- `e657352605fb1c26222c49fdb6c50fc9010c4c941e7835d7c09271949d99a30f`  `js/data/schema.js`
-- `970fb1da370d261c18e5af63b77531cc852d33de4cd7b4c36cf57ff8d57ef0d5`  `js/main.js`
-- `c2373c3f34a30828e789041069a0368b7af8b243740fa43ffad7e62632bd31a3`  `js/ui/components/button.js`
-- `d1d1f3718f6b3778d4615c43cbeda43e3d06febeaacd6ccd6ee1d27a39fffb05`  `js/ui/components/field.js`
-- `b9f6a38a1a4c3fed549e35c0c3ed54ccdb9b74e6bf23cf9c45add4007c9afbe9`  `js/ui/components/notice.js`
-- `ac4bdad1b8a113e35fe690d481cfa315594d6e29bb4e4e06675cf0d9bb06cc6b`  `js/ui/locked.js`
-- `31ce2f22a3c7f505c23e771bc420335eeb32530e05a1eed81f5d299be5ff8c57`  `js/ui/map.js`
-- `1f654cc25cd61e273fb2bd73fb51c094cb988eac71a87bae87b1efb36d724519`  `js/ui/onboarding.js`
-- `191f2ffed9e04ebbfccc3123ddab7c33e5c6176bdde3dca8b8b78406b161d048`  `js/ui/settings.js`
-- `5c6450f853fce94f0598e0ce59b8328cf4655f1c3adaa7b979385789026bf3df`  `js/ui/sheet.js`
-- `9313fc8204d100e095c94c37714536f5b14a55f5e7d29c27b939b1b7bdbc85a3`  `js/ui/shell.js`
-- `a36373591edc57ef757002fd49c747e3a5e1728307b4d1c168e8e8a46b1783a7`  `manifest.webmanifest`
-- `bf2900cf9c93b5556e5530a1014dc368f8b6eff4bd0f7686280aec5fef21abe7`  `package.json`
-- `f0eaa1b0858e1b0ff73e7e38c30d9a74feec206069727a6d4d894ea5be70bb56`  `styles/base.css`
-- `20d2b46c01d99dbbc8a76b7f91e7ea80ed85bac3ddbd5455f482867a64344596`  `styles/layout.css`
-- `65aed423db4d587df35de4769a784f96152f533ad9db9d4b2338fcd4b6dc735e`  `styles/map.css`
-- `266374be52f7f8eb088ca032c144fb17fcf7400bf537e564725a52f761ca1b7b`  `styles/sheet.css`
-- `f95ca0337e46082ea2c8e8cc15fefcc2ade473971717d0465241163575c7a5d5`  `styles/tokens.css`
-- `1b9c4b31a2a0784816bd515902746c2d1a5bf3c3eef2d9b7ea225cd21b75d2a3`  `sw.js`
-- `e5f818a619ac5849a4f2419179eb284e7776c10c4e5d9df7ceb819bd1554a681`  `tools/check.sh`
-- `589b648333e1cb857f98d15e1426500b4759e3b2dcd63ada63a4521d1d37a265`  `tools/memory-indexeddb.mjs`
-- `0b25bbce92746b6d2fbf3b723daa28d34dd1f5620f9d22e5926531139b4e6cf1`  `tools/serve.mjs`
-- `8c246166f19f8d48e315a8f14385c9b83c7ef465e76adb5a62c3e2d614949d05`  `tools/smoke-browser.js`
-- `8adfea171f14ca3447d46eae48ca437f9dd9ab78d60edc8f64c37c6a6a058b8a`  `tools/smoke.html`
-- `68ced79cc2eca66079071b29ff2eb11a0b75a40b2f74c9de5a4d59fd1d50cada`  `tools/smoke.mjs`
+.map-header { display: grid; gap: 4px; margin-bottom: 14px; }
+.chapter-plate {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--edge);
+  background: var(--iron);
+  padding: 5px 8px;
+  color: var(--ember);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.settlement-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: var(--iron);
+  aspect-ratio: 390 / 620;
+  isolation: isolate;
+}
+.settlement-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 600ms linear, opacity 600ms linear;
+}
+.settlement-frame::after {
+  content: '';
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  pointer-events: none;
+  border: 8px solid rgba(14, 11, 7, .38);
+}
+.settlement-weather { position: absolute; z-index: 2; inset: 0; pointer-events: none; transition: background 600ms linear; }
+.weather-storm img { filter: grayscale(.72) brightness(.52) contrast(1.15); }
+.weather-storm .settlement-weather { background: rgba(34, 28, 21, .48); }
+.weather-overcast img { filter: grayscale(.35) brightness(.68) contrast(1.06); }
+.weather-overcast .settlement-weather { background: rgba(34, 28, 21, .25); }
+.weather-clear img { filter: saturate(.82) brightness(.83) contrast(1.04); }
+.weather-clear .settlement-weather { background: rgba(201, 138, 46, .04); }
+.weather-dawn-gold img { filter: sepia(.18) saturate(1.02) brightness(.96) contrast(1.02); }
+.weather-dawn-gold .settlement-weather { background: rgba(201, 138, 46, .08); animation: ember-breathe 4s ease-in-out infinite; }
+@keyframes ember-breathe { 0%, 100% { opacity: .92; } 50% { opacity: 1; } }
+.map-caption { display: grid; gap: 2px; margin-top: 10px; color: var(--parchment-dim); font-size: 14px; }
+.building-node {
+  position: absolute;
+  z-index: 5;
+  left: var(--node-x);
+  top: var(--node-y);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 44px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 0;
+  background: transparent;
+  color: var(--parchment);
+  cursor: pointer;
+}
+.building-node__mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--ember-low);
+  border-radius: 2px;
+  background: rgba(14, 11, 7, .9);
+  color: var(--ember);
+  font-family: var(--font-display);
+  font-size: 11px;
+}
+.building-node__label {
+  max-width: 76px;
+  border: 1px solid rgba(58, 47, 32, .85);
+  border-radius: 2px;
+  background: rgba(14, 11, 7, .88);
+  padding: 1px 4px;
+  color: var(--parchment);
+  font-family: var(--font-display);
+  font-size: 8px;
+  line-height: 1.25;
+  text-align: center;
+  text-transform: uppercase;
+}
+.building-node.is-dimmed { opacity: .45; }
+.building-node.is-dimmed .building-node__mark { border-color: var(--edge); color: var(--parchment-dim); }
+.map-ledger {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  margin-top: 14px;
+}
+.map-ledger h2 { margin-bottom: 4px; font-size: 18px; }
+.world-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 12px;
+  border: 1px solid var(--edge);
+  background: var(--iron);
+}
+.world-summary div { display: grid; gap: 1px; padding: 9px 5px; text-align: center; border-left: 1px solid var(--edge); }
+.world-summary div:first-child { border-left: 0; }
+.world-summary strong { color: var(--parchment); font-family: var(--font-display); font-size: 13px; font-weight: 500; }
+.world-summary span { color: var(--parchment-dim); font-size: 11px; }
+.map-section { margin-top: 26px; }
+.map-section > h2 { margin-bottom: 12px; }
+.building-records, .history-list { border: 1px solid var(--edge); }
+.building-record {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--edge);
+  border-radius: 0;
+  background: var(--iron);
+  padding: 10px 11px;
+  text-align: left;
+  cursor: pointer;
+}
+.building-record:first-child { border-top: 0; }
+.building-record.is-dimmed { opacity: .45; }
+.building-record__level {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--edge);
+  color: var(--ember);
+  font-family: var(--font-display);
+}
+.building-record__body { display: grid; min-width: 0; }
+.building-record__body strong { font-family: var(--font-display); font-size: 13px; font-weight: 500; letter-spacing: .03em; }
+.building-record__body > span:not(.xp-track) { color: var(--parchment-dim); font-size: 12px; }
+.building-record__state { color: var(--parchment-dim); font-size: 12px; text-align: right; }
+.xp-track { display: block; width: 100%; height: 4px; margin-top: 5px; background: var(--night); overflow: hidden; }
+.xp-track > span { display: block; height: 100%; background: var(--ember); transition: width 600ms linear; }
+.history-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--edge);
+  border-radius: 0;
+  background: var(--iron);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.history-row:first-child { border-top: 0; }
+.history-row > span { display: grid; }
+.history-row strong { font-family: var(--font-display); font-size: 12px; font-weight: 500; }
+.history-row small { line-height: 1.35; }
+.history-row > span:last-child { color: var(--parchment-dim); font-style: italic; font-size: 14px; }
+.building-detail__level { display: grid; grid-template-columns: 52px 1fr; gap: 13px; align-items: start; }
+.building-detail__level > span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--ember-low);
+  color: var(--ember);
+  font-family: var(--font-display);
+  font-size: 20px;
+}
+.building-detail__level p { margin: 2px 0 6px; color: var(--parchment-dim); }
+.building-detail__level small { display: block; margin-top: 4px; }
+@media (max-width: 370px) {
+  .building-node__label { font-size: 7px; max-width: 64px; }
+  .map-ledger { grid-template-columns: 1fr; }
+  .map-ledger .button { width: 100%; }
+  .world-summary strong { font-size: 11px; }
+  .history-row { grid-template-columns: 96px 1fr; }
+}

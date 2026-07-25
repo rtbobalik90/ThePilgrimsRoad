@@ -1,0 +1,10 @@
+/* fb40 · /js/ui/locked.js · v0.2.0 · 2026-07-25 */
+const COPY = {
+  '/review': ['Weekly Review', 'No week has yet been weighed.'],
+  '/chronicle': ['Chronicle', 'The first page remains unwritten.']
+};
+
+export function renderLocked({ path, setView, router }) {
+  const [title, message] = COPY[path] ?? ['Sealed', 'This chamber has not opened.'];
+  setView(`<section class="locked-screen" aria-labelledby="locked-title"><div><div class="locked-sigil" aria-hidden="true">I</div><p class="eyebrow">Sealed chamber</p><h1 id="locked-title">${title}</h1><p class="lede">${message}</p><a class="button button--quiet" href="${router.url('/')}" data-route="/">Return to the map</a></div></section>`);
+}

@@ -1,15 +1,27 @@
-{
-  "name": "full-by-40-pilgrims-road",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "description": "Phase 0 foundation for Full by 40 \u2014 The Pilgrim's Road.",
-  "scripts": {
-    "serve": "node tools/serve.mjs",
-    "smoke": "node tools/smoke.mjs",
-    "check": "bash tools/check.sh"
-  },
-  "engines": {
-    "node": ">=20"
+/* fb40 · /js/systems/streaks.js · v0.2.0 · 2026-07-25 */
+import { daysBetween } from '../core/dates.js';
+
+export const GRACE_COOLDOWN_DAYS = 30;
+
+export function graceAvailable(lastGraceDate, date) {
+  if (!lastGraceDate) return true;
+  return daysBetween(lastGraceDate, date) >= GRACE_COOLDOWN_DAYS;
+}
+
+export function applyStreakDay(progress, { date, positive }) {
+  if (positive) {
+    progress.streak = progress.streak > 0 ? progress.streak + 1 : 1;
+    progress.bestStreak = Math.max(progress.bestStreak, progress.streak);
+    return { ...progress, graceApplied: false, broke: false };
   }
+
+  if (progress.streak <= 0) return { ...progress, graceApplied: false, broke: false };
+  if (graceAvailable(progress.graceUsedOn, date)) {
+    progress.graceUsedOn = date;
+    return { ...progress, graceApplied: true, broke: false };
+  }
+
+  progress.streak = 0;
+  progress.lastStreakBreakDate = date;
+  return { ...progress, graceApplied: false, broke: true };
 }

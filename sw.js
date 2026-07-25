@@ -1,85 +1,51 @@
-/* fb40 · /sw.js · v0.1.0 · 2026-07-25 */
-const CACHE_NAME = 'fb40-shell-v0.1.0';
-const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './styles/tokens.css',
-  './styles/base.css',
-  './styles/layout.css',
-  './styles/map.css',
-  './styles/sheet.css',
-  './js/main.js',
-  './js/core/db.js',
-  './js/core/state.js',
-  './js/core/router.js',
-  './js/core/events.js',
-  './js/core/dates.js',
-  './js/core/version.js',
-  './js/core/log.js',
-  './js/data/schema.js',
-  './js/data/migrate.js',
-  './js/data/backup.js',
-  './js/ui/shell.js',
-  './js/ui/onboarding.js',
-  './js/ui/map.js',
-  './js/ui/settings.js',
-  './js/ui/sheet.js',
-  './js/ui/locked.js',
-  './js/ui/components/button.js',
-  './js/ui/components/field.js',
-  './js/ui/components/notice.js',
-  './data/config.json',
-  './data/prologue-questions.json',
-  './data/asset-manifest.json',
-  './assets/settlement/settlement-shell.webp',
-  './assets/settlement/settlement-shell-fallback.svg',
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
-  './assets/icons/icon-maskable-512.png',
-  './assets/icons/apple-touch-icon.png'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key.startsWith('fb40-') && key !== CACHE_NAME).map((key) => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
-
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
-          return response;
-        })
-        .catch(() => caches.match('./index.html'))
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') return response;
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-        return response;
-      });
-    })
-  );
-});
+.checkin-form { padding-top: 8px; }
+.checkin-date-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--edge);
+  background: var(--iron);
+  padding: 9px 10px;
+}
+.checkin-date-row label { color: var(--parchment-dim); }
+.checkin-date-row input { min-width: 0; border: 1px solid var(--edge); background: var(--night); color: var(--parchment); padding: 7px 8px; }
+.checkin-date-row span { color: var(--ember-low); font-family: var(--font-display); font-size: 10px; text-transform: uppercase; }
+.checkin-section { display: grid; gap: 8px; }
+.checkin-row { border: 1px solid var(--edge); background: var(--iron); padding: 10px; }
+.checkin-row__heading { display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.checkin-row__heading > div { display: grid; }
+.checkin-row__heading strong { font-family: var(--font-display); font-size: 13px; font-weight: 500; }
+.checkin-row__heading span { color: var(--parchment-dim); font-size: 12px; }
+.checkin-row__heading output { color: var(--ember-low); font-size: 12px; }
+.tri-state { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--edge); }
+.tri-state button {
+  min-height: 38px;
+  border: 0;
+  border-left: 1px solid var(--edge);
+  border-radius: 0;
+  background: var(--iron);
+  color: var(--parchment-dim);
+  cursor: pointer;
+}
+.tri-state button:first-child { border-left: 0; }
+.tri-state button[data-mark='2'][aria-pressed='true'] { background: var(--ember); color: var(--night); }
+.tri-state button[data-mark='1'][aria-pressed='true'] { color: var(--ember); outline: 1px solid var(--ember); outline-offset: -1px; background: transparent; }
+.tri-state button[data-mark='0'][aria-pressed='true'] { background: var(--iron-raised); color: var(--parchment-dim); }
+.tri-state button:disabled { cursor: default; opacity: .65; }
+.settlement-rest { border: 1px solid var(--edge); background: var(--iron-raised); }
+.settlement-rest summary { cursor: pointer; padding: 11px 12px; color: var(--parchment-dim); font-family: var(--font-display); font-size: 12px; letter-spacing: .03em; }
+.settlement-rest[open] summary { border-bottom: 1px solid var(--edge); color: var(--ember); }
+.settlement-rest > div { display: grid; gap: 8px; padding: 8px; }
+.honest-field { border-top: 1px solid var(--edge); padding-top: 14px; }
+.honest-field textarea { min-height: 88px; }
+.honest-field__count { display: flex; justify-content: space-between; gap: 10px; color: var(--parchment-dim); font-size: 12px; }
+.confession-block { border: 1px solid var(--edge); background: var(--iron); padding: 11px; }
+.confession-toggle { display: flex; gap: 9px; align-items: center; cursor: pointer; }
+.confession-toggle input { accent-color: var(--ember); }
+#confession-fields { display: grid; gap: 12px; padding-top: 12px; }
+#confession-fields fieldset { display: flex; gap: 16px; margin: 0; border: 1px solid var(--edge); padding: 10px; }
+#confession-fields legend { color: var(--parchment-dim); font-size: 13px; padding: 0 5px; }
+#confession-fields label { color: var(--parchment-dim); }
+#confession-fields input { accent-color: var(--ember); }
+#confession-fields textarea { min-height: 92px; }

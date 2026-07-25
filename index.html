@@ -1,34 +1,97 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0E0B07">
-  <meta name="description" content="Full by 40 — The Pilgrim's Road. A persistent life campaign.">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Pilgrim's Road">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/tokens.css">
-  <link rel="stylesheet" href="styles/base.css">
-  <link rel="stylesheet" href="styles/layout.css">
-  <link rel="stylesheet" href="styles/map.css">
-  <link rel="stylesheet" href="styles/sheet.css">
-  <title>Full by 40 — The Pilgrim's Road</title>
-</head>
-<body>
-  <noscript>
-    <main class="noscript">
-      <h1>The road is closed.</h1>
-      <p>This application requires JavaScript to keep its local record.</p>
-    </main>
-  </noscript>
-  <div id="app" aria-live="polite"></div>
-  <div id="sheet-root"></div>
-  <script type="module" src="js/main.js"></script>
-</body>
-</html>
+/* fb40 · /js/systems/checkins.js · v0.2.0 · 2026-07-25 */
+import { atomicPut, getAllRecords, getRecord, putRecord } from '../core/db.js';
+import { dateRange, localDateISO } from '../core/dates.js';
+import { PILLAR_DEFINITIONS, PILLAR_IDS, createPillarRecord } from '../data/pillars.js';
+import { buildingTier, levelFromXp } from './levels.js';
+import { applyStreakDay } from './streaks.js';
+import { MARK_XP, isExplicitMark, isPositiveMark, multipliedXp } from './xp.js';
+
+export const HONEST_LINE_MIN = 20;
+export const HONEST_LINE_MAX = 140;
+export const CHECKIN_COMPLETION_XP = 5;
+export const HONEST_LINE_XP = 5;
+export const CONFESSION_XP = 20;
+
+export async function ensurePillarRecords(db) {
+  const existing = new Map((await getAllRecords(db, 'pillars')).map((record) => [record.id, record]));
+  const entries = PILLAR_DEFINITIONS.map((definition) => {
+    const current = existing.get(definition.id);
+    return {
+      store: 'pillars',
+      record: current ? { ...createPillarRecord(definition), ...current, ...definition } : createPillarRecord(definition)
+    };
+  });
+  await atomicPut(db, entries);
+}
+
+export function emptyMarks() {
+  return Object.fromEntries(PILLAR_IDS.map((id) => [id, null]));
+}
+
+export async function getCheckin(db, date) {
+  return getRecord(db, 'days', date);
+}
+
+export async function saveCheckin(db, record) {
+  await putRecord(db, 'days', record);
+  await rebuildPhase1Progress(db);
+  return record;
+}
+
+export async function rebuildPhase1Progress(db, { throughDate = localDateISO() } = {}) {
+  await ensurePillarRecords(db);
+  const metaStart = await getRecord(db, 'meta', 'campaignStart');
+  const campaignStart = metaStart?.value ?? throughDate;
+  const [days, existingPillars] = await Promise.all([
+    getAllRecords(db, 'days'),
+    getAllRecords(db, 'pillars')
+  ]);
+  const relevantDays = days.filter((day) => day.date >= campaignStart && day.date <= throughDate);
+  const dayMap = new Map(relevantDays.map((day) => [day.date, day]));
+  const existingById = new Map(existingPillars.map((pillar) => [pillar.id, pillar]));
+  const progress = Object.fromEntries(PILLAR_DEFINITIONS.map((definition) => [definition.id, {
+    ...createPillarRecord(definition),
+    ...existingById.get(definition.id),
+    ...definition,
+    xp: 0,
+    streak: 0,
+    bestStreak: 0,
+    graceUsedOn: null,
+    lastLogDate: null,
+    lastStreakBreakDate: null
+  }]));
+
+  for (const date of dateRange(campaignStart, throughDate)) {
+    const day = dayMap.get(date);
+    const completed = Boolean(day?.completed);
+    const honest = completed && String(day?.honestLine ?? '').trim().length >= HONEST_LINE_MIN;
+
+    for (const id of PILLAR_IDS) {
+      const pillar = progress[id];
+      const mark = day?.marks?.[id];
+      const explicit = isExplicitMark(mark);
+      const positive = isPositiveMark(mark);
+
+      if (explicit) pillar.lastLogDate = date;
+      const streakResult = applyStreakDay(pillar, { date, positive });
+      Object.assign(pillar, streakResult);
+
+      if (completed) {
+        pillar.xp += multipliedXp(CHECKIN_COMPLETION_XP, pillar.streak);
+        if (positive) pillar.xp += multipliedXp(MARK_XP[mark], pillar.streak);
+        if (honest) pillar.xp += HONEST_LINE_XP;
+      }
+      if (day?.confession?.pillarId === id && String(day.confession.text ?? '').trim()) pillar.xp += CONFESSION_XP;
+    }
+  }
+
+  const updatedAt = new Date().toISOString();
+  await atomicPut(db, PILLAR_DEFINITIONS.map((definition) => {
+    const pillar = progress[definition.id];
+    pillar.level = levelFromXp(pillar.xp);
+    pillar.tier = buildingTier(pillar.level);
+    pillar.updatedAt = updatedAt;
+    return { store: 'pillars', record: pillar };
+  }));
+  return Object.values(progress);
+}
