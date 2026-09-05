@@ -1,4 +1,4 @@
-/* fb40 · /js/main.js · v0.1.0 · 2026-07-25 */
+/* fb40 · /js/main.js · v0.2.0 · 2026-09-05 */
 import { openDatabase } from './core/db.js';
 import { ensureFirstBootMetadata, loadAppState, saveLastRoute } from './core/state.js';
 import { Router } from './core/router.js';
@@ -6,6 +6,7 @@ import { log } from './core/log.js';
 import { renderShell, setActiveNavigation, setView } from './ui/shell.js';
 import { renderOnboarding } from './ui/onboarding.js';
 import { renderMap } from './ui/map.js';
+import { renderChapel } from './ui/chapel.js';
 import { renderLocked } from './ui/locked.js';
 import { renderSettings } from './ui/settings.js';
 
@@ -50,12 +51,13 @@ async function boot() {
 
   renderShell({ router, state });
   const currentRoute = router.resolvePathname();
-  const restorableRoutes = new Set(['/', '/settings', '/checkin', '/review', '/chronicle']);
+  const restorableRoutes = new Set(['/', '/chapel', '/settings', '/checkin', '/review', '/chronicle']);
   if (state.meta.onboardingStatus === 'complete' && currentRoute === '/' && state.meta.lastRoute && restorableRoutes.has(state.meta.lastRoute)) {
     history.replaceState({}, '', router.url(state.meta.lastRoute));
   }
   router
-    .register('/', () => renderMap({ state, setView }))
+    .register('/', () => renderMap({ state, setView, router }))
+    .register('/chapel', () => renderChapel({ state, setView, router, refreshState }))
     .register('/prologue', () => renderOnboarding({ state, setView, router, refreshState }))
     .register('/settings', () => renderSettings({ state, setView, refreshState, router }))
     .register('/checkin', ({ path }) => renderLocked({ path, setView, router }))
