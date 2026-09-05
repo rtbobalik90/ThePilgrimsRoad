@@ -1,5 +1,5 @@
-/* fb40 · /sw.js · v0.1.0 · 2026-07-25 */
-const CACHE_NAME = 'fb40-shell-v0.1.0';
+/* fb40 · /sw.js · v0.2.0 · 2026-09-05 */
+const CACHE_NAME = 'fb40-shell-v0.2.0';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const APP_SHELL = [
   './styles/base.css',
   './styles/layout.css',
   './styles/map.css',
+  './styles/chapel.css',
   './styles/sheet.css',
   './js/main.js',
   './js/core/db.js',
@@ -20,9 +21,12 @@ const APP_SHELL = [
   './js/data/schema.js',
   './js/data/migrate.js',
   './js/data/backup.js',
+  './js/life/activities.js',
+  './js/systems/chapel.js',
   './js/ui/shell.js',
   './js/ui/onboarding.js',
   './js/ui/map.js',
+  './js/ui/chapel.js',
   './js/ui/settings.js',
   './js/ui/sheet.js',
   './js/ui/locked.js',
