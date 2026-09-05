@@ -1,0 +1,18 @@
+.chapel { display: grid; gap: 14px; }
+.chapel__hero { position: relative; overflow: hidden; min-height: 220px; }
+.chapel__hero::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 72% 28%, rgba(201,138,46,.12), transparent 34%); }
+.chapel--restored .chapel__hero::before { background: radial-gradient(circle at 72% 28%, rgba(201,138,46,.28), transparent 42%); }
+.chapel__light { position: absolute; right: 22px; bottom: 22px; width: 52px; height: 78px; display: grid; place-items: end center; }
+.chapel__light::before { content: ''; width: 12px; height: 42px; border: 1px solid var(--edge); background: #c7b58a; opacity: .45; }
+.chapel__light span { position: absolute; bottom: 40px; width: 14px; height: 22px; border-radius: 50% 50% 45% 45%; background: var(--ember); filter: blur(.2px); opacity: .12; transform-origin: 50% 100%; }
+.chapel--restored .chapel__light span { opacity: 1; box-shadow: 0 0 22px rgba(201,138,46,.62); animation: first-flame 2.6s ease-in-out infinite; }
+@keyframes first-flame { 0%,100% { transform: scale(.9) rotate(-2deg); } 50% { transform: scale(1.08) rotate(2deg); } }
+.keeper-card h2 { margin-bottom: 8px; }
+.keeper-dialogue { margin-bottom: 14px; font-size: 19px; font-style: italic; }
+.faith-object { display: grid; gap: 14px; }
+.demo-badge { width: fit-content; border: 1px solid var(--ember-low); padding: 5px 7px; color: var(--ember); font-family: var(--font-display); font-size: 9px; letter-spacing: .08em; }
+.faith-object .definition-list { padding: 12px 0; border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge); }
+.keep-node { position: absolute; z-index: 4; left: 71%; top: 25%; transform: translate(-50%, -50%); display: grid; gap: 2px; place-items: center; min-width: 64px; border: 0; background: transparent; color: var(--parchment); text-decoration: none; }
+.keep-node__mark { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--ember); background: rgba(14,11,7,.88); color: var(--ember); font-family: var(--font-display); }
+.keep-node__label { padding: 2px 5px; border: 1px solid var(--edge); background: rgba(14,11,7,.88); font-family: var(--font-display); font-size: 8px; text-transform: uppercase; }
+@media (min-width: 561px) { .chapel__hero { min-height: 250px; } }
